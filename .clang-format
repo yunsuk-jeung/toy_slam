@@ -1,0 +1,74 @@
+---
+Language:        Cpp
+# BasedOnStyle:  Google
+AccessModifierOffset: -2
+AlignArrayOfStructures: Right
+AlignAfterOpenBracket: true
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: 'true'
+# AlignEscapedNewlinesLeft: true
+AlignOperands: Align
+AlignTrailingComments: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: true
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+BraceWrapping:
+	BeforeElse: true
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializersBeforeComma: true
+ColumnLimit:     90
+CommentPragmas:  '^ IWYU pragma:'
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+DerivePointerAlignment: false
+DisableFormat:   false
+EmptyLineAfterAccessModifier: Always
+EmptyLineBeforeAccessModifier: Always
+ExperimentalAutoDetectBinPacking: false
+ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
+IndentCaseLabels: false
+IndentWidth:    2
+IndentWrappedFunctionNames: false
+KeepEmptyLinesAtTheStartOfBlocks: true
+MacroBlockBegin: ''
+MacroBlockEnd:   ''
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+ObjCBlockIndentWidth: 2
+ObjCSpaceAfterProperty: false
+ObjCSpaceBeforeProtocolList: false
+PenaltyBreakBeforeFirstCallParameter: 120
+PointerAlignment: Left
+# ReflowComments: false
+SpacesInLineCommentPrefix: 
+  Minimum: 0
+  Maximum: 0
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 2
+SpacesInAngles:  false
+SpacesInContainerLiterals: true
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+Standard:        Auto
+SortIncludes:  false
+TabWidth:        8
+UseTab:          Never
+...
+

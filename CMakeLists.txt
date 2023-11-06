@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18.1)
 
-project("toy_vio")
+project("toy_sample")
 
 option(BUILD_TEST "Build test" OFF)
 
@@ -19,8 +19,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_executable(example main.cpp)
-target_link_libraries(example PUBLIC libs)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/toy ${CMAKE_BINARY_DIR}/toy)
+
+add_executable(example exec/vio_main.cpp)
+target_link_libraries(example PRIVATE libs toyslam)
 
 if(WIN32)
 

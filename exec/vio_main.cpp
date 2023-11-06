@@ -1,10 +1,14 @@
 #include <iostream>
 #include <tbb/concurrent_unordered_map.h>
 #include <Eigen/Dense>
+#include "Slam.h"
 
 using Map = tbb::concurrent_unordered_map<int, int, std::hash<int>>;
 
 int main() {
+
+  toy::SLAM::getInstance(); 
+  auto toy = toy::SLAM();
 
   Map map;
 

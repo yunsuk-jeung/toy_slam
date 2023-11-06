@@ -1,14 +1,17 @@
 #include <iostream>
+#include <functional>
+
 #include <tbb/concurrent_unordered_map.h>
 #include <Eigen/Dense>
 
-#include <functional>
+#include <spdlog/spdlog.h>
+#include <nlohmann/json.hpp>
+
 #include "Slam.h"
 
 using Map = tbb::concurrent_unordered_map<int, int, std::hash<int>>;
 
 int main() {
-
 
   auto accCallback = [](uint64_t& ns, float* acc) {
     toy::SLAM::getInstance()->setAcc(ns, acc);
@@ -18,6 +21,13 @@ int main() {
     toy::SLAM::getInstance()->setGyr(ns, gyr);
   };
 
+  nlohmann::json ex1 = nlohmann::json::parse(R"(
+  {
+    "pi": 3.141,
+    "happy": true
+  }
+)");
+  spdlog::info("Welcome to spdlog!");
 
   Map map;
 

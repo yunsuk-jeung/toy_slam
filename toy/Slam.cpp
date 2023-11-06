@@ -14,7 +14,7 @@ void SLAM::setNewImage(ImageType type,
                        int       lenght,
                        int       width,
                        int       height) {}
-
+ 
 void SLAM::setAcc(uint64_t& ns, float* acc) {}
 
 void SLAM::setGyr(uint64_t& ns, float* gyr) {}

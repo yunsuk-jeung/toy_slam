@@ -12,6 +12,9 @@ set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../libs)
 
 option(LINK_WITH_EIGEN "link with eigen" ON)
 option(LINK_WITH_TBB "link with tbb" ON)
+option(LINK_WITH_SPDLOG "link with SPDLOG" ON)
+option(LINK_WITH_JSON "link with JSON" ON)
+
 add_subdirectory(${EXTERNAL_LIB_DIR} ${CMAKE_BINARY_DIR}/libs)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -22,7 +25,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/toy ${CMAKE_BINARY_DIR}/toy)
 
 add_executable(example exec/vio_main.cpp)
-target_link_libraries(example PRIVATE libs toyslam)
+target_link_libraries(example PRIVATE libs toyslam::toyslam)
 
 if(WIN32)
 

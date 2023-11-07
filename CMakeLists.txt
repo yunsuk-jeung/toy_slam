@@ -30,7 +30,7 @@ target_link_libraries(example PRIVATE libs toyslam::toyslam)
 if(WIN32)
 
   include(${EXTERNAL_LIB_DIR}/copyDLL.cmake)
-  set(BIN_DIR ${EXTERNAL_LIB_DIR}/libs_win/bin)
-  copy_tbb_dlls(example ${BIN_DIR})
+  set(TBB_BIN_DIR ${EXTERNAL_LIB_DIR}/libs_win/tbb_2021_11_0_rc1/bin)
+  copy_tbb_dlls(example ${TBB_BIN_DIR})
 
 endif()

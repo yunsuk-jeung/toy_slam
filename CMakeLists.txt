@@ -14,6 +14,7 @@ option(LINK_WITH_EIGEN "link with eigen" ON)
 option(LINK_WITH_TBB "link with tbb" ON)
 option(LINK_WITH_SPDLOG "link with SPDLOG" ON)
 option(LINK_WITH_JSON "link with JSON" ON)
+option(LINK_WITH_OPENCV34 "link with cv34" ON)
 
 add_subdirectory(${EXTERNAL_LIB_DIR} ${CMAKE_BINARY_DIR}/libs)
 
@@ -29,8 +30,13 @@ target_link_libraries(example PRIVATE libs toyslam::toyslam)
 
 if(WIN32)
 
-  include(${EXTERNAL_LIB_DIR}/copyDLL.cmake)
-  set(TBB_BIN_DIR ${EXTERNAL_LIB_DIR}/libs_win/tbb_2021_11_0_rc1/bin)
-  copy_tbb_dlls(example ${TBB_BIN_DIR})
+	include(${EXTERNAL_LIB_DIR}/copyDLL.cmake)
+  if(LINK_WITH_TBB)
+	copy_tbb_dlls(example ${EXTERNAL_LIB_DIR})
+  endif()
 
+  if(LINK_WITH_OPENCV34)
+	copy_cv34_dlls(example ${EXTERNAL_LIB_DIR})
+  endif()
+  
 endif()

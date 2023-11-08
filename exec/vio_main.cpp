@@ -6,6 +6,7 @@
 
 #include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "Slam.h"
 
@@ -54,6 +55,11 @@ int main() {
   for (auto& [key, val] : map) {
     std::cout << key << " / " << val << std::endl;
   }
+
+  cv::Mat image(480, 640, CV_8UC3);
+  cv::putText(image, "OPENCV_TEST", {0, 100}, 0, 2, {255.0, 0.0, 0.0}, 1);
+  cv::imshow("sample", image);
+  cv::waitKey(1000);
 
   return 0;
 }

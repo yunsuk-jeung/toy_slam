@@ -1,10 +1,44 @@
 cmake_minimum_required(VERSION 3.18.1)
 
-project("toyslam")
+project("toy")
 
-file(GLOB_RECURSE TOY_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+file(GLOB_RECURSE TOY_SRC
+  ${CMAKE_CURRENT_SOURCE_DIR}/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+)
+
+message(FATATL_ERROR ${TOY_SRC})
 
 add_library(${PROJECT_NAME} STATIC ${TOY_SRC})
-add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+file(GLOB SUBDIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *)
+
+target_include_directories(${PROJECT_NAME} PUBLIC 
+${CMAKE_CURRENT_SOURCE_DIR}
+# ${CMAKE_CURRENT_SOURCE_DIR}/datastruct
+# ${CMAKE_CURRENT_SOURCE_DIR}/ImageModule
+# ${CMAKE_CURRENT_SOURCE_DIR}/mapper
+# ${CMAKE_CURRENT_SOURCE_DIR}/util
+# ${CMAKE_CURRENT_SOURCE_DIR}/Vio
+${SUBDIRECTORIES}
+)
+
+set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../lib)
+
+option(LINK_WITH_EIGEN "link with eigen" ON)
+option(LINK_WITH_TBB "link with tbb" ON)
+option(LINK_WITH_SPDLOG "link with SPDLOG" ON)
+option(LINK_WITH_JSON "link with JSON" ON)
+option(LINK_WITH_OPENCV34 "link with cv34" ON)
+option(LINK_WITH_CERES "link with cv34" ON)
+
+add_subdirectory(${EXTERNAL_LIB_DIR} ${CMAKE_BINARY_DIR}/lib)
+target_link_libraries(${PROJECT_NAME} PUBLIC libs)
+
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})

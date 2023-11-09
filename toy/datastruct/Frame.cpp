@@ -1,9 +1,10 @@
 #include "Frame.h"
 
 namespace toy {
+template <typename FLOAT>
+Frame<FLOAT>::Frame() {}
 
-Frame::Frame() {}
-
-Frame::~Frame() {}
+template <typename FLOAT>
+Frame<FLOAT>::~Frame() {}
 
 }  //namespace toy

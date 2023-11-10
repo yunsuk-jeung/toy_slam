@@ -11,7 +11,7 @@
 #include "Slam.h"
 
 #include <ceres/ceres.h>
-using Map = tbb::concurrent_unordered_map<int, int, std::hash<int>>;
+using Map = tbb::concurrent_unordered_map<int, int, std::hash<int>>;  
 
 int main() {
 

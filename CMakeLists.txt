@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18.1)
 
-project("toy_sample")
+project("toy_project")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -8,12 +8,17 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 option(BUILD_TEST "Build test" OFF)
+option(BUILD_SAMPLES "Build samples" ON)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/toy ${CMAKE_BINARY_DIR}/toy)
+
+if(BUILD_SAMPLES)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/samples)
+endif()
 
 if(BUILD_TEST)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Test ${CMAKE_BINARY_DIR}/Test)
 endif()
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/toy ${CMAKE_BINARY_DIR}/toy)
 
 add_executable(example exec/vio_main.cpp)
 target_link_libraries(example PRIVATE toy::toy libs)

@@ -8,7 +8,7 @@ class Frame {
   using ptr = std::shared_ptr<Frame>;
 
 public:
-
+  
 protected:
 
   Frame();

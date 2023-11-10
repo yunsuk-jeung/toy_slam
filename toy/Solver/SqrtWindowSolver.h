@@ -4,7 +4,6 @@ namespace toy {
 template <typename FLOAT>
 class SqrtWindowSolver : public LocalSolver {
 public:
-
   SqrtWindowSolver() {}
   virtual ~SqrtWindowSolver() {}
 

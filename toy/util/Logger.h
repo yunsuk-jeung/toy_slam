@@ -27,7 +27,6 @@ class vkLogger {
   static std::shared_ptr<spdlog::logger> android_logger;
 
 public:
-
   template <typename... Args>
   static void logI(const char* fmt, Args... args) {
     android_logger->info(fmt, args...);

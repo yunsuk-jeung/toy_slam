@@ -3,11 +3,11 @@
 #include "SqrtWindowSolver.h"
 
 namespace toy {
-std::unique_ptr<LocalSolver> LocalSolverFactory::createLocalSolver(bool useDouble,
-                                                                        SolverType type) {
+std::unique_ptr<LocalSolver> LocalSolverFactory::createLocalSolver(bool       useDouble,
+                                                                   SolverType type) {
 
   std::unique_ptr<LocalSolver> solver = nullptr;
-  
+
   switch (type) {
   case toy::LocalSolverFactory::SolverType::SQRT:
     if (useDouble) {
@@ -27,8 +27,6 @@ std::unique_ptr<LocalSolver> LocalSolverFactory::createLocalSolver(bool useDoubl
 
   return solver;
 }
-
-
 
 //LocalSolver* LocalSolverFactory::createLocalSolver(bool useDouble, SolverType type) {
 //  return nullptr;

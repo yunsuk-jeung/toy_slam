@@ -7,7 +7,6 @@ namespace toy {
 template <typename T>
 class Singleton {
 public:
-
   static T* getInstance() {
     if (!instance) {
       instance.reset(new T());
@@ -18,8 +17,7 @@ public:
   static void deleteInstance() { instance.reset(); }
 
 protected:
-
-  Singleton() {}  
+  Singleton() {}
   virtual ~Singleton() {}
 
   Singleton(const Singleton&)            = delete;
@@ -28,11 +26,11 @@ protected:
   Singleton& operator=(Singleton&&)      = delete;
 
 private:
-
   static std::unique_ptr<T, void (*)(T*)> instance;
 };
 
 template <typename T>
-std::unique_ptr<T, void (*)(T*)> Singleton<T>::instance(nullptr, [](T* obj) { delete obj; });
+std::unique_ptr<T, void (*)(T*)> Singleton<T>::instance(nullptr,
+                                                        [](T* obj) { delete obj; });
 
-}  //namespace ts
+}  //namespace toy

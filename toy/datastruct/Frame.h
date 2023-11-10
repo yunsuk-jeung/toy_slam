@@ -8,14 +8,12 @@ class Frame {
   using ptr = std::shared_ptr<Frame>;
 
 public:
-  
-protected:
 
+protected:
   Frame();
   ~Frame();
 
 protected:
-
   Eigen::Vector<FLOAT, 3> wTc;
 };
 }  //namespace toy

@@ -12,7 +12,6 @@ class SLAM : public Singleton<SLAM> {
   friend class Singleton<SLAM>;
 
 public:
-
   void init(const std::string& configFile);
 
   void setNewImage(ImageType type,
@@ -26,10 +25,9 @@ public:
   void setGyr(uint64_t& ns, float* gyr);
 
 private:
-
   SLAM();
   ~SLAM() override;
 
-  std::unique_ptr<Vio> vioUPtr; 
+  std::unique_ptr<Vio> vioUPtr;
 };
 }  //namespace toy

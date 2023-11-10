@@ -11,7 +11,7 @@
 #include "Slam.h"
 
 #include <ceres/ceres.h>
-using Map = tbb::concurrent_unordered_map<int, int, std::hash<int>>;  
+using Map = tbb::concurrent_unordered_map<int, int, std::hash<int>>;
 
 int main() {
 
@@ -63,7 +63,6 @@ int main() {
   cv::putText(image, "OPENCV_TEST", {0, 100}, 0, 2, {255.0, 0.0, 0.0}, 1);
   cv::imshow("sample", image);
   cv::waitKey(1000);
-
 
   return 0;
 }

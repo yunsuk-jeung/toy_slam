@@ -11,6 +11,7 @@ option(BUILD_TEST "Build test" OFF)
 option(BUILD_SAMPLES "Build samples" ON)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/toy ${CMAKE_BINARY_DIR}/toy)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/IO ${CMAKE_BINARY_DIR}/IO)
 
 if(BUILD_SAMPLES)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/samples)
@@ -21,7 +22,7 @@ if(BUILD_TEST)
 endif()
 
 add_executable(example exec/vio_main.cpp)
-target_link_libraries(example PRIVATE toy::toy libs)
+target_link_libraries(example PRIVATE toy::toy libs io)
 
 if(WIN32)
   set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../lib)

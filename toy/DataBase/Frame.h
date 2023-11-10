@@ -1,11 +1,13 @@
 #pragma once
+#include <memory>
+
 #include <Eigen/Dense>
-#include <opencv2/core.hpp>
 
 namespace toy {
+namespace db {
 template <typename FLOAT>
 class Frame {
-  using ptr = std::shared_ptr<Frame>;
+  using Ptr = std::shared_ptr<Frame>;
 
 public:
 
@@ -16,4 +18,5 @@ protected:
 protected:
   Eigen::Vector<FLOAT, 3> wTc;
 };
+}  //namespace db
 }  //namespace toy

@@ -1,22 +1,21 @@
 #include <iostream>
-#include "LocalSolverFactory.h"
 #include "SqrtWindowSolver.h"
 
 namespace toy {
-std::unique_ptr<LocalSolver> LocalSolverFactory::createLocalSolver(bool       useDouble,
+std::unique_ptr<VioSolver> VioSolverFactory::createVioSolver(bool       useDouble,
                                                                    SolverType type) {
 
-  std::unique_ptr<LocalSolver> solver = nullptr;
+  std::unique_ptr<VioSolver> solver = nullptr;
 
   switch (type) {
-  case toy::LocalSolverFactory::SolverType::SQRT:
+  case toy::VioSolverFactory::SolverType::SQRT:
     if (useDouble) {
     }
     else {
       solver = std::make_unique<SqrtWindowSolver<float>>();
     }
     break;
-  case toy::LocalSolverFactory::SolverType::CERES:
+  case toy::VioSolverFactory::SolverType::CERES:
     //a = new SqrtWindowSolver<float>();
 
     break;
@@ -28,7 +27,7 @@ std::unique_ptr<LocalSolver> LocalSolverFactory::createLocalSolver(bool       us
   return solver;
 }
 
-//LocalSolver* LocalSolverFactory::createLocalSolver(bool useDouble, SolverType type) {
+//VioSolver* VioSolverFactory::createVioSolver(bool useDouble, SolverType type) {
 //  return nullptr;
 //}
 

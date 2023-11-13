@@ -12,7 +12,7 @@ class SLAM : public Singleton<SLAM> {
   friend class Singleton<SLAM>;
 
 public:
-  void init(const std::string& configFile);
+  void prepare(const std::string& configFile);
 
   void setNewImage(ImageType type,
                    uint64_t& ns,

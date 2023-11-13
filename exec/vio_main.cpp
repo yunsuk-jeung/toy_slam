@@ -15,7 +15,7 @@ using Map = tbb::concurrent_unordered_map<int, int, std::hash<int>>;
 
 int main() {
 
-  toy::SLAM::getInstance()->init(std::string("wtf"));
+  toy::SLAM::getInstance()->prepare(std::string("wtf"));
 
   auto accCallback = [](uint64_t& ns, float* acc) {
     toy::SLAM::getInstance()->setAcc(ns, acc);

@@ -1,17 +1,19 @@
 #include "ImagePyramid.h"
 #include "Logger.h"
+#include "config.h"
 
 namespace toy {
 namespace db {
 ImagePyramid::ImagePyramid(ImageType type, cv::Mat in) {
+
   switch (type) {
   case ImageType::MAIN:
-    if (in.type() != 0)
-      in.convertTo(origin, CV_8UC1);
-    else
-      origin = in;
+    convertToGray(in, origin);
+    createImagePyrmid();
     break;
-    
+  case ImageType::SUB:
+    convertToGray(in, origin);
+    break;
   default:
     origin = in;
     break;
@@ -37,6 +39,15 @@ ImagePyramid::ImagePyramid(ImageType type,
 ImagePyramid::~ImagePyramid() {
 
   pyramids.clear();
+}
+
+void ImagePyramid::createImagePyrmid() {}
+
+void ImagePyramid::convertToGray(cv::Mat& src, cv::Mat& dst) {
+  if (src.type() != 0)
+    src.convertTo(dst, CV_8UC1);
+  else
+    dst = src;
 }
 
 };  //namespace db

@@ -4,13 +4,18 @@
 #include "Processor.h"
 
 namespace toy {
-class LocalSolver;
+class FeatureTracker;
+class VioSolver;
 class Vio {
 public:
   Vio();
   ~Vio();
 
+  void prepare();
+
 private:
-  std::unique_ptr<LocalSolver> optimzerUPtr;
+  std::unique_ptr<FeatureTracker> featureTrackerUptr;
+  std::unique_ptr<VioSolver>      optimzerUPtr;
 };
+
 }  //namespace toy

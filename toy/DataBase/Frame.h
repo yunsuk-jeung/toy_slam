@@ -7,8 +7,6 @@ namespace toy {
 namespace db {
 template <typename FLOAT>
 class Frame {
-  using Ptr = std::shared_ptr<Frame>;
-
 public:
 
 protected:

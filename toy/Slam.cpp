@@ -9,9 +9,10 @@ SLAM::SLAM() : vioUPtr{nullptr} {};
 
 SLAM::~SLAM(){};
 
-void SLAM::init(const std::string& configFile) {
+void SLAM::prepare(const std::string& configFile) {
   Config::parseConfig(configFile);
   vioUPtr = std::make_unique<Vio>();
+  vioUPtr->prepare();
 }
 
 void SLAM::setNewImage(ImageType type,

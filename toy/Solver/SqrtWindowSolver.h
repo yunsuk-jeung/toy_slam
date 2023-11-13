@@ -1,8 +1,8 @@
 #pragma once
-#include "LocalSolver.h"
+#include "VioSolver.h"
 namespace toy {
 template <typename FLOAT>
-class SqrtWindowSolver : public LocalSolver {
+class SqrtWindowSolver : public VioSolver {
 public:
   SqrtWindowSolver() {}
   virtual ~SqrtWindowSolver() {}

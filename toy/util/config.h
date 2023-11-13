@@ -4,8 +4,8 @@ namespace toy {
 class Config {
 public:
   static void parseConfig(const std::string& file);
-
+  
   static bool useDouble;
-  static int  localSolverType;
+  static int  vioSolverType;
 };
 }  //namespace toy

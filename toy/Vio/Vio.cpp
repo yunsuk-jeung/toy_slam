@@ -1,14 +1,15 @@
 #include "Vio.h"
-#include "LocalSolver.h"
 #include "config.h"
-
+#include "FeatureTracker.h"
+#include "VioSolver.h"
 namespace toy {
-Vio::Vio() {
+Vio::Vio() : featureTrackerUptr{nullptr}, optimzerUPtr{nullptr} {}
 
-  auto solverType = static_cast<LocalSolverFactory::SolverType>(Config::localSolverType);
-  optimzerUPtr    = LocalSolverFactory::createLocalSolver(Config::useDouble, solverType);
-  optimzerUPtr->process();
-}
+Vio::~Vio() {}
 
-Vio::~Vio(){};
+void Vio::prepare() {
+  auto solverType = static_cast<VioSolverFactory::SolverType>(Config::vioSolverType);
+  optimzerUPtr    = VioSolverFactory::createVioSolver(Config::useDouble, solverType);
+};
+
 }  //namespace toy

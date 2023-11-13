@@ -56,7 +56,7 @@ struct Pattern24 {
   // |
   // |
   // y
-
+  //// clang-format off
   static constexpr Scalar pattern_raw[][2] = {
       {-1, 5},  {1, 5},
 
@@ -71,6 +71,7 @@ struct Pattern24 {
       {-1, -5}, {1, -5}
 
   };
+//// clang-format on
 
   static constexpr int PATTERN_SIZE =
       sizeof(pattern_raw) / (2 * sizeof(Scalar));

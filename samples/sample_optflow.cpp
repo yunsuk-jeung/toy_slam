@@ -35,10 +35,11 @@ auto main() -> int {
   pointss.resize(pyramids.size());
 
   for (auto i = 0; i < pyramids.size(); i++) {
-    auto  img    = pyramids[i].getOrigin();
+    auto  img    = pyramids[i].getGray();
     auto& points = pointss[i];
     extractor.process(img, points);
   }
+
 
   return 0;
 }

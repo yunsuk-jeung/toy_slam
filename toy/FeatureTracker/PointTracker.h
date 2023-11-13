@@ -8,7 +8,7 @@ public:
   ~PointTracker() = default;
 
 protected:
-  PointExtractor* extractor;
-  PointMatcher*   matcher;
+  PointExtractor* mExtractor;
+  PointMatcher*   mMatcher;
 };
 }  //namespace toy

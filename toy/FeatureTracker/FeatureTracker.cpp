@@ -7,7 +7,7 @@
 
 namespace toy {
 FeatureTracker::FeatureTracker() {
-  pointTracker = new PointTracker();
+  mPointTracker = new PointTracker();
 }
 
 FeatureTracker::~FeatureTracker() {}

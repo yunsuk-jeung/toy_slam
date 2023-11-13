@@ -1,21 +1,22 @@
 #pragma once
-//#include <tbb/concorent_>
-#include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_hash_map.h>
+#include <tbb/concurrent_set.h>
 #include "Frame.h"
 
 namespace toy {
 namespace db {
-template <typename T>
 class Frame;
-template <typename FLOAT>
+class Landmark;
 class Map {
 public:
   Map()  = default;
   ~Map() = default;
 
-  Frame<FLOAT>* createNewFrame() { return new Frame<FLOAT>(); }
+  virtual Frame* createNewFrame() = 0;
 
 protected:
+  tbb::concurrent_set<Frame*>    mFrames;
+  // tbb::concurrent_set<Landmark*> mLandmarks;
 };
 
 }  //namespace db

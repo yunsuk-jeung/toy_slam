@@ -15,7 +15,7 @@ public:
 
 private:
   std::unique_ptr<FeatureTracker> featureTrackerUptr;
-  std::unique_ptr<VioSolver>      optimzerUPtr;
+  std::unique_ptr<VioSolver>      vioSolverUptr;
 };
 
 }  //namespace toy

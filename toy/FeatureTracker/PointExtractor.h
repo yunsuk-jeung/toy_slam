@@ -12,7 +12,7 @@ public:
   void process(cv::Mat image, std::vector<cv::Point2f>& points);
 
 protected:
-  cv::Ptr<cv::Feature2D> extractor;
+  cv::Ptr<cv::Feature2D> mFeature2D;
   static void            convertKptsToPts(std::vector<cv::KeyPoint>& kpts,
                                           std::vector<cv::Point2f>&  pts);
 };

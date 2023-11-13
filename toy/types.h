@@ -8,4 +8,6 @@ namespace toy {
  * next to the main camera. DEPTH : Depth image
  */
 enum class ImageType { MAIN, SUB, DEPTH };
+enum class ImageFormat { GRAAY, RGB888 };
+
 };  //namespace toy

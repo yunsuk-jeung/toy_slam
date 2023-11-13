@@ -8,7 +8,7 @@ public:
   ~LineTracker();
 
 protected:
-  LineExtractor* extractor;
-  LineMatcher*   matcher;
+  LineExtractor* mExtractor;
+  LineMatcher*   mMatcher;
 };
 }  //namespace toy

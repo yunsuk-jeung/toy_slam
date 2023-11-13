@@ -1,12 +1,13 @@
 #pragma once
 #include <memory>
 
-#include <Eigen/Dense>
-
 namespace toy {
 namespace db {
-template <typename FLOAT>
+class ImagePyramid;
+class Map;
 class Frame {
+  friend class Map;
+
 public:
 
 protected:
@@ -14,7 +15,7 @@ protected:
   ~Frame();
 
 protected:
-  Eigen::Vector<FLOAT, 3> wTc;
+  ImagePyramid* mImagePyramid;
 };
 }  //namespace db
 }  //namespace toy

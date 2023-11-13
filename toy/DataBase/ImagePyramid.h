@@ -7,10 +7,17 @@
 namespace toy {
 namespace db {
 class ImagePyramid {
-  
+
 public:
-  ImagePyramid(ImageType type, cv::Mat);
-  ImagePyramid(ImageType type, uint8_t* buffer, int lenght, int width, int height);
+  ImagePyramid(ImageType type, cv::Mat mat);
+
+  ImagePyramid(ImageType   type,
+               ImageFormat format,
+               uint8_t*    buffer,
+               int         lenght,
+               int         width,
+               int         height);
+
   ~ImagePyramid();
 
 protected:
@@ -18,12 +25,12 @@ protected:
   static void convertToGray(cv::Mat& src, cv::Mat& dst);
 
 protected:
-  cv::Mat              origin;
-  std::vector<cv::Mat> pyramids;
+  cv::Mat              mGray;
+  std::vector<cv::Mat> mPyramids;
 
 public:
-  cv::Mat               getOrigin() { return origin; }
-  std::vector<cv::Mat>& getPyramids() { return pyramids; }
+  cv::Mat               getGray() { return mGray; }
+  std::vector<cv::Mat>& getPyramids() { return mPyramids; }
 };
 };  //namespace db
 }  //namespace toy

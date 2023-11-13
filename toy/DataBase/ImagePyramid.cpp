@@ -8,27 +8,27 @@ ImagePyramid::ImagePyramid(ImageType type, cv::Mat in) {
 
   switch (type) {
   case ImageType::MAIN:
-    convertToGray(in, origin);
+    convertToGray(in, mGray);
     createImagePyrmid();
     break;
   case ImageType::SUB:
-    convertToGray(in, origin);
+    convertToGray(in, mGray);
     break;
   default:
-    origin = in;
+    mGray = in;
     break;
   }
 }
 
-ImagePyramid::ImagePyramid(ImageType type,
-                           uint8_t*  buffer,
-                           int       lenght,
-                           int       width,
-                           int       height) {
+ImagePyramid::ImagePyramid(ImageType   type,
+                           ImageFormat format,
+                           uint8_t*    buffer,
+                           int         lenght,
+                           int         width,
+                           int         height) {
 
   switch (type) {
   case ImageType::MAIN:
-    origin = cv::Mat(height, width, CV_8UC1, buffer);
     break;
 
   default:
@@ -38,7 +38,7 @@ ImagePyramid::ImagePyramid(ImageType type,
 
 ImagePyramid::~ImagePyramid() {
 
-  pyramids.clear();
+  mPyramids.clear();
 }
 
 void ImagePyramid::createImagePyrmid() {}

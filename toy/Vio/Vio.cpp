@@ -3,13 +3,13 @@
 #include "FeatureTracker.h"
 #include "VioSolver.h"
 namespace toy {
-Vio::Vio() : featureTrackerUptr{nullptr}, optimzerUPtr{nullptr} {}
+Vio::Vio() : featureTrackerUptr{nullptr}, vioSolverUptr{nullptr} {}
 
 Vio::~Vio() {}
 
 void Vio::prepare() {
   auto solverType = static_cast<VioSolverFactory::SolverType>(Config::vioSolverType);
-  optimzerUPtr    = VioSolverFactory::createVioSolver(Config::useDouble, solverType);
+  vioSolverUptr   = VioSolverFactory::createVioSolver(Config::useDouble, solverType);
 };
 
 }  //namespace toy

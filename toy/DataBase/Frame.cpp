@@ -1,13 +1,15 @@
 #include "Frame.h"
+#include "ImagePyramid.h"
 
 namespace toy {
 namespace db {
 
-template <typename FLOAT>
-Frame<FLOAT>::Frame() {}
+Frame::Frame() : mImagePyramid{nullptr} {}
 
-template <typename FLOAT>
-Frame<FLOAT>::~Frame() {}
+Frame::~Frame() {
+  delete mImagePyramid;
+  mImagePyramid = nullptr;
+}
 
 }  //namespace db
 }  //namespace toy

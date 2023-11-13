@@ -13,7 +13,7 @@ public:
   bool process(Frame* frame);
 
 protected:
-  PointTracker* pointTracker;
-  LineTracker*  lineTracker;
+  PointTracker* mPointTracker;
+  LineTracker*  mLineTracker;
 };
 }  //namespace toy

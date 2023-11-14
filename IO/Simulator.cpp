@@ -6,7 +6,10 @@ Simulator::Simulator() {
   mIsSimulator = true;
 }
 
-Simulator::~Simulator() {}
+Simulator::~Simulator() {
+  delete mDataReader;
+  mDataReader = nullptr;
+}
 
 void Simulator::prepare() {}
 
@@ -17,7 +20,7 @@ void Simulator::start() {}
 void Simulator::stop() {}
 
 void Simulator::registerDataReader(DataReader* dataReader) {
-  mDataReaderUptr.reset(dataReader);
+  mDataReader = dataReader;
 }
 
 }  //namespace io

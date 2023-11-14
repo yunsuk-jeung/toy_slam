@@ -18,6 +18,6 @@ public:
   void registerDataReader(DataReader* dataReader);
 
 protected:
-  std::unique_ptr<DataReader> mDataReaderUptr;
+  DataReader* mDataReader;
 };
 }  //namespace io

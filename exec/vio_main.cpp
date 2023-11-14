@@ -7,13 +7,21 @@
 #include "SensorFactory.h"
 #include "Slam.h"
 
-std::string getConfigPath() {
-  auto currPath   = std::filesystem::current_path();
-  auto configPath = currPath.parent_path().parent_path().append("configs");
-  return configPath.append("VioOnly.json").string();
+io::Sensor*     sensor      = nullptr;
+io::DataReader* dataReaders = nullptr;
+std::string     dataPath    = "D:/dataset/EUROC/MH_01_easy";
+
+void setupSensor() {
+  sensor = io::SensorFactory::createSensor(io::SensorFactory::SensorType::SIMULATOR);
+
+  io::DataReader* reader = io::DataReader::createDataReader(io::DataReader::Type::EUROC);
+  reader->openDirectory();
+  (io::Simulator*)sensor->registerDataReader(reader);
+
+  sensor->prepare();
 }
 
-void registerCallbacks(io::Sensor* sensor) {
+void registerCallbacks() {
 
   auto imageCallback = [](const int&      dataType,
                           const int&      format,
@@ -39,16 +47,16 @@ void registerCallbacks(io::Sensor* sensor) {
   sensor->registerGyrCallback(gyrCallback);
 }
 
+std::string getConfigPath() {
+  auto currPath   = std::filesystem::current_path();
+  auto configPath = currPath.parent_path().parent_path().append("configs");
+  return configPath.append("VioOnly.json").string();
+}
+
 int main() {
-  auto* sensor = (io::Simulator*)io::SensorFactory::createSensor(
-      io::SensorFactory::SensorType::SIMULATOR);
+  setupSensor();
 
-  io::DataReader* reader = io::DataReader::createDataReader(io::DataReader::Type::EUROC);
-
-  sensor->registerDataReader(reader);
-  sensor->prepare();
-
-  registerCallbacks(sensor);
+  registerCallbacks();
 
   auto configFile = getConfigPath();
   toy::SLAM::getInstance()->prepare(configFile);

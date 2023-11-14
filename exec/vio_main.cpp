@@ -2,15 +2,15 @@
 #include <functional>
 #include <filesystem>
 
-#include "Sensor.h"
+#include "DataReader.h"
+#include "Simulator.h"
 #include "SensorFactory.h"
 #include "Slam.h"
 
 std::string getConfigPath() {
-  auto currPath = std::filesystem::current_path();
-  auto configPath =
-      currPath.parent_path().parent_path().append("configs").append("VioOnly.json");
-  return configPath.string();
+  auto currPath   = std::filesystem::current_path();
+  auto configPath = currPath.parent_path().parent_path().append("configs");
+  return configPath.append("VioOnly.json").string();
 }
 
 void registerCallbacks(io::Sensor* sensor) {
@@ -36,17 +36,27 @@ void registerCallbacks(io::Sensor* sensor) {
 
   sensor->registerImageCallback(imageCallback);
   sensor->registerAccCallback(accCallback);
+  sensor->registerGyrCallback(gyrCallback);
 }
 
 int main() {
-  std::unique_ptr<io::Sensor> sensorUptr =
-      io::SensorFactory::createSensor(io::SensorFactory::SensorType::SIMULATOR);
+  auto* sensor = (io::Simulator*)io::SensorFactory::createSensor(
+      io::SensorFactory::SensorType::SIMULATOR);
 
-  registerCallbacks(sensorUptr.get());
+  io::DataReader* reader = io::DataReader::createDataReader(io::DataReader::Type::EUROC);
+
+  sensor->registerDataReader(reader);
+  sensor->prepare();
+
+  registerCallbacks(sensor);
 
   auto configFile = getConfigPath();
   toy::SLAM::getInstance()->prepare(configFile);
 
   toy::SLAM::deleteInstance();
+
+  delete reader;
+  delete sensor;
+
   return 0;
 }

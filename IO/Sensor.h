@@ -26,7 +26,9 @@ public:
 
   void registerImageCallback(ImageCallback cb) { mImageCallBack = cb; }
   void registerAccCallback(ImuCallback cb) { mAccCallback = cb; }
-  void registeGyrCallback(ImuCallback cb) { mGyrCallback = cb; }
+  void registerGyrCallback(ImuCallback cb) { mGyrCallback = cb; }
+
+  bool isSimulator() const { return mIsSimulator; };
 
 protected:
   ImageCallback mImageCallBack = [](const int&      dataType,
@@ -47,6 +49,7 @@ protected:
     std::cout << "u forgot to register gyr Callback" << std::endl;
   };
 
-  int imageFormat = 0;
+  int  mImageFormat = 0;
+  bool mIsSimulator = false;
 };
 }  //namespace io

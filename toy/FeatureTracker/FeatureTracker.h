@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 #include <string>
 namespace toy {
 class Frame;
@@ -22,9 +21,9 @@ public:
   bool process(Frame* frame);
 
 protected:
-  std::unique_ptr<PointExtractor> mPointExtractorUptr;
-  std::unique_ptr<PointMatcher>   mPointMatcherUptr;
-  std::unique_ptr<LineExtractor>  mLineExtractorUptr;
-  std::unique_ptr<LineMatcher>    mLineMatcherUptr;
+  PointExtractor* mPointExtractor;
+  PointMatcher*   mPointMatcher;
+  LineExtractor*  mLineExtractor;
+  LineMatcher*    mLineMatcher;
 };
 }  //namespace toy

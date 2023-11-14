@@ -6,14 +6,17 @@
 #include "Map.h"
 namespace toy {
 
-SLAM::SLAM() : vioUptr{nullptr} {};
+SLAM::SLAM() : vio{nullptr} {};
 
-SLAM::~SLAM(){};
+SLAM::~SLAM() {
+  delete vio;
+  vio = nullptr;
+};
 
 void SLAM::prepare(const std::string& configFile) {
   Config::parseConfig(configFile);
-  vioUptr = std::make_unique<Vio>();
-  vioUptr->prepare();
+  vio = new Vio();
+  vio->prepare();
 }
 
 void SLAM::setNewImage(const int       type_,
@@ -28,8 +31,8 @@ void SLAM::setNewImage(const int       type_,
   auto format = static_cast<ImageFormat>(format_);
 
   auto* imagePyramid = new db::ImagePyramid(type, format, buffer, l, w, h);
-  vioUptr->insert(imagePyramid);
-  vioUptr->process();
+  vio->insert(imagePyramid);
+  vio->process();
 }
 
 void SLAM::setAcc(const uint64_t& ns, float* acc) {}

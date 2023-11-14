@@ -1,7 +1,5 @@
 #pragma once
 
-#include <memory>
-
 namespace toy {
 
 template <typename T>
@@ -9,12 +7,12 @@ class Singleton {
 public:
   static T* getInstance() {
     if (!instance) {
-      instance.reset(new T());
+      instance = new T();
     }
-    return instance.get();
+    return instance;
   }
 
-  static void deleteInstance() { instance.reset(); }
+  static void deleteInstance() { delete instance; }
 
 protected:
   Singleton() {}
@@ -26,11 +24,10 @@ protected:
   Singleton& operator=(Singleton&&)      = delete;
 
 private:
-  static std::unique_ptr<T, void (*)(T*)> instance;
+  static T* instance;
 };
 
 template <typename T>
-std::unique_ptr<T, void (*)(T*)> Singleton<T>::instance(nullptr,
-                                                        [](T* obj) { delete obj; });
+T* Singleton<T>::instance(nullptr);
 
 }  //namespace toy

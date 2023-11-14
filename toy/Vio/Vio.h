@@ -26,9 +26,9 @@ private:
   using Processor<db::ImagePyramid, void>::mInQueue;
 
 private:
-  std::unique_ptr<FeatureTracker> mFeatureTrackerUptr;
-  std::unique_ptr<VioSolver>      mVioSolverUptr;
-  std::unique_ptr<db::LocalMap>   mLocalMapUptr;
+  FeatureTracker* mFeatureTracker;
+  VioSolver*      mVioSolver;
+  db::LocalMap*   mLocalMap;
 };
 
 }  //namespace toy

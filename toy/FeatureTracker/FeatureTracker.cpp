@@ -12,16 +12,28 @@ FeatureTracker::FeatureTracker(std::string pointExtractor,
                                std::string lineExtractor,
                                std::string lineMatcher) {
 
-  mPointExtractorUptr = std::make_unique<PointExtractor>(pointExtractor);
-  mPointMatcherUptr   = std::make_unique<PointMatcher>(pointMatcher);
+  mPointExtractor = new PointExtractor(pointExtractor);
+  mPointMatcher   = new PointMatcher(pointMatcher);
 
   if (lineExtractor == "none") return;
 
-  mLineExtractorUptr = std::make_unique<LineExtractor>(lineExtractor);
-  mLineMatcherUptr   = std::make_unique<LineMatcher>(lineMatcher);
+  mLineExtractor = new LineExtractor(lineExtractor);
+  mLineMatcher   = new LineMatcher(lineMatcher);
 }
 
-FeatureTracker::~FeatureTracker() {}
+FeatureTracker::~FeatureTracker() {
+  delete mPointExtractor;
+  mPointExtractor = nullptr;
+
+  delete mPointMatcher;
+  mPointMatcher;
+
+  delete mLineExtractor;
+  mLineExtractor = nullptr;
+
+  delete mLineMatcher;
+  mLineMatcher = nullptr;
+}
 
 bool FeatureTracker::process(Frame* frame) {
 

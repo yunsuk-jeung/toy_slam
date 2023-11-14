@@ -6,26 +6,35 @@
 #include "LocalMap.h"
 
 namespace toy {
-Vio::Vio() : mFeatureTrackerUptr{nullptr}, mVioSolverUptr{nullptr} {
-  mLocalMapUptr = std::make_unique<db::LocalMap>();
+Vio::Vio() : mFeatureTracker{nullptr}, mVioSolver{nullptr} {
+  mLocalMap = new db::LocalMap();
 }
 
-Vio::~Vio() {}
+Vio::~Vio() {
+  delete mFeatureTracker;
+  mFeatureTracker = nullptr;
+
+  delete mVioSolver;
+  mVioSolver = nullptr;
+
+  delete mLocalMap;
+  mLocalMap = nullptr;
+}
 
 void Vio::prepare() {
-  mFeatureTrackerUptr = std::make_unique<FeatureTracker>(Config::Vio::pointExtractor,
-                                                         Config::Vio::pointMatcher,
-                                                         Config::Vio::lineExtractor,
-                                                         Config::Vio::lineMatcher);
+  mFeatureTracker = new FeatureTracker(Config::Vio::pointExtractor,
+                                       Config::Vio::pointMatcher,
+                                       Config::Vio::lineExtractor,
+                                       Config::Vio::lineMatcher);
 
-  mVioSolverUptr = VioSolverFactory::createVioSolver();
+  mVioSolver = VioSolverFactory::createVioSolver();
 }
 
 void Vio::process() {
   db::ImagePyramid* currImage = getLatestInput();
   if (!currImage) return;
 
-  db::Frame* currFrame = mLocalMapUptr->createNewFrame(currImage);
+  db::Frame* currFrame = mLocalMap->createNewFrame(currImage);
 };
 
 }  //namespace toy

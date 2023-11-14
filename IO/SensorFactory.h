@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 
 namespace io {
 class Sensor;
@@ -9,6 +8,6 @@ public:
     SIMULATOR,
   };
 
-  static std::unique_ptr<Sensor> createSensor(SensorType type);
+  static Sensor* createSensor(SensorType type);
 };
 }  //namespace io

@@ -1,10 +1,9 @@
 #pragma once
 
-#include <memory>
 #include <string>
 
-#include "Singleton.h"
 #include "types.h"
+#include "Singleton.h"
 
 namespace toy {
 class Vio;
@@ -29,6 +28,6 @@ private:
   SLAM();
   ~SLAM() override;
 
-  std::unique_ptr<Vio> vioUptr;
+  Vio* vio;
 };
 }  //namespace toy

@@ -2,7 +2,9 @@
 #include "Simulator.h"
 
 namespace io {
-Simulator::Simulator() {}
+Simulator::Simulator() {
+  mIsSimulator = true;
+}
 
 Simulator::~Simulator() {}
 
@@ -15,7 +17,7 @@ void Simulator::start() {}
 void Simulator::stop() {}
 
 void Simulator::registerDataReader(DataReader* dataReader) {
-  mDataReader = dataReader;
+  mDataReaderUptr.reset(dataReader);
 }
 
 }  //namespace io

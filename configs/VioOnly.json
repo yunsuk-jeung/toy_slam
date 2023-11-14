@@ -1,0 +1,20 @@
+{
+  "Vio": {
+    "On": true,
+    "Tracker": {
+      "Point": {
+        "On": true,
+        "Extractor": "FAST",
+        "Matcher": "OpticalFlowCV"
+      },
+      "Line": {
+        "On": false
+      }
+    },
+    "Solver": "SqrtLocalSolver"
+  },
+
+  "Mapper": {
+    "On": false
+  }
+}

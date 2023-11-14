@@ -6,7 +6,7 @@
 namespace toy {
 class PointExtractor {
 public:
-  PointExtractor();
+  PointExtractor(std::string type);
   ~PointExtractor();
 
   void process(cv::Mat image, std::vector<cv::Point2f>& points);

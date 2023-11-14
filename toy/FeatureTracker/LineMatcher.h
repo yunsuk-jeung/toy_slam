@@ -1,3 +1,8 @@
 #pragma once
-
-class LineMatcher {};
+#include <string>
+namespace toy {
+class LineMatcher {
+public:
+  LineMatcher(std::string) {}
+};
+}  //namespace toy

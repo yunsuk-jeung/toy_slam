@@ -25,6 +25,7 @@ void SLAM::setNewImage(ImageType   type,
                        int         h) {
   auto* imagePyramid = new db::ImagePyramid(type, format, buffer, l, w, h);
   vioUptr->insert(imagePyramid);
+  vioUptr->process();
 }
 
 void SLAM::setAcc(uint64_t& ns, float* acc) {}

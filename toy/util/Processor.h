@@ -13,6 +13,7 @@ public:
 
   void insert(IN* in) { mInQueue.push(in); }
 
+protected:
   IN* getLatestInput() {
     IN* out;
     while (mInQueue.try_pop(out)) {

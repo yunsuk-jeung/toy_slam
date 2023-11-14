@@ -1,8 +1,8 @@
 #include "PointExtractor.h"
 
 namespace toy {
-PointExtractor::PointExtractor() {
-  mFeature2D = cv::FastFeatureDetector::create();
+PointExtractor::PointExtractor(std::string type) {
+  if (type == "FAST") mFeature2D = cv::FastFeatureDetector::create();
 }
 
 PointExtractor::~PointExtractor() {}

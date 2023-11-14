@@ -11,7 +11,6 @@
 
 using namespace toy;
 auto main() -> int {
-  spdlog::set_level(spdlog::level::debug);
 
   LOGI("Starting opticalflow module ");
 

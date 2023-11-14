@@ -4,14 +4,15 @@
 namespace toy {
 namespace db {
 class ImagePyramid;
-class Map;
+class LocalMap;
 class Frame {
-  friend class Map;
+  friend class LocalMap;
 
 public:
 
 protected:
-  Frame();
+  Frame() = delete;
+  Frame(ImagePyramid*);
   ~Frame();
 
 protected:

@@ -5,6 +5,7 @@
 
 namespace toy {
 namespace db {
+class ImagePyramid;
 class Frame;
 class Landmark;
 class Map {
@@ -12,7 +13,7 @@ public:
   Map()  = default;
   ~Map() = default;
 
-  virtual Frame* createNewFrame() = 0;
+  virtual Frame* createNewFrame(ImagePyramid* in) = 0;
 
 protected:
   tbb::concurrent_set<Frame*> mFrames;

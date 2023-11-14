@@ -4,7 +4,7 @@
 namespace toy {
 namespace db {
 
-Frame::Frame() : mImagePyramid{nullptr} {}
+Frame::Frame(ImagePyramid* imagePyramid) : mImagePyramid{imagePyramid} {}
 
 Frame::~Frame() {
   delete mImagePyramid;

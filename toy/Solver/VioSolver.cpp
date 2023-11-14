@@ -3,7 +3,7 @@
 
 namespace toy {
 std::unique_ptr<VioSolver> VioSolverFactory::createVioSolver(bool       useDouble,
-                                                                   SolverType type) {
+                                                             SolverType type) {
 
   std::unique_ptr<VioSolver> solver = nullptr;
 
@@ -27,7 +27,8 @@ std::unique_ptr<VioSolver> VioSolverFactory::createVioSolver(bool       useDoubl
   return solver;
 }
 
-//VioSolver* VioSolverFactory::createVioSolver(bool useDouble, SolverType type) {
+//VioSolver* VioSolverFactory::createVioSolver(bool useDouble, SolverType type)
+//{
 //  return nullptr;
 //}
 

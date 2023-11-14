@@ -40,6 +40,5 @@ auto main() -> int {
     extractor.process(img, points);
   }
 
-
   return 0;
 }

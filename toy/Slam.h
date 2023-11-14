@@ -29,6 +29,6 @@ private:
   SLAM();
   ~SLAM() override;
 
-  std::unique_ptr<Vio> vioUPtr;
+  std::unique_ptr<Vio> vioUptr;
 };
 }  //namespace toy

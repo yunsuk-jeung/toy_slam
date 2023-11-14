@@ -16,13 +16,13 @@ protected:
     std::vector<uint32_t>    trackCounts;
   } points;
 
-  // struct Lines {
-  //   std::vector<uint32_t>    ids;
-  //   std::vector<uint32_t>    levels;
-  //   std::vector<cv::Point2f> start;
-  //   std::vector<cv::Point2f> end;
+  //struct Lines {
+  //  std::vector<uint32_t>    ids;
+  //  std::vector<uint32_t>    levels;
+  //  std::vector<cv::Point2f> start;
+  //  std::vector<cv::Point2f> end;
 
-  // } lines;
+  //} lines;
 };
 }  //namespace db
 }  //namespace toy

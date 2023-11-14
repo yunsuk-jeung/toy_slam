@@ -23,9 +23,13 @@ public:
 protected:
   void        createImagePyrmid();
   static void convertToGray(cv::Mat& src, cv::Mat& dst);
+  static int  requestCVFormat(ImageFormat format);
 
 protected:
   cv::Mat              mGray;
+  int                  mW;
+  int                  mH;
+  int                  mL;
   std::vector<cv::Mat> mPyramids;
 
 public:

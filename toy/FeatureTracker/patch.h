@@ -47,11 +47,11 @@ struct Patch {
 
   typedef Eigen::Matrix<int, 2, 1> Vector2i;
 
-  typedef Eigen::Matrix<Scalar, 2, 1> Vector2;
-  typedef Eigen::Matrix<Scalar, 1, 2> Vector2T;
-  typedef Eigen::Matrix<Scalar, 3, 1> Vector3;
-  typedef Eigen::Matrix<Scalar, 3, 3> Matrix3;
-  typedef Eigen::Matrix<Scalar, 4, 4> Matrix4;
+  typedef Eigen::Matrix<Scalar, 2, 1>            Vector2;
+  typedef Eigen::Matrix<Scalar, 1, 2>            Vector2T;
+  typedef Eigen::Matrix<Scalar, 3, 1>            Vector3;
+  typedef Eigen::Matrix<Scalar, 3, 3>            Matrix3;
+  typedef Eigen::Matrix<Scalar, 4, 4>            Matrix4;
   typedef Eigen::Matrix<Scalar, PATTERN_SIZE, 1> VectorP;
 
   typedef Eigen::Matrix<Scalar, 2, PATTERN_SIZE> Matrix2P;
@@ -59,9 +59,11 @@ struct Patch {
   typedef Eigen::Matrix<Scalar, PATTERN_SIZE, 3> MatrixP3;
   typedef Eigen::Matrix<Scalar, 3, PATTERN_SIZE> Matrix3P;
   typedef Eigen::Matrix<Scalar, PATTERN_SIZE, 4> MatrixP4;
-  typedef Eigen::Matrix<int, 2, PATTERN_SIZE> Matrix2Pi;
+  typedef Eigen::Matrix<int, 2, PATTERN_SIZE>    Matrix2Pi;
 
   static const Matrix2P pattern2;
+
+  // clang-format off
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
@@ -206,20 +208,20 @@ struct Patch {
   //   return num_residuals > PATTERN_SIZE / 2;
   // }
 
-  Vector2 pos = Vector2::Zero();
-  VectorP data = VectorP::Zero();  // negative if the point is not valid
+  Vector2 pos  = Vector2::Zero();
+  VectorP data = VectorP::Zero();  //negative if the point is not valid
 
-  // MatrixP3 J_se2;  // total jacobian with respect to se2 warp
-  // Matrix3 H_se2_inv;
+  //MatrixP3 J_se2;  // total jacobian with respect to se2 warp
+  //Matrix3 H_se2_inv;
   Matrix3P H_se2_inv_J_se2_T = Matrix3P::Zero();
 
   Scalar mean = 0;
 
   bool valid = false;
 };
-
 template <typename Scalar, typename Pattern>
 const typename OpticalFlowPatch<Scalar, Pattern>::Matrix2P
     OpticalFlowPatch<Scalar, Pattern>::pattern2 = Pattern::pattern2;
 
-}  // namespace basalt
+}  //namespace toy
+   // clang-format on

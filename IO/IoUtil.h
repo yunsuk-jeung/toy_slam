@@ -13,13 +13,13 @@ getFiles(const std::filesystem::path& dir, const std::filesystem::path& extensio
   for (const auto& entry : std::filesystem::directory_iterator(dir)) {
     if (entry.is_regular_file()) {
       std::filesystem::path filePath = entry.path();
-      
+
       if (filePath.extension() == extension || filePath.extension() == extension) {
         out.push_back(filePath);
       }
     }
   }
-  
+
   return out;
 }
 

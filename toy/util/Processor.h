@@ -9,10 +9,24 @@ class Processor {
 public:
   Processor() {}
   virtual ~Processor() {}
+  void registerOutQueue(tbb::concurrent_queue<OUT*>* out) { outQueue = out; }
 
-private:
-  tbb::concurrent_queue<IN*>  inQueue;
-  tbb::concurrent_queue<OUT*> outQueue;
+  void insert(IN* in) { mInQueue.push(in); }
+
+  IN* getLatestInput() {
+    IN* out;
+    while (mInQueue.try_pop(out)) {
+      if (!mInQueue.empty())
+        delete out;
+      else
+        return out;
+    }
+    return nullptr;
+  }
+
+protected:
+  tbb::concurrent_queue<IN*>   mInQueue;
+  tbb::concurrent_queue<OUT*>* mOutQueue;
 };
 
 }  //namespace toy

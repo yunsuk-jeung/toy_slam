@@ -4,7 +4,7 @@ class PointExtractor;
 class PointMatcher;
 class PointTracker {
 public:
-  PointTracker() = default;
+  PointTracker()  = default;
   ~PointTracker() = default;
 
 protected:

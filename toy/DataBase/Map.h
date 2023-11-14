@@ -15,8 +15,8 @@ public:
   virtual Frame* createNewFrame() = 0;
 
 protected:
-  tbb::concurrent_set<Frame*>    mFrames;
-  // tbb::concurrent_set<Landmark*> mLandmarks;
+  tbb::concurrent_set<Frame*> mFrames;
+  //tbb::concurrent_set<Landmark*> mLandmarks;
 };
 
 }  //namespace db

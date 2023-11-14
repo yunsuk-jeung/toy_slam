@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <Eigen/Dense>
+// clang-format off
 
 namespace toy {
 
@@ -56,7 +57,6 @@ struct Pattern24 {
   // |
   // |
   // y
-  //// clang-format off
   static constexpr Scalar pattern_raw[][2] = {
       {-1, 5},  {1, 5},
 
@@ -71,7 +71,7 @@ struct Pattern24 {
       {-1, -5}, {1, -5}
 
   };
-//// clang-format on
+
 
   static constexpr int PATTERN_SIZE =
       sizeof(pattern_raw) / (2 * sizeof(Scalar));
@@ -170,3 +170,4 @@ const typename Pattern50<Scalar>::Matrix2P Pattern50<Scalar>::pattern2 =
     0.75 * Pattern52<Scalar>::pattern2;
 
 }  // namespace basalt
+// clang-format on

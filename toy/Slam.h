@@ -14,16 +14,16 @@ class SLAM : public Singleton<SLAM> {
 public:
   void prepare(const std::string& configFile);
 
-  void setNewImage(ImageType   type,
-                   ImageFormat format,
-                   uint64_t&   ns,
-                   uint8_t*    buffer,
-                   int         l,
-                   int         w,
-                   int         h);
+  void setNewImage(const int       type,
+                   const int       format,
+                   const uint64_t& ns,
+                   uint8_t*        buffer,
+                   const int       l,
+                   const int       w,
+                   const int       h);
 
-  void setAcc(uint64_t& ns, float* acc);
-  void setGyr(uint64_t& ns, float* gyr);
+  void setAcc(const uint64_t& ns, float* acc);
+  void setGyr(const uint64_t& ns, float* gyr);
 
 private:
   SLAM();

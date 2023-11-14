@@ -11,7 +11,7 @@ option(BUILD_TEST "Build test" OFF)
 option(BUILD_SAMPLES "Build samples" ON)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/toy ${CMAKE_BINARY_DIR}/toy)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/IO ${CMAKE_BINARY_DIR}/IO)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/io ${CMAKE_BINARY_DIR}/io)
 
 if(BUILD_SAMPLES)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/samples)

@@ -16,20 +16,24 @@ void SLAM::prepare(const std::string& configFile) {
   vioUptr->prepare();
 }
 
-void SLAM::setNewImage(ImageType   type,
-                       ImageFormat format,
-                       uint64_t&   ns,
-                       uint8_t*    buffer,
-                       int         l,
-                       int         w,
-                       int         h) {
+void SLAM::setNewImage(const int       type_,
+                       const int       format_,
+                       const uint64_t& ns,
+                       uint8_t*        buffer,
+                       const int       l,
+                       const int       w,
+                       const int       h) {
+
+  auto type   = static_cast<ImageType>(type_);
+  auto format = static_cast<ImageFormat>(format_);
+
   auto* imagePyramid = new db::ImagePyramid(type, format, buffer, l, w, h);
   vioUptr->insert(imagePyramid);
   vioUptr->process();
 }
 
-void SLAM::setAcc(uint64_t& ns, float* acc) {}
+void SLAM::setAcc(const uint64_t& ns, float* acc) {}
 
-void SLAM::setGyr(uint64_t& ns, float* gyr) {}
+void SLAM::setGyr(const uint64_t& ns, float* gyr) {}
 
 }  //namespace toy

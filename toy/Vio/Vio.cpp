@@ -1,5 +1,6 @@
 #include "config.h"
 #include "ImagePyramid.h"
+#include "Frame.h"
 #include "LocalMap.h"
 #include "FeatureTracker.h"
 #include "VioSolverFactory.h"
@@ -7,7 +8,7 @@
 #include "Vio.h"
 
 namespace toy {
-Vio::Vio() : mFeatureTracker{nullptr}, mVioSolver{nullptr} {
+Vio::Vio() : mFeatureTracker{nullptr}, mVioSolver{nullptr}, currMainImage{nullptr} {
   mLocalMap = new db::LocalMap();
 }
 
@@ -32,10 +33,16 @@ void Vio::prepare() {
 }
 
 void Vio::process() {
-  db::ImagePyramid* currImage = getLatestInput();
-  if (!currImage) return;
+  db::Frame* currFrame = getLatestFrame();
 
-  db::Frame* currFrame = mLocalMap->createNewFrame(currImage);
+  if (!currImage) return;
+}
+
+Frame* Vio::getLatestFrame() {
+  //db::ImagePyramid* currImage = getLatestInput();
+  //mLocalMap->createNewFrame(currImage);
+
+  return nullptr;
 };
 
 }  //namespace toy

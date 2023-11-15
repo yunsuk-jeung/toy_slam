@@ -5,22 +5,22 @@
 #include <opencv2/opencv.hpp>
 
 #include "ImagePyramid.h"
-#include "Logger.h"
+#include "ToyLogger.h"
 #include "IoUtil.h"
 #include "PointExtractor.h"
 
 using namespace toy;
 auto main() -> int {
 
-  LOGI("Starting opticalflow module ");
+  ToyLogI("Starting opticalflow module ");
 
   std::string           currCpp = __FILE__;
   std::filesystem::path path(currCpp);
   std::filesystem::path resourcePath = path.parent_path().append("resources");
-  LOGD("Resource directory: {}", resourcePath.string());
+  ToyLogD("Resource directory: {}", resourcePath.string());
 
   auto pngs = io::util::getFiles(resourcePath, ".png");
-  LOGI("png size : {}", pngs.size());
+  ToyLogI("png size : {}", pngs.size());
 
   std::vector<db::ImagePyramid> pyramids;
   for (const auto& png : pngs) {

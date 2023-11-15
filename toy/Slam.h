@@ -11,13 +11,13 @@ class SLAM : public Singleton<SLAM> {
   friend class Singleton<SLAM>;
 
 public:
+  void setSensorInfo(float* cam0, float* cam1, float* imu = nullptr);
   void prepare(const std::string& configFile);
 
   void setNewImage(const int       type,
                    const int       format,
                    const uint64_t& ns,
                    uint8_t*        buffer,
-                   const int       l,
                    const int       w,
                    const int       h);
 

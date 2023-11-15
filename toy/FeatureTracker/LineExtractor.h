@@ -6,5 +6,6 @@ class LineExtractor {
 public:
   LineExtractor() = delete;
   LineExtractor(std::string) {}
+  ~LineExtractor() {}
 };
 }  //namespace toy

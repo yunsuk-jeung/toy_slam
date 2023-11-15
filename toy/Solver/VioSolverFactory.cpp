@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Logger.h"
+#include "ToyLogger.h"
 #include "config.h"
 #include "SqrtLocalSolver.h"
 #include "VioSolverFactory.h"
@@ -11,7 +11,7 @@ VioSolver* VioSolverFactory::createVioSolver() {
     return new SqrtLocalSolver();
   }
 
-  LOGE("Check your json for vio solver");
+  ToyLogE("Check your json for vio solver");
   throw std::runtime_error("no vio solver type");
 }
 }  //namespace toy

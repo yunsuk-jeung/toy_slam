@@ -10,7 +10,8 @@ namespace toy {
 FeatureTracker::FeatureTracker(std::string pointExtractor,
                                std::string pointMatcher,
                                std::string lineExtractor,
-                               std::string lineMatcher) {
+                               std::string lineMatcher)
+    : mLineExtractor{nullptr}, mLineMatcher{nullptr} {
 
   mPointExtractor = new PointExtractor(pointExtractor);
   mPointMatcher   = new PointMatcher(pointMatcher);

@@ -1,10 +1,16 @@
 #include <iostream>
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include "Logger.h"
+#include "ToyLogger.h"
 #include "config.h"
 
 namespace toy {
+bool Config::sync = {false};
+
+float Config::Vio::camInfo0[12] = {0};
+float Config::Vio::camInfo1[12] = {0};
+float Config::Vio::imuInfo[4]   = {0};
+
 std::string Config::Vio::pointExtractor = "FAST";
 std::string Config::Vio::pointMatcher   = "OpticalFlowCV";
 std::string Config::Vio::lineExtractor  = "none";
@@ -16,13 +22,12 @@ void Config::parseConfig(const std::string& configFile) {
 
   std::ifstream file(configFile);
 
-  //파일에서 JSON 데이터 읽기
   nlohmann::json json_obj;
   file >> json_obj;
 
-  //파일 닫기
   file.close();
 
+  sync                = json_obj["Sync"];
   bool vio_on         = json_obj["Vio"]["On"];
   bool point_on       = json_obj["Vio"]["Tracker"]["Point"]["On"];
   Vio::pointExtractor = json_obj["Vio"]["Tracker"]["Point"]["Extractor"];
@@ -31,18 +36,18 @@ void Config::parseConfig(const std::string& configFile) {
   Vio::solverType     = json_obj["Vio"]["Solver"];
 
   int align_width = 10;
-  LOGI("################  vio  ################");
-  //LOGI("{:<{}} -   {}", "On", align_width, vio_on);
+  ToyLogI("sync mode : ", sync);
+  ToyLogI("################  vio  ################");
   if (vio_on) {
-    LOGI("----------- tracker point ----------");
-    LOGI("-{:<{}} -   {}", "On", align_width, point_on);
-    LOGI("-{:<{}} -   {}", "Extractor", align_width, Vio::pointExtractor);
-    LOGI("-{:<{}} -   {}", "Matcher", align_width, Vio::pointMatcher);
-    LOGI("----------- tracker line ----------")
-    LOGI("-{:<{}} -   {}", "On", align_width, line_on);
-    LOGI("----------- solver ----------");
-    LOGI("-{:<{}} -   {}", "Solver", align_width, Vio::solverType);
-    LOGI("################  end  ################");
+    ToyLogI("----------- tracker point ----------");
+    ToyLogI("-{:<{}} -   {}", "On", align_width, point_on);
+    ToyLogI("-{:<{}} -   {}", "Extractor", align_width, Vio::pointExtractor);
+    ToyLogI("-{:<{}} -   {}", "Matcher", align_width, Vio::pointMatcher);
+    ToyLogI("----------- tracker line ----------")
+        ToyLogI("-{:<{}} -   {}", "On", align_width, line_on);
+    ToyLogI("----------- solver ----------");
+    ToyLogI("-{:<{}} -   {}", "Solver", align_width, Vio::solverType);
+    ToyLogI("################  end  ################");
   }
 }
 

@@ -12,7 +12,9 @@ public:
     return instance;
   }
 
-  static void deleteInstance() { delete instance; }
+  static void deleteInstance() { 
+    delete instance; 
+  }
 
 protected:
   Singleton() {}

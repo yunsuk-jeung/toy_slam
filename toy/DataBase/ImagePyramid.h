@@ -9,21 +9,16 @@ namespace db {
 class ImagePyramid {
 
 public:
+  ImagePyramid() {}
   ImagePyramid(ImageType type, cv::Mat mat);
 
-  ImagePyramid(ImageType   type,
-               ImageFormat format,
-               uint8_t*    buffer,
-               int         lenght,
-               int         width,
-               int         height);
+  ImagePyramid(ImageType type, int format, uint8_t* buffer, int width, int height);
 
   ~ImagePyramid();
 
 protected:
   void        createImagePyrmid();
   static void convertToGray(cv::Mat& src, cv::Mat& dst);
-  static int  requestCVFormat(ImageFormat format);
 
 protected:
   cv::Mat              mGray;

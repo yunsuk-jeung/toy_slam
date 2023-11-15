@@ -1,4 +1,4 @@
-#include "Logger.h"
+#include "ToyLogger.h"
 #include "LocalMap.h"
 namespace toy {
 namespace db {
@@ -6,7 +6,7 @@ LocalMap::LocalMap() {}
 
 LocalMap::~LocalMap() {
   if (!mFrames.empty()) {
-    LOGE("You have leaked frame mFrames : {} frames are not delete.", mFrames.size());
+    ToyLogE("You have leaked frame mFrames : {} frames are not delete.", mFrames.size());
     for (auto it = mFrames.begin(); it != mFrames.end(); ++it) delete (*it);
   }
 }

@@ -1,5 +1,5 @@
 #include "ImagePyramid.h"
-#include "Logger.h"
+#include "ToyLogger.h"
 #include "config.h"
 
 namespace toy {
@@ -25,17 +25,11 @@ ImagePyramid::ImagePyramid(ImageType type, cv::Mat in) {
   }
 }
 
-ImagePyramid::ImagePyramid(ImageType   type,
-                           ImageFormat format,
-                           uint8_t*    buffer,
-                           int         l,
-                           int         w,
-                           int         h) {
+ImagePyramid::ImagePyramid(ImageType type, int cvFormat, uint8_t* buffer, int w, int h) {
   switch (type) {
   case ImageType::MAIN:
   case ImageType::SUB: {
-    int     cvFormat = requestCVFormat(format);
-    cv::Mat in       = cv::Mat(h, w, cvFormat, buffer);
+    cv::Mat in = cv::Mat(h, w, cvFormat, buffer).clone();
 
     convertToGray(in, mGray);
     createImagePyrmid();
@@ -47,9 +41,8 @@ ImagePyramid::ImagePyramid(ImageType   type,
     break;
   }
   default: {
-    int     cvFormat = requestCVFormat(format);
-    cv::Mat in       = cv::Mat(h, w, cvFormat, buffer);
-    mGray            = in;
+    cv::Mat in = cv::Mat(h, w, cvFormat, buffer);
+    mGray      = in;
 
     break;
   }
@@ -68,17 +61,6 @@ void ImagePyramid::convertToGray(cv::Mat& src, cv::Mat& dst) {
     src.convertTo(dst, CV_8UC1);
   else
     dst = src;
-}
-
-int ImagePyramid::requestCVFormat(ImageFormat format) {
-  int cvFormat{0};
-  switch (format) {
-  case ImageFormat::RGB888:
-    cvFormat = CV_8UC4;
-  default:
-    break;
-  }
-  return cvFormat;
 }
 
 };  //namespace db

@@ -1,5 +1,7 @@
 #pragma once
-#include <memory>
+#include <mutex>
+#include <thread>
+#include <atomic>
 #include "Sensor.h"
 
 namespace io {
@@ -10,7 +12,7 @@ public:
   ~Simulator();
 
   void prepare() override;
-  void getInfo(float* info) override;
+  void getInfo(float* info0, float* info1) override;
 
   void start() override;
   void stop() override;
@@ -19,5 +21,11 @@ public:
 
 protected:
   DataReader* mDataReader;
+
+  std::atomic<bool> mWorking = false;
+  std::thread       mThread;
+
+  int mImageType0;
+  int mImageType1;
 };
 }  //namespace io

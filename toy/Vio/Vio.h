@@ -4,14 +4,15 @@
 
 namespace toy {
 namespace db {
-class ImagePyramid;
 class Frame;
 class LocalMap;
+class ImagePyramid;
 }  //namespace db
 
 class FeatureTracker;
 class VioSolver;
 class Vio : public Processor<db::ImagePyramid, void> {
+
 public:
   using Processor<db::ImagePyramid, void>::registerOutQueue;
   using Processor<db::ImagePyramid, void>::insert;

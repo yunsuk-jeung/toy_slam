@@ -1,9 +1,10 @@
 #include "config.h"
+#include "ImagePyramid.h"
+#include "LocalMap.h"
 #include "FeatureTracker.h"
 #include "VioSolverFactory.h"
 #include "VioSolver.h"
 #include "Vio.h"
-#include "LocalMap.h"
 
 namespace toy {
 Vio::Vio() : mFeatureTracker{nullptr}, mVioSolver{nullptr} {

@@ -21,8 +21,8 @@ if(BUILD_TEST)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Test ${CMAKE_BINARY_DIR}/Test)
 endif()
 
-add_executable(example exec/vio_main.cpp)
-target_link_libraries(example PRIVATE toy::toy libs io)
+add_executable(euroc_vio exec/vio_main.cpp)
+target_link_libraries(euroc_vio PRIVATE toy::toy libs io)
 
 if(WIN32)
   set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../lib)
@@ -30,10 +30,10 @@ if(WIN32)
   include(${EXTERNAL_LIB_DIR}/copyDLL.cmake)
 
   if(LINK_WITH_TBB)
-    copy_tbb_dlls(example ${EXTERNAL_LIB_DIR})
+    copy_tbb_dlls(euroc_vio ${EXTERNAL_LIB_DIR})
   endif()
 
   if(LINK_WITH_OPENCV34)
-    copy_cv34_dlls(example ${EXTERNAL_LIB_DIR})
+    copy_cv34_dlls(euroc_vio ${EXTERNAL_LIB_DIR})
   endif()
 endif()

@@ -4,18 +4,18 @@
 
 namespace toy {
 
-template <class IN, class OUT>
+template <typename IN_, typename OUT_>
 class Processor {
 public:
   Processor() {}
   virtual ~Processor() {}
-  void registerOutQueue(tbb::concurrent_queue<OUT*>* out) { outQueue = out; }
+  void registerOutQueue(tbb::concurrent_queue<OUT_*>* out) { outQueue = out; }
 
-  void insert(IN* in) { mInQueue.push(in); }
+  void insert(IN_* in) { mInQueue.push(in); }
 
 protected:
-  IN* getLatestInput() {
-    IN* out;
+  IN_* getLatestInput() {
+    IN_* out;
     while (mInQueue.try_pop(out)) {
       if (!mInQueue.empty())
         delete out;
@@ -26,8 +26,8 @@ protected:
   }
 
 protected:
-  tbb::concurrent_queue<IN*>   mInQueue;
-  tbb::concurrent_queue<OUT*>* mOutQueue;
+  tbb::concurrent_queue<IN_*>   mInQueue;
+  tbb::concurrent_queue<OUT_*>* mOutQueue;
 };
 
 }  //namespace toy

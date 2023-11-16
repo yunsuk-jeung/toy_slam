@@ -14,6 +14,9 @@ public:
     static std::string pointExtractor;
     static std::string pointMatcher;
 
+    static int pyramidLevel;
+    static int patchSize;
+
     static std::string lineExtractor;
     static std::string lineMatcher;
 

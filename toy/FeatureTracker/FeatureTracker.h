@@ -18,7 +18,7 @@ public:
   ~FeatureTracker();
 
   //reject frame when process is false?
-  bool process(Frame* frame);
+  bool process(db::Frame* frame);
 
 protected:
   PointExtractor* mPointExtractor;

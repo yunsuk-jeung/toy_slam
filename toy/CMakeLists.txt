@@ -24,6 +24,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   # ${CMAKE_CURRENT_SOURCE_DIR}/mapper
   # ${CMAKE_CURRENT_SOURCE_DIR}/util
   # ${CMAKE_CURRENT_SOURCE_DIR}/Vio
+  ${CMAKE_CURRENT_SOURCE_DIR}/../common
   ${SUBDIRECTORIES}
 )
 

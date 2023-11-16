@@ -60,11 +60,24 @@ void Simulator::start() {
 
     while (mWorking) {
       if (mDataReader->getImages(type0, ns0, image0, type1, ns1, image1)) {
-        mImageCallBack(type0, image0.type(), ns0, image0.data, image0.cols, image0.rows);
-        mImageCallBack(type1, image1.type(), ns1, image1.data, image1.cols, image1.rows);
+        ImageData imageData0{type0,
+                             image0.type(),
+                             ns0,
+                             image0.data,
+                             image0.cols,
+                             image0.rows};
 
-        cv::imshow("111", image0);
-        cv::waitKey(33);
+        ImageData imageData1{type1,
+                             image1.type(),
+                             ns1,
+                             image1.data,
+                             image1.cols,
+                             image1.rows};
+        //mImageC
+        mImageCallBack(imageData0, imageData1);
+
+        //cv::imshow("111", image0);
+        //cv::waitKey(33);
       }
       else {
         //mWorking = false;

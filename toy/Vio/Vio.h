@@ -1,5 +1,5 @@
 #pragma once
-
+#include <array>
 #include "ImagePyramid.h"
 #include "Processor.h"
 
@@ -24,8 +24,6 @@ public:
 private:
   using Processor<db::ImagePyramid, void>::getLatestInput;
   using Processor<db::ImagePyramid, void>::mInQueue;
-
-  Frame* getLatestFrame();
 
 private:
   FeatureTracker* mFeatureTracker;

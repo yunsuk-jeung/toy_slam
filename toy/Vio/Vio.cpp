@@ -1,6 +1,9 @@
+#include <opencv2/opencv.hpp>
+
 #include "config.h"
 #include "ImagePyramid.h"
 #include "Frame.h"
+#include "MemoryPointerPool.h"
 #include "LocalMap.h"
 #include "FeatureTracker.h"
 #include "VioSolverFactory.h"
@@ -33,16 +36,10 @@ void Vio::prepare() {
 }
 
 void Vio::process() {
-  db::Frame* currFrame = getLatestFrame();
+  db::ImagePyramid* pyramids = getLatestInput();
+  db::Frame* currFrame = db::MemoryPointerPool::getInstance()->createFrame(pyramids);
 
-  if (!currImage) return;
+  mFeatureTracker->process(currFrame);
 }
-
-Frame* Vio::getLatestFrame() {
-  //db::ImagePyramid* currImage = getLatestInput();
-  //mLocalMap->createNewFrame(currImage);
-
-  return nullptr;
-};
 
 }  //namespace toy

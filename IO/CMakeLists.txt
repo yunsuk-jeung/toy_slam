@@ -13,5 +13,5 @@ file(GLOB_RECURSE IO_SRC
 )
 
 add_library(io STATIC ${IO_SRC})
-target_include_directories(io PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(io PRIVATE libs)
+target_include_directories(io PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../common)
+target_link_libraries(io PUBLIC libs)

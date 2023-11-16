@@ -1,6 +1,7 @@
 #include "config.h"
 #include "ToyLogger.h"
 #include "ImagePyramid.h"
+#include "MemoryPointerPool.h"
 #include "Frame.h"
 #include "Map.h"
 #include "Vio.h"
@@ -13,6 +14,8 @@ SLAM::SLAM() : vio{nullptr} {};
 SLAM::~SLAM() {
   delete vio;
   vio = nullptr;
+
+  db::MemoryPointerPool::deleteInstance();
 };
 
 void SLAM::setSensorInfo(float* cam0, float* cam1, float* imu) {
@@ -24,25 +27,17 @@ void SLAM::setSensorInfo(float* cam0, float* cam1, float* imu) {
 }
 
 void SLAM::prepare(const std::string& configFile) {
+  db::MemoryPointerPool::getInstance();
   Config::parseConfig(configFile);
   vio = new Vio();
   vio->prepare();
 }
 
-void SLAM::setNewImage(const int       type_,
-                       const int       cvFormat,
-                       const uint64_t& ns,
-                       uint8_t*        buffer,
-                       const int       w,
-                       const int       h) {
+void SLAM::setNewImage(ImageData& imageData0, ImageData& imageData1) {
 
-  auto type = static_cast<ImageType>(type_);
+  db::ImagePyramid* pyramids = new db::ImagePyramid[2]{imageData0, imageData1};
+  vio->insert(pyramids);
 
-  auto* imagePyramid = new db::ImagePyramid(type, cvFormat, buffer, w, h);
-  vio->insert(imagePyramid);
-
-  ToyLogD("curr type : {}, format : {}",type_, cvFormat);
-  //std::cout << type << std::endl;
   if (Config::sync) vio->process();
 }
 

@@ -9,10 +9,10 @@ namespace db {
 class ImagePyramid {
 
 public:
-  ImagePyramid() {}
-  ImagePyramid(ImageType type, cv::Mat mat);
-
-  ImagePyramid(ImageType type, int format, uint8_t* buffer, int width, int height);
+  ImagePyramid() = delete;
+  ImagePyramid(const ImageData&);
+  //ImagePyramid(ImageType type, cv::Mat mat);
+  //ImagePyramid(ImageType type, int format, uint8_t* buffer, int width, int height);
 
   ~ImagePyramid();
 
@@ -21,14 +21,16 @@ protected:
   static void convertToGray(cv::Mat& src, cv::Mat& dst);
 
 protected:
-  cv::Mat              mGray;
+  int                  mType;
+  cv::Mat              mOrigin;
   int                  mW;
   int                  mH;
   int                  mL;
   std::vector<cv::Mat> mPyramids;
 
 public:
-  cv::Mat               getGray() { return mGray; }
+  int                   type() { return mType; }
+  cv::Mat               getOrigin() { return mOrigin; }
   std::vector<cv::Mat>& getPyramids() { return mPyramids; }
 };
 };  //namespace db

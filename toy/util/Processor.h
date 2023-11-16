@@ -18,7 +18,7 @@ protected:
     IN_* out;
     while (mInQueue.try_pop(out)) {
       if (!mInQueue.empty())
-        delete out;
+        delete[] out;
       else
         return out;
     }

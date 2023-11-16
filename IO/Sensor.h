@@ -2,18 +2,14 @@
 #include <functional>
 #include <iostream>
 
+#include "types.h"
 #include "SensorInfo.h"
 
 namespace io {
 
 class Sensor {
 public:
-  using ImageCallback = std::function<void(const int&      dataType,
-                                           const int&      format,
-                                           const uint64_t& ns,
-                                           uint8_t*        data,
-                                           const int&      width,
-                                           const int&      height)>;
+  using ImageCallback = std::function<void(ImageData&, ImageData&)>;
 
   using ImuCallback = std::function<void(const uint64_t&, float*)>;
 
@@ -33,12 +29,7 @@ public:
   bool isSimulator() const { return mIsSimulator; };
 
 protected:
-  ImageCallback mImageCallBack = [](const int&      dataType,
-                                    const int&      format,
-                                    const uint64_t& ns,
-                                    uint8_t*        data,
-                                    const int&      width,
-                                    const int&      height) {
+  ImageCallback mImageCallBack = [](ImageData& imageData0, ImageData& ImageData1) {
     std::cout << "You forgot to register image Callback\n";
   };
 

@@ -4,6 +4,7 @@
 #include <atomic>
 #include "Sensor.h"
 
+class CamInfo;
 namespace io {
 class DataReader;
 class Simulator : public Sensor {
@@ -12,7 +13,7 @@ public:
   ~Simulator();
 
   void prepare() override;
-  void getInfo(float* info0, float* info1) override;
+  void getInfo(CamInfo* info0, CamInfo* info1) override;
 
   void start() override;
   void stop() override;

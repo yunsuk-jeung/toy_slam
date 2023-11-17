@@ -5,8 +5,7 @@
 #include <atomic>
 #include <thread>
 #include <opencv2/opencv.hpp>
-
-#include "SensorInfo.h"
+#include "types.h"
 
 namespace io {
 class DataReader {

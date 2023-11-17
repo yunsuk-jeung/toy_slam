@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
-
+#include <sophus/so3.hpp>
+#include <sophus/se3.hpp>
 namespace toy {
 namespace db {
 class ImagePyramid;
@@ -8,7 +9,10 @@ class LocalMap;
 class Feature;
 class Frame {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   friend class MemoryPointerPool;
+
+  void setPbc(float*, float*);
 
 protected:
   Frame() = delete;
@@ -22,6 +26,11 @@ protected:
 
   Feature* mFeature0;
   Feature* mFeature1;
+
+  //P is SE3
+  Sophus::SE3d Pwb;
+  Sophus::SE3d Pbc0;
+  Sophus::SE3d Pbc1;
 
 public:
   ImagePyramid* getImagePyramid0() { return mImagePyramid0; }

@@ -39,6 +39,8 @@ void Vio::process() {
   db::ImagePyramid* pyramids = getLatestInput();
   db::Frame* currFrame = db::MemoryPointerPool::getInstance()->createFrame(pyramids);
 
+  currFrame->setPbc(Config::Vio::camInfo0.Mbc.data(), Config::Vio::camInfo1.Mbc.data());
+
   mFeatureTracker->process(currFrame);
 }
 

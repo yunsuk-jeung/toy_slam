@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include "types.h"
+
 namespace toy {
 class Config {
 public:
@@ -7,9 +9,9 @@ public:
   static bool sync;
 
   struct Vio {
-    static float camInfo0[12];
-    static float camInfo1[12];
-    static float imuInfo[4];
+    static CamInfo camInfo0;
+    static CamInfo camInfo1;
+    static ImuInfo imuInfo;
 
     static std::string pointExtractor;
     static std::string pointMatcher;

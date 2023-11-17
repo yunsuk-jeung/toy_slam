@@ -20,7 +20,7 @@ public:
   virtual void start()   = 0;
   virtual void stop()    = 0;
 
-  virtual void getInfo(float* info0, float* info1) = 0;
+  virtual void getInfo(CamInfo* info0, CamInfo* info1) = 0;
 
   void registerImageCallback(ImageCallback cb) { mImageCallBack = cb; }
   void registerAccCallback(ImuCallback cb) { mAccCallback = cb; }

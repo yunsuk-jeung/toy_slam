@@ -47,11 +47,11 @@ int main() {
   setupSensor();
   registerCallbacks();
 
-  float info0[28];
-  float info1[28];
-  sensor->getInfo(info0, info1);
+  CamInfo info0;
+  CamInfo info1;
+  sensor->getInfo(&info0, &info1);
 
-  toy::SLAM::getInstance()->setSensorInfo(info0, info1);
+  toy::SLAM::getInstance()->setSensorInfo(&info0, &info1);
   toy::SLAM::getInstance()->prepare(slamConfigFile);
 
   sensor->start();

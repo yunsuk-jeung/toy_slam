@@ -7,9 +7,9 @@
 namespace toy {
 bool Config::sync = {false};
 
-float Config::Vio::camInfo0[12] = {0};
-float Config::Vio::camInfo1[12] = {0};
-float Config::Vio::imuInfo[4]   = {0};
+CamInfo Config::Vio::camInfo0;
+CamInfo Config::Vio::camInfo1;
+ImuInfo Config::Vio::imuInfo;
 
 std::string Config::Vio::pointExtractor = "FAST";
 

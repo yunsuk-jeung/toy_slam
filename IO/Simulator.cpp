@@ -14,36 +14,9 @@ void Simulator::prepare() {
   mDataReader->getInfos(mCamInfo0, mCamInfo1);
 }
 
-void Simulator::getInfo(float* info0, float* info1) {
-  int i      = 0;
-  info0[i++] = mCamInfo0.type;
-  info0[i++] = mCamInfo0.w;
-  info0[i++] = mCamInfo0.h;
-  info0[i++] = mCamInfo0.intrinsic[0];
-  info0[i++] = mCamInfo0.intrinsic[1];
-  info0[i++] = mCamInfo0.intrinsic[2];
-  info0[i++] = mCamInfo0.intrinsic[3];
-  info0[i++] = mCamInfo0.distortion[0];
-  info0[i++] = mCamInfo0.distortion[1];
-  info0[i++] = mCamInfo0.distortion[2];
-  info0[i++] = mCamInfo0.distortion[3];
-  info0[i++] = mCamInfo0.distortion[4];
-  memcpy(&info0[i], &mCamInfo0.bMc, sizeof(float) * 16);
-
-  i          = 0;
-  info1[i++] = mCamInfo1.type;
-  info1[i++] = mCamInfo1.w;
-  info1[i++] = mCamInfo1.h;
-  info1[i++] = mCamInfo1.intrinsic[0];
-  info1[i++] = mCamInfo1.intrinsic[1];
-  info1[i++] = mCamInfo1.intrinsic[2];
-  info1[i++] = mCamInfo1.intrinsic[3];
-  info1[i++] = mCamInfo1.distortion[0];
-  info1[i++] = mCamInfo1.distortion[1];
-  info1[i++] = mCamInfo1.distortion[2];
-  info1[i++] = mCamInfo1.distortion[3];
-  info1[i++] = mCamInfo1.distortion[4];
-  memcpy(&info1[i], &mCamInfo1.bMc, sizeof(float) * 16);
+void Simulator::getInfo(CamInfo* info0, CamInfo* info1) {
+  memcpy(info0, &mCamInfo0, sizeof(CamInfo));
+  memcpy(info1, &mCamInfo1, sizeof(CamInfo));
 }
 
 void Simulator::start() {

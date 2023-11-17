@@ -1,6 +1,10 @@
 #include <iostream>
 #include <filesystem>
 #include <chrono>
+
+#include <nlohmann/json.hpp>
+#include <Eigen/Dense>
+
 #include "Logger.h"
 #include "EurocReader.h"
 
@@ -130,32 +134,46 @@ void EurocReader::syncStereo() {
 }
 
 void EurocReader::parseConfig(std::string configFile) {
-  mCamInfo0.type         = 0;
-  mCamInfo0.w            = 752;
-  mCamInfo0.h            = 480;
-  mCamInfo0.intrinsic[0] = 458.654f;
-  mCamInfo0.intrinsic[1] = 457.296f;
-  mCamInfo0.intrinsic[2] = 367.215f;
-  mCamInfo0.intrinsic[3] = 248.375f;
 
-  mCamInfo0.distortion[0] = -0.28340811f;
-  mCamInfo0.distortion[1] = 0.07395907f;
-  mCamInfo0.distortion[2] = 0.00019359f;
-  mCamInfo0.distortion[3] = 1.76187114e-05f;
-  mCamInfo0.distortion[4] = 0.0f;
+  std::ifstream jsonFile(configFile);
 
-  mCamInfo1.type          = 1;
-  mCamInfo1.w             = 752;
-  mCamInfo1.h             = 480;
-  mCamInfo1.intrinsic[0]  = 457.587f;
-  mCamInfo1.intrinsic[1]  = 456.134f;
-  mCamInfo1.intrinsic[2]  = 379.999f;
-  mCamInfo1.intrinsic[3]  = 255.238f;
-  mCamInfo1.distortion[0] = -0.28368365f;
-  mCamInfo1.distortion[1] = 0.07451284f;
-  mCamInfo1.distortion[2] = -0.00010473f;
-  mCamInfo1.distortion[3] = -3.55590700e-05f;
-  mCamInfo1.distortion[4] = 0.0f;
+  if (!jsonFile.is_open()) {
+    LOGE("missing config file : {}", configFile);
+    return;
+  }
+  nlohmann::json jsonObject;
+  jsonFile >> jsonObject;
+
+  {
+    auto cam0Json               = jsonObject["cam0"];
+    mCamInfo0.type              = 0;
+    mCamInfo0.w                 = cam0Json["resolution"][0].get<int>();
+    mCamInfo0.h                 = cam0Json["resolution"][1].get<int>();
+    mCamInfo0.cameraModel       = cam0Json["cameraModel"];
+    mCamInfo0.intrinsics        = cam0Json["intrinsics"].get<std::vector<float>>();
+    mCamInfo0.distortionModel   = cam0Json["distortionModel"];
+    mCamInfo0.distortions       = cam0Json["distortions"].get<std::vector<float>>();
+    std::vector<float> bMcRmjor = cam0Json["Mbc"].get<std::vector<float>>();
+    Eigen::Matrix4f    Mbc;
+    memcpy(Mbc.data(), bMcRmjor.data(), sizeof(float) * 16);
+    Mbc.transposeInPlace();
+    memcpy(mCamInfo0.Mbc.data(), Mbc.data(), sizeof(float) * 16);
+  }
+  {
+    auto cam1Json               = jsonObject["cam1"];
+    mCamInfo1.type              = 1;
+    mCamInfo1.w                 = cam1Json["resolution"].get<std::vector<int>>()[0];
+    mCamInfo1.h                 = cam1Json["resolution"].get<std::vector<int>>()[1];
+    mCamInfo1.cameraModel       = cam1Json["cameraModel"];
+    mCamInfo1.intrinsics        = cam1Json["intrinsics"].get<std::vector<float>>();
+    mCamInfo1.distortionModel   = cam1Json["distortionModel"];
+    mCamInfo1.distortions       = cam1Json["distortions"].get<std::vector<float>>();
+    std::vector<float> bMcRmjor = cam1Json["Mbc"].get<std::vector<float>>();
+    Eigen::Matrix4f    Mbc;
+    memcpy(Mbc.data(), bMcRmjor.data(), sizeof(float) * 16);
+    Mbc.transposeInPlace();
+    memcpy(mCamInfo1.Mbc.data(), Mbc.data(), sizeof(float) * 16);
+  }
 }
 
 void EurocReader::load() {}

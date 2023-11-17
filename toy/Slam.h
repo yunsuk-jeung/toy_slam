@@ -5,12 +5,14 @@
 #include "types.h"
 #include "Singleton.h"
 
+class CamInfo;
+class ImuInfo;
 namespace toy {
 class Vio;
 class SLAM : public Singleton<SLAM> {
 public:
   friend class Singleton<SLAM>;
-  void setSensorInfo(float* cam0, float* cam1, float* imu = nullptr);
+  void setSensorInfo(CamInfo* cam0, CamInfo* cam1, ImuInfo* imu = nullptr);
   void prepare(const std::string& configFile);
 
   void setNewImage(ImageData& image0, ImageData& image1);

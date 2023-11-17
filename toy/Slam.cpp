@@ -6,6 +6,7 @@
 #include "Map.h"
 #include "Vio.h"
 #include "Slam.h"
+#include "types.h"
 
 namespace toy {
 
@@ -18,11 +19,12 @@ SLAM::~SLAM() {
   db::MemoryPointerPool::deleteInstance();
 };
 
-void SLAM::setSensorInfo(float* cam0, float* cam1, float* imu) {
-  memcpy(Config::Vio::camInfo0, cam0, sizeof(float) * 12);
-  memcpy(Config::Vio::camInfo1, cam1, sizeof(float) * 12);
+void SLAM::setSensorInfo(CamInfo* cam0, CamInfo* cam1, ImuInfo* imu) {
+  memcpy(&Config::Vio::camInfo0, cam0, sizeof(CamInfo));
+  memcpy(&Config::Vio::camInfo1, cam1, sizeof(CamInfo));
+
   if (imu) {
-    memcpy(Config::Vio::imuInfo, imu, sizeof(float) * 4);
+    memcpy(&Config::Vio::imuInfo, imu, sizeof(ImuInfo));
   }
 }
 

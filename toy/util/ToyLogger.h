@@ -1,7 +1,10 @@
 #pragma once
-
+#include <iostream>
+#include <string>
+#include <iomanip>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
+#include <sophus/se3.hpp>
 
 #ifdef __ANDROID__
 #include <spdlog/sinks/android_sink.h>
@@ -15,6 +18,32 @@
 
 #define __FILENAME__ (static_cast<const char*>(__FILE__) + ROOT_PATH_SIZE)
 #ifdef _WIN32
+
+namespace toy {
+
+class LogUtil {
+public:
+  static std::string SE3String(const Sophus::SE3d& se3, int precision = 4) {
+    Eigen::IOFormat CleanMat(precision, 0, ", ", "\n", "             [", "]", "\n");
+    Eigen::IOFormat CleanVec(precision, 0, ", ", "\n", "[", "]");
+
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(precision);  //Set the precision
+    ss << "\nRotation:" << se3.rotationMatrix().format(CleanMat) << "\n"
+       << "Translation: \n"
+       << se3.translation().transpose().format(CleanVec);
+    return ss.str();
+  }
+  static std::string se3String(const Sophus::SE3d& se3, int precision = 4) {
+    Eigen::IOFormat CleanVec(precision, 0, ", ", "\n", "[", "]");
+
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(precision);  //Set the precision
+    ss << "\n translation_so3 : " << se3.log().transpose().format(CleanVec);
+    return ss.str();
+  }
+};
+}  //namespace toy
 
 #define ToyLogI(...) spdlog::info(__VA_ARGS__);
 #define ToyLogW(...) spdlog::warn(__VA_ARGS__);

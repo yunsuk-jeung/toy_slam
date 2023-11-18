@@ -30,10 +30,10 @@ public:
   //  Eigen::Vector2d np;
   //  np << mInvFx * (double)pt.x + mInvCx, mInvFy * (double)pt.y + mInvCy;
 
-  //  if (mIsDistortion) {
-  //  }
+  //if (mIsDistortion) {
+  //}
 
-  //  return Eigen::Vector3d(np.x(), np.y(), 1.0);
+  //return Eigen::Vector3d(np.x(), np.y(), 1.0);
   //}
 };
 }  //namespace toy

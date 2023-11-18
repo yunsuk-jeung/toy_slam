@@ -6,15 +6,11 @@ template <typename T>
 class Singleton {
 public:
   static T* getInstance() {
-    if (!instance) {
-      instance = new T();
-    }
+    if (!instance) { instance = new T(); }
     return instance;
   }
 
-  static void deleteInstance() { 
-    delete instance; 
-  }
+  static void deleteInstance() { delete instance; }
 
 protected:
   Singleton() {}

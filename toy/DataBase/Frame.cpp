@@ -15,14 +15,10 @@ Frame::~Frame() {
   delete[] mImagePyramids[0];
   mImagePyramids.fill(nullptr);
 
-  for (auto* ptr : mCameras) {
-    delete ptr;
-  }
+  for (auto* ptr : mCameras) { delete ptr; }
   mCameras.fill(nullptr);
 
-  for (auto* ptr : mFeatures) {
-    delete ptr;
-  }
+  for (auto* ptr : mFeatures) { delete ptr; }
   mFeatures.fill(nullptr);
 }
 

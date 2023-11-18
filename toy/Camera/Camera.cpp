@@ -21,17 +21,13 @@ Camera::Camera(CameraInfo* cameraInfo)
   mInvCx = -mCx / mFx;
   mInvCy = -mCy / mFy;
 
-  if (mD0 != 0.0 || mD1 != 0.0 || mD2 != 0.0 || mD3 != 0.0) {
-    mIsDistortion = true;
-  }
+  if (mD0 != 0.0 || mD1 != 0.0 || mD2 != 0.0 || mD3 != 0.0) { mIsDistortion = true; }
 }
 
 Camera* CameraFactory::createCamera(CameraInfo* camInfo) {
   switch (camInfo->cameraModel) {
   case 0 /*pinhole*/:
-    if (camInfo->distortionModel == 0) {
-      return new PinholeRadialTangential(camInfo);
-    }
+    if (camInfo->distortionModel == 0) { return new PinholeRadialTangential(camInfo); }
 
     break;
   default:

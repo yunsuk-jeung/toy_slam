@@ -49,12 +49,8 @@ public:
 #else
     const char* lastSlash = strrchr(filePath, '/');
 #endif
-    if (lastSlash != nullptr) {
-      return lastSlash + 1;
-    }
-    else {
-      return filePath;
-    }
+    if (lastSlash != nullptr) { return lastSlash + 1; }
+    else { return filePath; }
   }
 };
 }  //namespace toy

@@ -25,9 +25,7 @@ void SLAM::setSensorInfo(CameraInfo* cam0, CameraInfo* cam1, ImuInfo* imu) {
   Config::Vio::camInfo0 = *cam0;
   Config::Vio::camInfo1 = *cam1;
 
-  if (imu) {
-    Config::Vio::imuInfo = *imu;
-  }
+  if (imu) { Config::Vio::imuInfo = *imu; }
 }
 
 void SLAM::prepare(const std::string& configFile) {

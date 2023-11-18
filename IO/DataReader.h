@@ -28,7 +28,7 @@ public:
                                    std::string dataDir,
                                    bool        uploadMemory = false) = 0;
 
-  virtual void getInfos(CamInfo&, CamInfo&) = 0;
+  virtual void getInfos(CameraInfo&, CameraInfo&) = 0;
 
   virtual bool getImages(int&      imageType0,
                          uint64_t& ns0,
@@ -61,9 +61,9 @@ protected:
   std::deque<uint64_t> mImageNsDeque1;
   std::deque<cv::Mat>  mImageDeque1;
 
-  CamInfo mCamInfo0;
-  CamInfo mCamInfo1;
-  ImuInfo mImuInfo;
+  CameraInfo mCamInfo0;
+  CameraInfo mCamInfo1;
+  ImuInfo    mImuInfo;
 
   std::mutex        mLoadLock;
   std::atomic<bool> mLoading;

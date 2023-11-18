@@ -11,7 +11,7 @@ public:
                      std::string dataDir,
                      bool        uploadMemory = false) override;
 
-  void getInfos(CamInfo&, CamInfo&) override;
+  void getInfos(CameraInfo&, CameraInfo&) override;
 
   bool getImages(int&      imageType0,
                  uint64_t& ns0,

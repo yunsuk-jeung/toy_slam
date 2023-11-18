@@ -19,9 +19,9 @@ SLAM::~SLAM() {
   db::MemoryPointerPool::deleteInstance();
 };
 
-void SLAM::setSensorInfo(CamInfo* cam0, CamInfo* cam1, ImuInfo* imu) {
-  memcpy(&Config::Vio::camInfo0, cam0, sizeof(CamInfo));
-  memcpy(&Config::Vio::camInfo1, cam1, sizeof(CamInfo));
+void SLAM::setSensorInfo(CameraInfo* cam0, CameraInfo* cam1, ImuInfo* imu) {
+  memcpy(&Config::Vio::camInfo0, cam0, sizeof(CameraInfo));
+  memcpy(&Config::Vio::camInfo1, cam1, sizeof(CameraInfo));
 
   if (imu) {
     memcpy(&Config::Vio::imuInfo, imu, sizeof(ImuInfo));

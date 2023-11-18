@@ -10,7 +10,7 @@ struct ImageData {
   int      h      = 0;
 };
 
-struct CamInfo {
+struct CameraInfo {
   int                type;             //1
   int                w;                //2
   int                h;                //3
@@ -20,7 +20,7 @@ struct CamInfo {
   std::vector<float> distortions;      //14
   std::vector<float> Mbc;              //30
 
-  CamInfo()
+  CameraInfo()
       : type{0}, w{0}, h{0}, intrinsics{}, distortionModel{}, distortions{}, Mbc(16, 0) {}
 };
 struct ImuInfo {

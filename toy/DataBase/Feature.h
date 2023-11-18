@@ -1,6 +1,6 @@
 #pragma once
 #include <opencv2/core.hpp>
-
+#include <Eigen/Dense>
 namespace toy {
 namespace db {
 class Feature {
@@ -15,10 +15,11 @@ public:
       mTrackCounts.reserve(size);
     }
 
-    std::vector<uint32_t>    mIds;
-    std::vector<uint32_t>    mLevels;
-    std::vector<cv::Point2f> mPoints;
-    std::vector<uint32_t>    mTrackCounts;
+    std::vector<uint32_t>        mIds;
+    std::vector<uint32_t>        mLevels;
+    std::vector<cv::Point2f>     mPoints;
+    std::vector<uint32_t>        mTrackCounts;
+    std::vector<Eigen::Vector2d> mUndsits;
   };
   Feature()  = default;
   ~Feature() = default;

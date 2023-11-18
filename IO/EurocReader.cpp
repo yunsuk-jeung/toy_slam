@@ -74,9 +74,9 @@ void EurocReader::openDirectory(std::string configFile,
   std::this_thread::sleep_for(std::chrono::milliseconds(300));
 }
 
-void EurocReader::getInfos(CamInfo& cam0, CamInfo& cam1) {
-  memcpy(&cam0, &mCamInfo0, sizeof(CamInfo));
-  memcpy(&cam1, &mCamInfo1, sizeof(CamInfo));
+void EurocReader::getInfos(CameraInfo& cam0, CameraInfo& cam1) {
+  memcpy(&cam0, &mCamInfo0, sizeof(CameraInfo));
+  memcpy(&cam1, &mCamInfo1, sizeof(CameraInfo));
 }
 
 bool EurocReader::getImages(int&      type0,

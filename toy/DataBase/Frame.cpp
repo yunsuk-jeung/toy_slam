@@ -18,6 +18,12 @@ Frame::~Frame() {
   mImagePyramid0 = nullptr;
   mImagePyramid1 = nullptr;
 
+  delete mCam0;
+  mCam0 = nullptr;
+
+  delete mCam1;
+  mCam1 = nullptr;
+
   delete mFeature0;
   mFeature0 = nullptr;
 

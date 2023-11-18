@@ -9,9 +9,9 @@ public:
   static bool sync;
 
   struct Vio {
-    static CamInfo camInfo0;
-    static CamInfo camInfo1;
-    static ImuInfo imuInfo;
+    static CameraInfo camInfo0;
+    static CameraInfo camInfo1;
+    static ImuInfo    imuInfo;
 
     static std::string pointExtractor;
     static std::string pointMatcher;

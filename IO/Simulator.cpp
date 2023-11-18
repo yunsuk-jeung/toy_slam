@@ -14,9 +14,9 @@ void Simulator::prepare() {
   mDataReader->getInfos(mCamInfo0, mCamInfo1);
 }
 
-void Simulator::getInfo(CamInfo* info0, CamInfo* info1) {
-  memcpy(info0, &mCamInfo0, sizeof(CamInfo));
-  memcpy(info1, &mCamInfo1, sizeof(CamInfo));
+void Simulator::getInfo(CameraInfo* info0, CameraInfo* info1) {
+  memcpy(info0, &mCamInfo0, sizeof(CameraInfo));
+  memcpy(info1, &mCamInfo1, sizeof(CameraInfo));
 }
 
 void Simulator::start() {

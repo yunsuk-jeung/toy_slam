@@ -20,7 +20,7 @@ public:
   virtual void start()   = 0;
   virtual void stop()    = 0;
 
-  virtual void getInfo(CamInfo* info0, CamInfo* info1) = 0;
+  virtual void getInfo(CameraInfo* info0, CameraInfo* info1) = 0;
 
   void registerImageCallback(ImageCallback cb) { mImageCallBack = cb; }
   void registerAccCallback(ImuCallback cb) { mAccCallback = cb; }
@@ -41,9 +41,9 @@ protected:
     std::cout << "u forgot to register gyr Callback" << std::endl;
   };
 
-  CamInfo mCamInfo0;
-  CamInfo mCamInfo1;
-  ImuInfo mImuInfo;
+  CameraInfo mCamInfo0;
+  CameraInfo mCamInfo1;
+  ImuInfo    mImuInfo;
 
   int  mImageFormat = 0;
   bool mIsSimulator = false;

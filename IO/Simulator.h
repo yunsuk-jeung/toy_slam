@@ -4,7 +4,7 @@
 #include <atomic>
 #include "Sensor.h"
 
-class CamInfo;
+class CameraInfo;
 namespace io {
 class DataReader;
 class Simulator : public Sensor {
@@ -13,7 +13,7 @@ public:
   ~Simulator();
 
   void prepare() override;
-  void getInfo(CamInfo* info0, CamInfo* info1) override;
+  void getInfo(CameraInfo* info0, CameraInfo* info1) override;
 
   void start() override;
   void stop() override;

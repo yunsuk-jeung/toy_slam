@@ -2,7 +2,7 @@
 #include "ToyLogger.h"
 #include "config.h"
 #include "SqrtLocalSolver.h"
-#include "VioSolverFactory.h"
+#include "VioSolver.h"
 
 namespace toy {
 VioSolver* VioSolverFactory::createVioSolver() {

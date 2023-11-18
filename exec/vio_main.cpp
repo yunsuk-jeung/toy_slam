@@ -47,8 +47,8 @@ int main() {
   setupSensor();
   registerCallbacks();
 
-  CamInfo info0;
-  CamInfo info1;
+  CameraInfo info0;
+  CameraInfo info1;
   sensor->getInfo(&info0, &info1);
 
   toy::SLAM::getInstance()->setSensorInfo(&info0, &info1);

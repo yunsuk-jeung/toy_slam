@@ -30,7 +30,7 @@ protected:
 
 public:
   int                   type() { return mType; }
-  cv::Mat               getOrigin() { return mOrigin; }
+  cv::Mat&              getOrigin() { return mOrigin; }
   std::vector<cv::Mat>& getPyramids() { return mPyramids; }
 };
 };  //namespace db

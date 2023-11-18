@@ -68,5 +68,9 @@ protected:
   std::mutex        mLoadLock;
   std::atomic<bool> mLoading;
   std::thread       mLoadThread;
+
+public:
+  CameraInfo& getCameraInfo0() { return mCamInfo0; }
+  CameraInfo& getCameraInfo1() { return mCamInfo1; }
 };
 }  //namespace io

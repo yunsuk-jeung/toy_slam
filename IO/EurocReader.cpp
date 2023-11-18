@@ -75,8 +75,8 @@ void EurocReader::openDirectory(std::string configFile,
 }
 
 void EurocReader::getInfos(CameraInfo& cam0, CameraInfo& cam1) {
-  memcpy(&cam0, &mCamInfo0, sizeof(CameraInfo));
-  memcpy(&cam1, &mCamInfo1, sizeof(CameraInfo));
+  cam0 = mCamInfo0;
+  cam1 = mCamInfo1;
 }
 
 bool EurocReader::getImages(int&      type0,
@@ -145,14 +145,19 @@ void EurocReader::parseConfig(std::string configFile) {
   jsonFile >> jsonObject;
 
   {
-    auto cam0Json               = jsonObject["cam0"];
-    mCamInfo0.type              = 0;
-    mCamInfo0.w                 = cam0Json["resolution"][0].get<int>();
-    mCamInfo0.h                 = cam0Json["resolution"][1].get<int>();
-    mCamInfo0.cameraModel       = cam0Json["cameraModel"];
-    mCamInfo0.intrinsics        = cam0Json["intrinsics"].get<std::vector<float>>();
-    mCamInfo0.distortionModel   = cam0Json["distortionModel"];
-    mCamInfo0.distortions       = cam0Json["distortions"].get<std::vector<float>>();
+    auto cam0Json             = jsonObject["cam0"];
+    mCamInfo0.type            = 0;
+    mCamInfo0.w               = cam0Json["resolution"][0].get<int>();
+    mCamInfo0.h               = cam0Json["resolution"][1].get<int>();
+    mCamInfo0.cameraModel     = cam0Json["cameraModel"];
+    mCamInfo0.intrinsics      = cam0Json["intrinsics"].get<std::vector<float>>();
+    mCamInfo0.distortionModel = cam0Json["distortionModel"];
+
+    auto& distortion = cam0Json["distortions"].get<std::vector<float>>();
+    memcpy(mCamInfo0.distortions.data(),
+           distortion.data(),
+           sizeof(float) * distortion.size());
+
     std::vector<float> bMcRmjor = cam0Json["Mbc"].get<std::vector<float>>();
     Eigen::Matrix4f    Mbc;
     memcpy(Mbc.data(), bMcRmjor.data(), sizeof(float) * 16);
@@ -160,14 +165,19 @@ void EurocReader::parseConfig(std::string configFile) {
     memcpy(mCamInfo0.Mbc.data(), Mbc.data(), sizeof(float) * 16);
   }
   {
-    auto cam1Json               = jsonObject["cam1"];
-    mCamInfo1.type              = 1;
-    mCamInfo1.w                 = cam1Json["resolution"].get<std::vector<int>>()[0];
-    mCamInfo1.h                 = cam1Json["resolution"].get<std::vector<int>>()[1];
-    mCamInfo1.cameraModel       = cam1Json["cameraModel"];
-    mCamInfo1.intrinsics        = cam1Json["intrinsics"].get<std::vector<float>>();
-    mCamInfo1.distortionModel   = cam1Json["distortionModel"];
-    mCamInfo1.distortions       = cam1Json["distortions"].get<std::vector<float>>();
+    auto cam1Json             = jsonObject["cam1"];
+    mCamInfo1.type            = 1;
+    mCamInfo1.w               = cam1Json["resolution"].get<std::vector<int>>()[0];
+    mCamInfo1.h               = cam1Json["resolution"].get<std::vector<int>>()[1];
+    mCamInfo1.cameraModel     = cam1Json["cameraModel"];
+    mCamInfo1.intrinsics      = cam1Json["intrinsics"].get<std::vector<float>>();
+    mCamInfo1.distortionModel = cam1Json["distortionModel"];
+
+    auto& distortion = cam1Json["distortions"].get<std::vector<float>>();
+    memcpy(mCamInfo1.distortions.data(),
+           distortion.data(),
+           sizeof(float) * distortion.size());
+
     std::vector<float> bMcRmjor = cam1Json["Mbc"].get<std::vector<float>>();
     Eigen::Matrix4f    Mbc;
     memcpy(Mbc.data(), bMcRmjor.data(), sizeof(float) * 16);

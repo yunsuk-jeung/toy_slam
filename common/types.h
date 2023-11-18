@@ -21,8 +21,18 @@ struct CameraInfo {
   std::vector<float> Mbc;              //30
 
   CameraInfo()
-      : type{0}, w{0}, h{0}, intrinsics{}, distortionModel{}, distortions{}, Mbc(16, 0) {}
+      : type{0}
+      , w{0}
+      , h{0}
+      , cameraModel{0}
+      , intrinsics{}
+      , distortionModel{0}
+      , distortions(5, 0)
+      , Mbc(16, 0) {}
+
+  ~CameraInfo() {}
 };
+
 struct ImuInfo {
   float gyrNoiseDensity{0};
   float gyrRandomWalk{0};

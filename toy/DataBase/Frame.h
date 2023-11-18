@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <memory>
 #include <sophus/so3.hpp>
 #include <sophus/se3.hpp>
@@ -23,14 +24,9 @@ protected:
 protected:
   int mId;
 
-  ImagePyramid* mImagePyramid0;
-  ImagePyramid* mImagePyramid1;
-
-  Camera* mCam0;
-  Camera* mCam1;
-
-  Feature* mFeature0;
-  Feature* mFeature1;
+  std::array<ImagePyramid*, 2> mImagePyramids;
+  std::array<Camera*, 2>       mCameras;
+  std::array<Feature*, 2>      mFeatures;
 
   //P is SE3
   Sophus::SE3d Pwb;
@@ -38,16 +34,15 @@ protected:
   Sophus::SE3d Pbc1;
 
 public:
-  ImagePyramid* getImagePyramid0() { return mImagePyramid0; }
-  ImagePyramid* getImagePyramid1() { return mImagePyramid1; }
+  ImagePyramid* getImagePyramid(int i) { return mImagePyramids[i]; }
 
-  void setCameras(Camera* cam0, Camera* cam1) {
-    mCam0 = cam0;
-    mCam1 = cam1;
+  Camera* getCamera(int i) { return mCameras[i]; }
+  void    setCameras(Camera* cam0, Camera* cam1) {
+    mCameras[0] = cam0;
+    mCameras[1] = cam1;
   }
 
-  Feature* getFeature0() { return mFeature0; }
-  Feature* getFeature1() { return mFeature1; }
+  Feature* getFeature(int i) { return mFeatures[i]; }
 };
 }  //namespace db
 }  //namespace toy

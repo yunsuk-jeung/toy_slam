@@ -8,6 +8,8 @@
 #include "Slam.h"
 #include "types.h"
 
+#include <opencv2/opencv.hpp>
+
 namespace toy {
 
 SLAM::SLAM() : vio{nullptr} {};
@@ -20,11 +22,11 @@ SLAM::~SLAM() {
 };
 
 void SLAM::setSensorInfo(CameraInfo* cam0, CameraInfo* cam1, ImuInfo* imu) {
-  memcpy(&Config::Vio::camInfo0, cam0, sizeof(CameraInfo));
-  memcpy(&Config::Vio::camInfo1, cam1, sizeof(CameraInfo));
+  Config::Vio::camInfo0 = *cam0;
+  Config::Vio::camInfo1 = *cam1;
 
   if (imu) {
-    memcpy(&Config::Vio::imuInfo, imu, sizeof(ImuInfo));
+    Config::Vio::imuInfo = *imu;
   }
 }
 
@@ -41,6 +43,9 @@ void SLAM::setNewImage(ImageData& imageData0, ImageData& imageData1) {
   vio->insert(pyramids);
 
   if (Config::sync) vio->process();
+
+  cv::imshow("syc", pyramids->getOrigin());
+  cv::waitKey();
 }
 
 void SLAM::setAcc(const uint64_t& ns, float* acc) {}

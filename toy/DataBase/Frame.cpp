@@ -8,27 +8,22 @@ namespace db {
 
 Frame::Frame(ImagePyramid* imagePyramid)
     : mId{-1}
-    , mImagePyramid0{&imagePyramid[0]}
-    , mImagePyramid1{&imagePyramid[1]}
-    , mFeature0{new Feature()}
-    , mFeature1{new Feature()} {}
+    , mImagePyramids{&imagePyramid[0], &imagePyramid[1]}
+    , mFeatures{new Feature(), new Feature()} {}
 
 Frame::~Frame() {
-  delete[] mImagePyramid0;
-  mImagePyramid0 = nullptr;
-  mImagePyramid1 = nullptr;
+  delete[] mImagePyramids[0];
+  mImagePyramids.fill(nullptr);
 
-  delete mCam0;
-  mCam0 = nullptr;
+  for (auto* ptr : mCameras) {
+    delete ptr;
+  }
+  mCameras.fill(nullptr);
 
-  delete mCam1;
-  mCam1 = nullptr;
-
-  delete mFeature0;
-  mFeature0 = nullptr;
-
-  delete mFeature1;
-  mFeature1 = nullptr;
+  for (auto* ptr : mFeatures) {
+    delete ptr;
+  }
+  mFeatures.fill(nullptr);
 }
 
 void Frame::setPbc(float* pfbc0, float* pfbc1) {

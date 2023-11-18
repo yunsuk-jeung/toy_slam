@@ -16,7 +16,7 @@
 #define LOGGER_FORMAT "[%^%l%$] %v"
 #define PROJECT_NAME "TOY"
 
-#define __FILENAME__ (static_cast<const char*>(__FILE__) + ROOT_PATH_SIZE)
+#define __FILENAME__ LogUtil::extractFileName(__FILE__)
 #ifdef _WIN32
 
 namespace toy {
@@ -41,6 +41,20 @@ public:
     ss << std::fixed << std::setprecision(precision);  //Set the precision
     ss << "\n translation_so3 : " << se3.log().transpose().format(CleanVec);
     return ss.str();
+  }
+
+  static const char* extractFileName(const char* filePath) {
+#ifdef _WIN32
+    const char* lastSlash = strrchr(filePath, '\\');
+#else
+    const char* lastSlash = strrchr(filePath, '/');
+#endif
+    if (lastSlash != nullptr) {
+      return lastSlash + 1;
+    }
+    else {
+      return filePath;
+    }
   }
 };
 }  //namespace toy

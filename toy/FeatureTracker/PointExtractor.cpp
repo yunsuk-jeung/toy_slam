@@ -1,3 +1,6 @@
+#include "Camera.h"
+#include "ImagePyramid.h"
+#include "Frame.h"
 #include "Feature.h"
 #include "PointExtractor.h"
 
@@ -8,24 +11,36 @@ PointExtractor::PointExtractor(std::string type) : mType{type} {
 
 PointExtractor::~PointExtractor() {}
 
-void PointExtractor::process(cv::Mat& image, db::Feature* feature) {
+void PointExtractor::process(db::Frame* frame) {
+  cv::Mat&     origin  = frame->getImagePyramid(0)->getOrigin();
+  db::Feature* feature = frame->getFeature(0);
+  Camera*      cam     = frame->getCamera(0);
+
   if (mType == "FAST") {
     std::vector<cv::KeyPoint> keyPoints;
-    mFeature2D->detect(image, keyPoints);
+    mFeature2D->detect(origin, keyPoints);
 
-    setKptsToFeature(keyPoints, feature);
+    convertCVKeyPointsToFeature(cam, keyPoints, feature);
   }
 }
 
-void PointExtractor::setKptsToFeature(std::vector<cv::KeyPoint>& kpts,
-                                      db::Feature*               feature) {
-  auto& keypoints = feature->getKeypoints();
-  keypoints.reserve(keypoints.size() + kpts.size());
+cv::Mat PointExtractor::createMask() {
+  return cv::Mat();
+}
 
-  auto& ids        = keypoints.mIds;
-  auto& levels     = keypoints.mLevels;
-  auto& points     = keypoints.mPoints;
-  auto& trackCount = keypoints.mTrackCounts;
+void PointExtractor::convertCVKeyPointsToFeature(Camera*                    cam,
+                                                 std::vector<cv::KeyPoint>& kpts,
+                                                 db::Feature*               feature) {
+
+  db::Feature newFeat;
+  auto&       newKpts = feature->getKeypoints();
+  newKpts.reserve(kpts.size());
+
+  auto& ids        = newKpts.mIds;
+  auto& levels     = newKpts.mLevels;
+  auto& points     = newKpts.mPoints;
+  auto& trackCount = newKpts.mTrackCounts;
+  auto& undists    = newKpts.mUndsits;
 
   for (const auto& kpt : kpts) {
     ids.push_back(mFeatureId++);
@@ -33,6 +48,11 @@ void PointExtractor::setKptsToFeature(std::vector<cv::KeyPoint>& kpts,
     points.push_back(kpt.pt);
     trackCount.push_back(0);
   }
+
+  cam->undistortPoints(points, undists);
+
+  auto& keypoints = feature->getKeypoints();
+  keypoints.push_back(newKpts);
 }
 
 }  //namespace toy

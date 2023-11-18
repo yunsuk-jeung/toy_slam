@@ -2,12 +2,14 @@
 #include "Simulator.h"
 
 namespace io {
-Simulator::Simulator() : mImageType0{0}, mImageType1{0} {
+Simulator::Simulator() : mDataReader{nullptr}, mImageType0{0}, mImageType1{0} {
   mIsSimulator = true;
 }
 
 Simulator::~Simulator() {
   stop();
+
+  mCamInfo0;
 }
 
 void Simulator::prepare() {
@@ -15,8 +17,8 @@ void Simulator::prepare() {
 }
 
 void Simulator::getInfo(CameraInfo* info0, CameraInfo* info1) {
-  memcpy(info0, &mCamInfo0, sizeof(CameraInfo));
-  memcpy(info1, &mCamInfo1, sizeof(CameraInfo));
+  *info0 = mCamInfo0;
+  *info1 = mCamInfo1;
 }
 
 void Simulator::start() {

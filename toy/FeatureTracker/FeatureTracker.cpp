@@ -1,57 +1,33 @@
 #pragma once
 #include "ImagePyramid.h"
 #include "Frame.h"
-#include "PointExtractor.h"
-#include "PointMatcher.h"
-#include "LineExtractor.h"
-#include "LineMatcher.h"
+#include "PointTracker.h"
+#include "LineTracker.h"
 #include "FeatureTracker.h"
 
 namespace toy {
-FeatureTracker::FeatureTracker(std::string pointExtractor,
-                               std::string pointMatcher,
-                               std::string lineExtractor,
-                               std::string lineMatcher)
-    : mLineExtractor{nullptr}, mLineMatcher{nullptr} {
+FeatureTracker::FeatureTracker(std::string pointTracker, std::string lineTracker)
+    : mLineTracker{nullptr} {
 
-  mPointExtractor = new PointExtractor(pointExtractor);
-  mPointMatcher   = new PointMatcher(pointMatcher);
+  mPointTracker = new PointTracker(pointTracker);
 
-  if (lineExtractor == "none") return;
+  if (lineTracker == "none") return;
 
-  mLineExtractor = new LineExtractor(lineExtractor);
-  mLineMatcher   = new LineMatcher(lineMatcher);
+  mLineTracker = new LineTracker(lineTracker);
 }
 
 FeatureTracker::~FeatureTracker() {
-  delete mPointExtractor;
-  mPointExtractor = nullptr;
+  delete mPointTracker;
+  mPointTracker = nullptr;
 
-  delete mPointMatcher;
-  mPointMatcher;
-
-  delete mLineExtractor;
-  mLineExtractor = nullptr;
-
-  delete mLineMatcher;
-  mLineMatcher = nullptr;
+  delete mLineTracker;
+  mLineTracker;
 }
 
 bool FeatureTracker::process(db::Frame* frame) {
 
   //todo maybe extract from pyramid...
-  mPointExtractor->process(frame);
-
-  if (frame->getImagePyramid(1)->type() == 1) {
-
-    db::Feature* feature0 = frame->getFeature(0);
-    db::Feature* feature1 = frame->getFeature(1);
-
-    mPointMatcher->process(frame->getImagePyramid(0),
-                           feature0,
-                           frame->getImagePyramid(1),
-                           feature1);
-  }
+  mPointTracker->process(frame);
 
   return true;
 }

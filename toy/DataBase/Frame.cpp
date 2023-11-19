@@ -9,7 +9,11 @@ namespace db {
 Frame::Frame(ImagePyramid* imagePyramid)
     : mId{-1}
     , mImagePyramids{&imagePyramid[0], &imagePyramid[1]}
-    , mFeatures{new Feature(), new Feature()} {}
+    , mFeatures{
+          new Feature(),
+          new Feature(),
+      } ,
+       mLbcs{Eigen::Vector6d(), Eigen::Vector6d()} {}
 
 Frame::~Frame() {
   delete[] mImagePyramids[0];
@@ -22,7 +26,7 @@ Frame::~Frame() {
   mFeatures.fill(nullptr);
 }
 
-void Frame::setPbc(float* pfbc0, float* pfbc1) {
+void Frame::setLbc(float* pfbc0, float* pfbc1) {
   Eigen::Matrix4f Mbc0(pfbc0);
   Eigen::Matrix4f Mbc1(pfbc1);
 
@@ -34,11 +38,14 @@ void Frame::setPbc(float* pfbc0, float* pfbc1) {
 
   Eigen::Quaterniond Qbc0(Rbc0);
   Eigen::Quaterniond Qbc1(Rbc1);
-  Pbc0 = Sophus::SE3d(Qbc0, Tbc0);
-  Pbc1 = Sophus::SE3d(Qbc1, Tbc1);
 
-  //ToyLogD("SE3 log test : {}", LogUtil::SE3String(Pbc0));
-  //ToyLogD("se3 log test : {}", LogUtil::se3String(Pbc1));
+  Sophus::SO3d SObc0 = Sophus::SO3d(Qbc0);
+  mLbcs[0].head(3)   = SObc0.log();
+  mLbcs[0].tail(3)   = Tbc0;
+
+  Sophus::SO3d SObc1 = Sophus::SO3d(Qbc1);
+  mLbcs[1].head(3)   = SObc1.log();
+  mLbcs[1].tail(3)   = Tbc1;
 }
 
 }  //namespace db

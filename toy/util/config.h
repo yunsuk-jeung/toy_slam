@@ -13,14 +13,13 @@ public:
     static CameraInfo camInfo1;
     static ImuInfo    imuInfo;
 
-    static std::string pointExtractor;
-    static std::string pointMatcher;
-
     static int pyramidLevel;
     static int patchSize;
+    static int rowGridCount;
+    static int colGridCount;
 
-    static std::string lineExtractor;
-    static std::string lineMatcher;
+    static std::string pointTracker;
+    static std::string lineTracker;
 
     static std::string solverType;
   };

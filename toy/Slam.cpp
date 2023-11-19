@@ -41,9 +41,6 @@ void SLAM::setNewImage(ImageData& imageData0, ImageData& imageData1) {
   vio->insert(pyramids);
 
   if (Config::sync) vio->process();
-
-  cv::imshow("syc", pyramids->getOrigin());
-  cv::waitKey();
 }
 
 void SLAM::setAcc(const uint64_t& ns, float* acc) {}

@@ -28,7 +28,7 @@ auto main() -> int {
     pyramids.push_back({ImageType::MAIN, image});
   }
 
-  toy::PointExtractor extractor;
+  toy::PointTracker extractor;
 
   std::vector<std::vector<cv::Point2f>> pointss;
   pointss.resize(pyramids.size());

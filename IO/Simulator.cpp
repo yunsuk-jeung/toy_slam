@@ -68,6 +68,40 @@ void Simulator::stop() {
   if (mThread.joinable()) mThread.join();
 }
 
+void Simulator::spinOnce() {
+  int      type0;
+  uint64_t ns0;
+  cv::Mat  image0;
+
+  int      type1;
+  uint64_t ns1;
+  cv::Mat  image1;
+
+  if (mDataReader->getImages(type0, ns0, image0, type1, ns1, image1)) {
+    ImageData imageData0{type0,
+                         image0.type(),
+                         ns0,
+                         image0.data,
+                         image0.cols,
+                         image0.rows};
+
+    ImageData imageData1{type1,
+                         image1.type(),
+                         ns1,
+                         image1.data,
+                         image1.cols,
+                         image1.rows};
+
+    mImageCallBack(imageData0, imageData1);
+
+    cv::imshow("input", image0);
+    //cv::waitKey(33);
+  }
+  else {
+    //mWorking = false;
+  }
+}
+
 void Simulator::registerDataReader(DataReader* dataReader) {
   mDataReader = dataReader;
 }

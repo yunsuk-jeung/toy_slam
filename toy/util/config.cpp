@@ -11,15 +11,14 @@ CameraInfo Config::Vio::camInfo0;
 CameraInfo Config::Vio::camInfo1;
 ImuInfo    Config::Vio::imuInfo;
 
-std::string Config::Vio::pointExtractor = "FAST";
-
-std::string Config::Vio::pointMatcher = "OpticalFlowCV";
 int         Config::Vio::pyramidLevel = 3;
 int         Config::Vio::patchSize    = 52;
+int         Config::Vio::rowGridCount = 12;
+int         Config::Vio::colGridCount = 8;
+std::string Config::Vio::pointTracker = "Fast.OpticalflowLK";
+std::string Config::Vio::lineTracker  = "none";
 
-std::string Config::Vio::lineExtractor = "none";
-std::string Config::Vio::lineMatcher   = "none";
-std::string Config::Vio::solverType    = "SqrtLocalSolver";
+std::string Config::Vio::solverType = "SqrtLocalSolver";
 
 void Config::parseConfig(const std::string& configFile) {
   spdlog::set_level(spdlog::level::debug);
@@ -30,23 +29,26 @@ void Config::parseConfig(const std::string& configFile) {
     throw std::runtime_error("config File is wrong!");
   }
 
-  nlohmann::json json_obj;
-  file >> json_obj;
+  nlohmann::json jsonObj;
+  file >> jsonObj;
 
   file.close();
 
-  sync                = json_obj["Sync"];
-  bool vio_on         = json_obj["Vio"]["On"];
-  bool point_on       = json_obj["Vio"]["Tracker"]["Point"]["On"];
-  Vio::pointExtractor = json_obj["Vio"]["Tracker"]["Point"]["Extractor"];
+  sync        = jsonObj["Sync"];
+  bool vio_on = jsonObj["Vio"]["On"];
 
-  auto matcherObj   = json_obj["Vio"]["Tracker"]["Point"]["Matcher"];
-  Vio::pointMatcher = matcherObj["Type"];
-  Vio::pyramidLevel = matcherObj["PyramidLevel"];
-  Vio::patchSize    = matcherObj["PatchSize"];
+  auto trackerObj = jsonObj["Vio"]["Tracker"];
 
-  bool line_on    = json_obj["Vio"]["Tracker"]["Line"]["On"];
-  Vio::solverType = json_obj["Vio"]["Solver"];
+  Vio::pyramidLevel = trackerObj["PyramidLevel"];
+  bool point_on     = trackerObj["Point"]["On"];
+  Vio::patchSize    = trackerObj["Point"]["PatchSize"];
+  Vio::rowGridCount = trackerObj["Point"]["RowGridCount"];
+  Vio::colGridCount = trackerObj["Point"]["ColGridCount"];
+  Vio::pointTracker = trackerObj["Point"]["Tracker"];
+
+  bool line_on = trackerObj["Line"]["On"];
+
+  Vio::solverType = jsonObj["Vio"]["Solver"];
 
   int align_width = 10;
   ToyLogI("sync mode : {}", sync);
@@ -54,10 +56,13 @@ void Config::parseConfig(const std::string& configFile) {
   if (vio_on) {
     ToyLogI("----------- tracker point ----------");
     ToyLogI("-{:<{}} -   {}", "On", align_width, point_on);
-    ToyLogI("-{:<{}} -   {}", "Extractor", align_width, Vio::pointExtractor);
-    ToyLogI("-{:<{}} -   {}", "Matcher", align_width, Vio::pointMatcher);
-    ToyLogI("----------- tracker line ----------")
-        ToyLogI("-{:<{}} -   {}", "On", align_width, line_on);
+    ToyLogI("-{:<{}} -   {}", "Tracker", align_width, Vio::pointTracker);
+    ToyLogI("");
+
+    ToyLogI("----------- tracker line ----------");
+    ToyLogI("-{:<{}} -   {}", "On", align_width, line_on);
+    ToyLogI("");
+
     ToyLogI("----------- solver ----------");
     ToyLogI("-{:<{}} -   {}", "Solver", align_width, Vio::solverType);
     ToyLogI("################  end  ################");

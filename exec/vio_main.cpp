@@ -54,11 +54,12 @@ int main() {
   toy::SLAM::getInstance()->setSensorInfo(&info0, &info1);
   toy::SLAM::getInstance()->prepare(slamConfigFile);
 
-  sensor->start();
-
-  cv::Mat tempGUi(1000, 1000, CV_8UC1);
-  cv::imshow("test", tempGUi);
-  int key = cv::waitKey();
+  //sensor->start();
+  while (true) {
+    ((io::Simulator*)sensor)->spinOnce();
+    int key = cv::waitKey();
+    if (key == 27) break;
+  }
 
   sensor->stop();
 

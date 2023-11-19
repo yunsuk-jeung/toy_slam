@@ -3,6 +3,7 @@
 #include <memory>
 #include <sophus/so3.hpp>
 #include <sophus/se3.hpp>
+#include "usings.h"
 namespace toy {
 class Camera;
 namespace db {
@@ -14,7 +15,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   friend class MemoryPointerPool;
 
-  void setPbc(float*, float*);
+  void setLbc(float*, float*);
 
 protected:
   Frame() = delete;
@@ -28,10 +29,9 @@ protected:
   std::array<Camera*, 2>       mCameras;
   std::array<Feature*, 2>      mFeatures;
 
-  //P is SE3
-  Sophus::SE3d Pwb;
-  Sophus::SE3d Pbc0;
-  Sophus::SE3d Pbc1;
+  //L : lie
+  Eigen::Vector6d                mLwb;
+  std::array<Eigen::Vector6d, 2> mLbcs;
 
 public:
   ImagePyramid* getImagePyramid(int i) { return mImagePyramids[i]; }
@@ -43,6 +43,8 @@ public:
   }
 
   Feature* getFeature(int i) { return mFeatures[i]; }
+
+  Eigen::Vector6d& getLbc(int i) { return mLbcs[i]; }
 };
 }  //namespace db
 }  //namespace toy

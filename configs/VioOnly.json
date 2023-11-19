@@ -4,14 +4,13 @@
   "Vio": {
     "On": true,
     "Tracker": {
+      "PyramidLevel": 3,
       "Point": {
+        "PatchSize": 31,
+        "RowGridCount": 12,
+        "ColGridCount": 8,
         "On": true,
-        "Extractor": "FAST",
-        "Matcher": {
-          "Type": "OpticalFlowCV",
-          "PyramidLevel": 3,
-          "PatchSize": 31
-        }
+        "Tracker": "Fast.OpticalflowLK"
       },
       "Line": {
         "On": false

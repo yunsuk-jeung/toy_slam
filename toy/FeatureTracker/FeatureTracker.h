@@ -2,18 +2,13 @@
 #include <string>
 namespace toy {
 class Frame;
-class PointExtractor;
-class PointMatcher;
-class LineExtractor;
-class LineMatcher;
+class PointTracker;
+class LineTracker;
 
 class FeatureTracker {
 public:
   FeatureTracker() = delete;
-  FeatureTracker(std::string pointExtractor,
-                 std::string pointMatcher,
-                 std::string mLineExtractor = "none",
-                 std::string mLineMatcher   = "none");
+  FeatureTracker(std::string pointTracker, std::string lineTracker);
 
   ~FeatureTracker();
 
@@ -21,9 +16,7 @@ public:
   bool process(db::Frame* frame);
 
 protected:
-  PointExtractor* mPointExtractor;
-  PointMatcher*   mPointMatcher;
-  LineExtractor*  mLineExtractor;
-  LineMatcher*    mLineMatcher;
+  PointTracker* mPointTracker;
+  LineTracker*  mLineTracker;
 };
 }  //namespace toy

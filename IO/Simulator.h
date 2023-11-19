@@ -18,6 +18,8 @@ public:
   void start() override;
   void stop() override;
 
+  void spinOnce();
+
   void registerDataReader(DataReader* dataReader);
 
 protected:

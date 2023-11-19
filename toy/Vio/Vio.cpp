@@ -27,10 +27,8 @@ Vio::~Vio() {
 }
 
 void Vio::prepare() {
-  mFeatureTracker = new FeatureTracker(Config::Vio::pointExtractor,
-                                       Config::Vio::pointMatcher,
-                                       Config::Vio::lineExtractor,
-                                       Config::Vio::lineMatcher);
+  mFeatureTracker =
+      new FeatureTracker(Config::Vio::pointTracker, Config::Vio::lineTracker);
 
   mVioSolver = VioSolverFactory::createVioSolver();
 }
@@ -42,7 +40,7 @@ void Vio::process() {
   Camera* cam0 = CameraFactory::createCamera(&Config::Vio::camInfo0);
   Camera* cam1 = CameraFactory::createCamera(&Config::Vio::camInfo1);
   currFrame->setCameras(cam0, cam1);
-  currFrame->setPbc(Config::Vio::camInfo0.Mbc.data(), Config::Vio::camInfo1.Mbc.data());
+  currFrame->setLbc(Config::Vio::camInfo0.Mbc.data(), Config::Vio::camInfo1.Mbc.data());
 
   mFeatureTracker->process(currFrame);
 }

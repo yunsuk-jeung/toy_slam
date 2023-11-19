@@ -12,27 +12,29 @@ public:
     void reserve(size_t size) {
       mIds.reserve(size);
       mLevels.reserve(size);
-      mPoints.reserve(size);
+      mUvs.reserve(size);
       mTrackCounts.reserve(size);
-      mUndsits.reserve(size);
+      mUndists.reserve(size);
+      mStatus.reserve(size);
     }
 
     void push_back(Keypoints& kpts) {
-
       // clang-format off
       mIds.insert(mIds.end(), kpts.mIds.begin(), kpts.mIds.begin());
       mLevels.insert(mLevels.end(), kpts.mLevels.begin(), kpts.mLevels.begin());
-      mPoints.insert(mPoints.end(), kpts.mPoints.begin(), kpts.mPoints.begin());
+      mUvs.insert(mUvs.end(), kpts.mUvs.begin(), kpts.mUvs.begin());
       mTrackCounts.insert(mTrackCounts.end(), kpts.mTrackCounts.begin(), kpts.mTrackCounts.begin());
-      mUndsits.insert(mUndsits.end(), kpts.mUndsits.begin(), kpts.mUndsits.begin());
+      mUndists.insert(mUndists.end(), kpts.mUndists.begin(), kpts.mUndists.begin());
+      mStatus.insert(mStatus.end(), kpts.mStatus.begin(), kpts.mStatus.begin());
       // clang-format on
     }
 
     std::vector<uint32_t>    mIds;
     std::vector<uint32_t>    mLevels;
-    std::vector<cv::Point2f> mPoints;
+    std::vector<cv::Point2f> mUvs;
     std::vector<uint32_t>    mTrackCounts;
-    std::vector<cv::Point2f> mUndsits;
+    std::vector<cv::Point2f> mUndists;
+    std::vector<uint8_t>     mStatus;
   };
 
   Feature()  = default;

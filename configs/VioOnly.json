@@ -7,8 +7,8 @@
       "PyramidLevel": 3,
       "Point": {
         "PatchSize": 31,
-        "RowGridCount": 12,
-        "ColGridCount": 8,
+        "RowGridCount": 10,
+        "ColGridCount": 14,
         "On": true,
         "Tracker": "Fast.OpticalflowLK"
       },

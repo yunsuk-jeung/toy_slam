@@ -19,10 +19,15 @@ public:
 
 protected:
   size_t extract(db::Frame* frame);
-  void   devideImage(cv::Mat& src, std::vector<cv::Mat>& subs);
-  void   convertCVKeyPointsToFeature(Camera*                    cam,
-                                     std::vector<cv::KeyPoint>& kpts,
-                                     db::Feature*               feature);
+
+  void devideImage(cv::Mat&                  src,
+                   cv::Mat&                  mask,
+                   std::vector<cv::Mat>&     subs,
+                   std::vector<cv::Point2i>& offsets);
+
+  void convertCVKeyPointsToFeature(Camera*                    cam,
+                                   std::vector<cv::KeyPoint>& kpts,
+                                   db::Feature*               feature);
 
   size_t track(db::Frame* frame);
   size_t trackStereo(db::Frame* frame);
@@ -33,5 +38,7 @@ protected:
   int                    mFeatureId = -1;
   std::string            mType      = "";
   cv::Ptr<cv::Feature2D> mFeature2D;
+
+  db::Frame* prevFrame;
 };
 }  //namespace toy

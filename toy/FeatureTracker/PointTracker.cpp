@@ -8,7 +8,7 @@
 #include "PointTracker.h"
 
 namespace toy {
-PointTracker::PointTracker(std::string type) : mType{type} {
+PointTracker::PointTracker(std::string type) : mType{type}, prevFrame{nullptr} {
   if (mType == "Fast.OpticalflowLK") {
     mFeature2D = cv::FastFeatureDetector::create();
     std::cout << std::endl;
@@ -39,25 +39,73 @@ size_t PointTracker::extract(db::Frame* frame) {
 
   std::vector<cv::Mat>                    subImages;
   std::vector<std::vector<cv::KeyPoint> > keyPointsPerSubImage;
-  devideImage(origin, subImages);
-  keyPointsPerSubImage.resize(subImages.size());
+  std::vector<cv::Point2i>                offset;
+
+  devideImage(origin, subImages, offset);
+  auto subSize = subImages.size();
+  keyPointsPerSubImage.resize(subSize);
+
+  int subId = 0;
+  for (auto& sub : subImages) {
+    auto& kpts = keyPointsPerSubImage[subId++];
+    mFeature2D->detect(sub, kpts);
+  }
 
   std::vector<cv::KeyPoint> keyPoints;
-  mFeature2D->detect(origin, keyPoints);
+  keyPoints.reserve(subSize);
+
+  for (size_t i = 0; i < subSize; ++i) {
+    auto& kpts = keyPointsPerSubImage[i];
+    if (kpts.empty()) { continue; }
+    std::nth_element(kpts.begin(),
+                     kpts.begin(),
+                     kpts.end(),
+                     [](cv::KeyPoint& kpt1, cv::KeyPoint& kpt2) {
+                       return kpt1.response > kpt2.response;
+                     });
+    auto& kpt = kpts.front();
+    kpt.pt.x  = kpt.pt.x + offset[i].x;
+    kpt.pt.y  = kpt.pt.y + offset[i].y;
+    keyPoints.push_back(kpts.front());
+  }
 
   convertCVKeyPointsToFeature(cam, keyPoints, feature);
+
+  cv::Mat image = origin.clone();
+  cv::cvtColor(image, image, CV_GRAY2BGR);
+  for (const auto& kpt : keyPoints) { cv::circle(image, kpt.pt, 3, {255, 0, 0}, -1); }
+  cv::imshow("keyPoint", image);
 
   return keyPoints.size();
 }
 
-void PointTracker::devideImage(cv::Mat& src, std::vector<cv::Mat>& subs) {
+void PointTracker::devideImage(cv::Mat&                  src,
+                               cv::Mat&                  mask,
+                               std::vector<cv::Mat>&     subs,
+                               std::vector<cv::Point2i>& offsets) {
+
   const int rowGridCount   = Config::Vio::rowGridCount;
   const int colGridCount   = Config::Vio::colGridCount;
   const int totalGridCount = rowGridCount * colGridCount;
-  subs.resize(totalGridCount);
+  subs.reserve(totalGridCount);
+  offsets.reserve(totalGridCount);
 
-  const int startRow = (src.cols % rowGridCount) >> 1;
-  const int startCol = (src.rows % colGridCount) >> 1;
+  const int startCol = (src.cols % colGridCount) >> 1;
+  const int startRow = (src.rows % rowGridCount) >> 1;
+
+  const int gridCols = src.cols / colGridCount;
+  const int gridRows = src.rows / rowGridCount;
+
+  for (int r = 0; r < rowGridCount; ++r) {
+    for (int c = 0; c < colGridCount; ++c) {
+      auto offset = cv::Point2i({startCol + gridCols * c}, {startRow + gridRows * r});
+
+      cv::Rect roi(offset.x, offset.y, gridCols, gridRows);
+      cv::Mat  crop = src(roi);
+      subs.push_back(crop);
+      offsets.push_back(offset);
+    }
+  }
 }
 
 size_t PointTracker::track(db::Frame* frame) {

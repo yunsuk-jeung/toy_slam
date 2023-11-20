@@ -8,7 +8,9 @@
 #include "PointTracker.h"
 
 namespace toy {
-PointTracker::PointTracker(std::string type) : mType{type}, prevFrame{nullptr} {
+PointTracker::PointTracker(std::string type)
+  : mType{type}
+  , prevFrame{nullptr} {
   if (mType == "Fast.OpticalflowLK") {
     mFeature2D = cv::FastFeatureDetector::create();
     std::cout << std::endl;

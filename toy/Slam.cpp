@@ -12,7 +12,8 @@
 
 namespace toy {
 
-SLAM::SLAM() : vio{nullptr} {};
+SLAM::SLAM()
+  : vio{nullptr} {};
 
 SLAM::~SLAM() {
   delete vio;

@@ -7,7 +7,8 @@ class PinholeRadialTangential : public Camera {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  PinholeRadialTangential(CameraInfo* cameraInfo) : Camera(cameraInfo) {
+  PinholeRadialTangential(CameraInfo* cameraInfo)
+    : Camera(cameraInfo) {
     mK = (cv::Mat_<double>(3, 3) << mFx, 0.0, mCx, 0.0, mFy, mCy, 0.0, 0.0, 1.0);
     mD = (cv::Mat_<double>(1, 5) << mD0, mD1, mD2, mD3, mD4);
   }
@@ -21,7 +22,8 @@ public:
     cv::undistortPoints(pts, undists, mK, mD);
   }
 
-  //virtual void undistortPoint(const cv::Point2f& pt, Eigen::Vector2d& undist) {
+  //virtual void undistortPoint(const cv::Point2f& pt, Eigen::Vector2d& undist)
+  //{
   //  Eigen::Vector3d n_xyz = inverseProjection(pt);  //normalized xyz
   //}
 

@@ -14,7 +14,11 @@ public:
     EUROC,
   };
 
-  DataReader() : mUploadMemory{false}, mImage0Type{0}, mImage1Type{0}, mLoading{false} {}
+  DataReader()
+    : mUploadMemory{false}
+    , mImage0Type{0}
+    , mImage1Type{0}
+    , mLoading{false} {}
 
   virtual ~DataReader() {
     stop();

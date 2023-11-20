@@ -2,7 +2,10 @@
 #include "Simulator.h"
 
 namespace io {
-Simulator::Simulator() : mDataReader{nullptr}, mImageType0{0}, mImageType1{0} {
+Simulator::Simulator()
+  : mDataReader{nullptr}
+  , mImageType0{0}
+  , mImageType1{0} {
   mIsSimulator = true;
 }
 

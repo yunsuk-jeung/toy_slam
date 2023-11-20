@@ -11,7 +11,10 @@
 #include "Vio.h"
 
 namespace toy {
-Vio::Vio() : mFeatureTracker{nullptr}, mVioSolver{nullptr}, currMainImage{nullptr} {
+Vio::Vio()
+  : mFeatureTracker{nullptr}
+  , mVioSolver{nullptr}
+  , currMainImage{nullptr} {
   mLocalMap = new db::LocalMap();
 }
 
@@ -28,7 +31,7 @@ Vio::~Vio() {
 
 void Vio::prepare() {
   mFeatureTracker =
-      new FeatureTracker(Config::Vio::pointTracker, Config::Vio::lineTracker);
+    new FeatureTracker(Config::Vio::pointTracker, Config::Vio::lineTracker);
 
   mVioSolver = VioSolverFactory::createVioSolver();
 }

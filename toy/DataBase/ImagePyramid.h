@@ -12,7 +12,8 @@ public:
   ImagePyramid() = delete;
   ImagePyramid(const ImageData&);
   //ImagePyramid(ImageType type, cv::Mat mat);
-  //ImagePyramid(ImageType type, int format, uint8_t* buffer, int width, int height);
+  //ImagePyramid(ImageType type, int format, uint8_t* buffer, int width, int
+  //height);
 
   ~ImagePyramid();
 

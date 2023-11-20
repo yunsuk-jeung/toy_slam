@@ -3,18 +3,18 @@
 
 namespace toy {
 Camera::Camera(CameraInfo* cameraInfo)
-    : mW{(float)cameraInfo->w}
-    , mH{(float)cameraInfo->w}
-    , mFx{cameraInfo->intrinsics[0]}
-    , mFy{cameraInfo->intrinsics[1]}
-    , mCx{cameraInfo->intrinsics[2]}
-    , mCy{cameraInfo->intrinsics[3]}
-    , mD0{cameraInfo->distortions[0]}
-    , mD1{cameraInfo->distortions[1]}
-    , mD2{cameraInfo->distortions[2]}
-    , mD3{cameraInfo->distortions[3]}
-    , mD4{cameraInfo->distortions[4]}
-    , mIsDistortion{false} {
+  : mW{(float)cameraInfo->w}
+  , mH{(float)cameraInfo->w}
+  , mFx{cameraInfo->intrinsics[0]}
+  , mFy{cameraInfo->intrinsics[1]}
+  , mCx{cameraInfo->intrinsics[2]}
+  , mCy{cameraInfo->intrinsics[3]}
+  , mD0{cameraInfo->distortions[0]}
+  , mD1{cameraInfo->distortions[1]}
+  , mD2{cameraInfo->distortions[2]}
+  , mD3{cameraInfo->distortions[3]}
+  , mD4{cameraInfo->distortions[4]}
+  , mIsDistortion{false} {
 
   mInvFx = 1.0 / mFx;
   mInvFy = 1.0 / mFy;

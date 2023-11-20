@@ -7,7 +7,7 @@
 
 namespace toy {
 FeatureTracker::FeatureTracker(std::string pointTracker, std::string lineTracker)
-    : mLineTracker{nullptr} {
+  : mLineTracker{nullptr} {
 
   mPointTracker = new PointTracker(pointTracker);
 

@@ -6,7 +6,10 @@ namespace toy {
 namespace db {
 
 ImagePyramid::ImagePyramid(const ImageData& imageData)
-    : mType{imageData.type}, mW{0}, mH{0}, mL{0} {
+  : mType{imageData.type}
+  , mW{0}
+  , mH{0}
+  , mL{0} {
 
   switch (mType) {
   case ImageType::NONE:
@@ -14,7 +17,7 @@ ImagePyramid::ImagePyramid(const ImageData& imageData)
   case ImageType::MAIN:
   case ImageType::SUB: {
     cv::Mat in =
-        cv::Mat(imageData.h, imageData.w, imageData.format, imageData.buffer).clone();
+      cv::Mat(imageData.h, imageData.w, imageData.format, imageData.buffer).clone();
 
     convertToGray(in, mOrigin);
     createImagePyrmid();

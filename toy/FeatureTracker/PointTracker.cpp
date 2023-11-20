@@ -21,7 +21,7 @@ PointTracker::~PointTracker() {}
 size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
   size_t trackedPtSize = track(prevFrame, currFrame);
 
-  if (trackedPtSize > 20) return trackedPtSize;
+  if (trackedPtSize > 80) return trackedPtSize;
 
   auto newKptSize = extract(currFrame);
 
@@ -104,6 +104,8 @@ void PointTracker::devideImage(cv::Mat&                  src,
     for (int c = 0; c < colGridCount; ++c) {
       auto offset = cv::Point2i({startCol + gridCols * c}, {startRow + gridRows * r});
 
+      if (mask.at<uchar>(startRow + gridRows * r, startCol + gridCols * c) == 0) continue;
+
       cv::Rect roi(offset.x, offset.y, gridCols, gridRows);
       cv::Mat  crop = src(roi);
       subs.push_back(crop);
@@ -115,7 +117,80 @@ void PointTracker::devideImage(cv::Mat&                  src,
 size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
   if (prev == nullptr) return size_t(0);
 
-  return curr->getFeature(0)->getKeypoints().size();
+  auto& pyramid0    = prev->getImagePyramid(0)->getPyramids();
+  auto& keyPoints0  = prev->getFeature(0)->getKeypoints();
+  auto& ids0        = keyPoints0.mIds;
+  auto& levels0     = keyPoints0.mLevels;
+  auto& uvs0        = keyPoints0.mUvs;
+  auto& trackCount0 = keyPoints0.mTrackCounts;
+  auto& undists0    = keyPoints0.mUndists;
+
+  if (ids0.empty()) return size_t(0);
+
+  auto& pyramid1 = curr->getImagePyramid(0)->getPyramids();
+
+  std::vector<cv::Point2f> uvs;
+  std::vector<cv::Point2f> undists;
+  const auto patch = cv::Size2i(Config::Vio::patchSize, Config::Vio::patchSize);
+
+  std::vector<uchar> statusO;
+  cv::calcOpticalFlowPyrLK(pyramid0,
+                           pyramid1,
+                           uvs0,
+                           uvs,
+                           statusO,
+                           cv::noArray(),
+                           patch,
+                           Config::Vio::pyramidLevel);
+
+  auto* cam1 = curr->getCamera(0);
+  cam1->undistortPoints(uvs, undists);
+
+  std::vector<uchar> statusE;
+  cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
+  cv::findEssentialMat(undists0, undists, I, cv::RANSAC, 0.99, 1.0 / 640, statusE);
+
+  auto  trackSize  = statusE.size();
+  auto& keyPoints1 = curr->getFeature(0)->getKeypoints();
+  keyPoints1.reserve(trackSize);
+
+  //#####################################################################
+  cv::Mat image1 = pyramid1[0].clone();
+  cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);
+
+  for (int i = 0; i < uvs0.size(); i++) {
+    if (statusO[i] == 0) {
+      cv::line(image1, uvs0[i], uvs[i], {0.0, 0.0, 255.0}, 1);
+      cv::circle(image1, uvs[i], 4, {0.0, 0.0, 255.0}, -1);
+    }
+    else {
+      cv::line(image1, uvs0[i], uvs[i], {255, 0.0, 0.0}, 1);
+      cv::circle(image1, uvs[i], 4, {255, 0.0, 0.0}, -1);
+    }
+  }
+  //#####################################################################
+  auto& ids1        = keyPoints1.mIds;
+  auto& levels1     = keyPoints1.mLevels;
+  auto& uvs1        = keyPoints1.mUvs;
+  auto& trackCount1 = keyPoints1.mTrackCounts;
+  auto& undists1    = keyPoints1.mUndists;
+
+  for (size_t i = 0; i < trackSize; ++i) {
+    if (statusO[i] == 0 || statusE[i] == 0) continue;
+    ids1.push_back(ids0[i]);
+    levels1.push_back(levels0[i]);
+    uvs1.push_back(uvs[i]);
+    trackCount1.push_back(++trackCount0[i]);
+    undists1.push_back(undists[i]);
+  }
+
+  //#####################################################################
+  for (const auto& uv : uvs1) { cv::circle(image1, uv, 3, {0, 255, 0}, -1); }
+  cv::imshow("mono opticalflow", image1);
+  cv::waitKey(1);
+  //#####################################################################
+
+  return ids1.size();
 }
 
 size_t PointTracker::trackStereo(db::Frame* frame) {
@@ -150,7 +225,7 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
 
   auto* cam1 = frame->getCamera(1);
   cam1->undistortPoints(uvs1, undists1);
-
+  //#####################################################################
   cv::Mat image0 = pyramid0[0].clone();
   cv::cvtColor(image0, image0, cv::COLOR_GRAY2BGR);
 
@@ -166,7 +241,9 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
       cv::line(image1, uvs0[i], uvs1[i], {0.0, 255.0, 0.0}, 1);
       cv::circle(image1, uvs1[i], 4, {0.0, 255.0, 0.0}, -1);
     }
+    cv::circle(image0, uvs0[i], 4, {0.0, 255.0, 0.0}, -1);
   }
+  //#####################################################################
 
   Sophus::SE3d    Sbc0    = Sophus::SE3d::exp(frame->getLbc(0));
   Sophus::SE3d    Sbc1    = Sophus::SE3d::exp(frame->getLbc(1));
@@ -190,15 +267,18 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
     if (err > epipolarThreashold) status[i] = 0;
   }
 
+  //#####################################################################
   for (int i = 0; i < uvs0.size(); i++) {
     if (status[i] == 0) {
       cv::line(image1, uvs0[i], uvs1[i], {255.0, 0.0, 0.0}, 1);
       cv::circle(image1, uvs1[i], 2, {255.0, 0.0, 0.0}, -1);
     }
   }
-
-  cv::imshow("remove outlier 0", image1);
+  cv::imshow("stereo opticalflow0", image0);
+  cv::imshow("stereo opticalflow1", image1);
   cv::waitKey(1);
+  //#####################################################################
+
   return size_t();
 }
 
@@ -232,7 +312,24 @@ void PointTracker::convertCVKeyPointsToFeature(Camera*                    cam,
 }
 
 cv::Mat PointTracker::createMask(const cv::Mat& origin, db::Feature* feature) {
-  return cv::Mat();
+  cv::Mat mask = cv::Mat(origin.rows, origin.cols, origin.type(), cv::Scalar(255));
+
+  const auto& uvs = feature->getKeypoints().mUvs;
+
+  const int rowGridCount = Config::Vio::rowGridCount;
+  const int colGridCount = Config::Vio::colGridCount;
+
+  const int gridCols = origin.cols / colGridCount;
+  const int gridRows = origin.rows / rowGridCount;
+  const int radius   = gridCols > gridRows ? gridRows >> 1 : gridCols >> 1;
+
+  for (const auto& uv : uvs) { cv::circle(mask, uv, radius, {0}, -1); }
+  //#####################################################################
+  cv::imshow("mask", mask);
+  cv::waitKey(1);
+  //#####################################################################
+
+  return mask;
 }
 
 }  //namespace toy

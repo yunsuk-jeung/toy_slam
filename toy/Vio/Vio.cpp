@@ -14,9 +14,8 @@ namespace toy {
 Vio::Vio()
   : mFeatureTracker{nullptr}
   , mVioSolver{nullptr}
-  , currMainImage{nullptr} {
-  mLocalMap = new db::LocalMap();
-}
+  , mLocalMap{new db::LocalMap()}
+  , mStatus{Status::NONE} {}
 
 Vio::~Vio() {
   delete mFeatureTracker;
@@ -34,18 +33,33 @@ void Vio::prepare() {
     new FeatureTracker(Config::Vio::pointTracker, Config::Vio::lineTracker);
 
   mVioSolver = VioSolverFactory::createVioSolver();
+  mStatus    = Status::INITIALIZING;
 }
 
 void Vio::process() {
   db::ImagePyramid* pyramids = getLatestInput();
-  db::Frame* currFrame = db::MemoryPointerPool::getInstance()->createFrame(pyramids);
+  if (!pyramids) return;
 
-  Camera* cam0 = CameraFactory::createCamera(&Config::Vio::camInfo0);
-  Camera* cam1 = CameraFactory::createCamera(&Config::Vio::camInfo1);
+  db::Frame* currFrame = db::MemoryPointerPool::getInstance()->createFrame(pyramids);
+  Camera*    cam0      = CameraFactory::createCamera(&Config::Vio::camInfo0);
+  Camera*    cam1      = CameraFactory::createCamera(&Config::Vio::camInfo1);
   currFrame->setCameras(cam0, cam1);
   currFrame->setLbc(Config::Vio::camInfo0.Mbc.data(), Config::Vio::camInfo1.Mbc.data());
 
-  mFeatureTracker->process(nullptr, currFrame);
+  bool OK{false};
+  switch (mStatus) {
+  case Status::INITIALIZING:
+    OK = mFeatureTracker->process(nullptr, currFrame);
+    if (OK) mStatus = Status::TRACKING;
+    break;
+  case Status::TRACKING:
+    OK = mFeatureTracker->process(mLocalMap->getLatestFrame(), currFrame);
+    break;
+  default:
+    break;
+  }
+
+  mLocalMap->addFrame(currFrame);
 }
 
 }  //namespace toy

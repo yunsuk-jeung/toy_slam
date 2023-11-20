@@ -25,12 +25,13 @@ private:
   using Processor<db::ImagePyramid, void>::getLatestInput;
   using Processor<db::ImagePyramid, void>::mInQueue;
 
+  enum class Status { NONE = -1, INITIALIZING = 0, TRACKING = 1 };
+
 private:
   FeatureTracker* mFeatureTracker;
   VioSolver*      mVioSolver;
   db::LocalMap*   mLocalMap;
-
-  db::ImagePyramid* currMainImage;
+  Status          mStatus;
 };
 
 }  //namespace toy

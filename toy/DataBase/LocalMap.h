@@ -9,8 +9,14 @@ public:
   LocalMap();
   ~LocalMap();
 
+  void   addFrame(Frame* in);
+  Frame* getLatestFrame();
+
 protected:
   std::vector<Frame*> mFrames;
+
+public:
+  std::vector<Frame*>& getFrames() { return mFrames; }
 };
 
 }  //namespace db

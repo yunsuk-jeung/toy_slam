@@ -10,5 +10,14 @@ LocalMap::LocalMap() {
 
 LocalMap::~LocalMap() {}
 
+void LocalMap::addFrame(Frame* in) {
+  mFrames.push_back(in);
+}
+
+Frame* LocalMap::getLatestFrame() {
+  if (mFrames.empty()) return nullptr;
+  return mFrames.back();
+}
+
 }  //namespace db
 }  //namespace toy

@@ -27,7 +27,6 @@ void setupSensor() {
 }
 
 void registerCallbacks() {
-
   auto imageCallback = [](ImageData& imageData0, ImageData& imageData1) {
     toy::SLAM::getInstance()->setNewImage(imageData0, imageData1);
   };

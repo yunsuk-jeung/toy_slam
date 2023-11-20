@@ -1,7 +1,9 @@
 #pragma once
 #include <string>
 namespace toy {
+namespace db {
 class Frame;
+}
 class PointTracker;
 class LineTracker;
 
@@ -13,7 +15,7 @@ public:
   ~FeatureTracker();
 
   //reject frame when process is false?
-  bool process(db::Frame* frame);
+  bool process(db::Frame* prevFrame, db::Frame* currentFrame);
 
 protected:
   PointTracker* mPointTracker;

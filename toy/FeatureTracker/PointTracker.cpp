@@ -9,8 +9,7 @@
 
 namespace toy {
 PointTracker::PointTracker(std::string type)
-  : mType{type}
-  , prevFrame{nullptr} {
+  : mType{type} {
   if (mType == "Fast.OpticalflowLK") {
     mFeature2D = cv::FastFeatureDetector::create();
     std::cout << std::endl;
@@ -19,19 +18,21 @@ PointTracker::PointTracker(std::string type)
 
 PointTracker::~PointTracker() {}
 
-void PointTracker::process(db::Frame* frame) {
+size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
+  size_t trackedPtSize = track(prevFrame, currFrame);
 
-  int trackedPtSize = track(frame);
+  if (trackedPtSize > 20) return trackedPtSize;
 
-  if (trackedPtSize > 20) return;
-  auto newKptSize = extract(frame);
+  auto newKptSize = extract(currFrame);
 
-  if (trackedPtSize + newKptSize == 0) return;
-  if (frame->getImagePyramid(1)->type() != 1) return;
+  if (trackedPtSize + newKptSize == 0) return 0;
+  if (currFrame->getImagePyramid(1)->type() != 1) return trackedPtSize;
 
-  db::Feature* feature0 = frame->getFeature(0);
-  db::Feature* feature1 = frame->getFeature(1);
-  trackStereo(frame);
+  db::Feature* feature0 = currFrame->getFeature(0);
+  db::Feature* feature1 = currFrame->getFeature(1);
+  trackStereo(currFrame);
+
+  return trackedPtSize;
 }
 
 size_t PointTracker::extract(db::Frame* frame) {
@@ -39,11 +40,13 @@ size_t PointTracker::extract(db::Frame* frame) {
   db::Feature* feature = frame->getFeature(0);
   Camera*      cam     = frame->getCamera(0);
 
+  cv::Mat mask = createMask(origin, feature);
+
   std::vector<cv::Mat>                    subImages;
   std::vector<std::vector<cv::KeyPoint> > keyPointsPerSubImage;
   std::vector<cv::Point2i>                offset;
 
-  devideImage(origin, subImages, offset);
+  devideImage(origin, mask, subImages, offset);
   auto subSize = subImages.size();
   keyPointsPerSubImage.resize(subSize);
 
@@ -85,7 +88,6 @@ void PointTracker::devideImage(cv::Mat&                  src,
                                cv::Mat&                  mask,
                                std::vector<cv::Mat>&     subs,
                                std::vector<cv::Point2i>& offsets) {
-
   const int rowGridCount   = Config::Vio::rowGridCount;
   const int colGridCount   = Config::Vio::colGridCount;
   const int totalGridCount = rowGridCount * colGridCount;
@@ -110,12 +112,13 @@ void PointTracker::devideImage(cv::Mat&                  src,
   }
 }
 
-size_t PointTracker::track(db::Frame* frame) {
-  return size_t();
+size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
+  if (prev == nullptr) return size_t(0);
+
+  return curr->getFeature(0)->getKeypoints().size();
 }
 
 size_t PointTracker::trackStereo(db::Frame* frame) {
-
   auto& pyramid0    = frame->getImagePyramid(0)->getPyramids();
   auto& keyPoints0  = frame->getFeature(0)->getKeypoints();
   auto& ids0        = keyPoints0.mIds;
@@ -202,7 +205,6 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
 void PointTracker::convertCVKeyPointsToFeature(Camera*                    cam,
                                                std::vector<cv::KeyPoint>& kpts,
                                                db::Feature*               feature) {
-
   db::Feature newFeat;
   auto&       newKpts = feature->getKeypoints();
   newKpts.reserve(kpts.size());
@@ -229,7 +231,7 @@ void PointTracker::convertCVKeyPointsToFeature(Camera*                    cam,
   keypoints.push_back(newKpts);
 }
 
-cv::Mat PointTracker::createMask() {
+cv::Mat PointTracker::createMask(const cv::Mat& origin, db::Feature* feature) {
   return cv::Mat();
 }
 

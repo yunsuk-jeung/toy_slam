@@ -11,7 +11,6 @@
 
 using namespace toy;
 auto main() -> int {
-
   ToyLogI("Starting opticalflow module ");
 
   std::string           currCpp = __FILE__;

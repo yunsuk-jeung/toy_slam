@@ -8,7 +8,6 @@
 namespace toy {
 FeatureTracker::FeatureTracker(std::string pointTracker, std::string lineTracker)
   : mLineTracker{nullptr} {
-
   mPointTracker = new PointTracker(pointTracker);
 
   if (lineTracker == "none") return;
@@ -24,10 +23,12 @@ FeatureTracker::~FeatureTracker() {
   mLineTracker;
 }
 
-bool FeatureTracker::process(db::Frame* frame) {
-
+bool FeatureTracker::process(db::Frame* prevFrame, db::Frame* currentFrame) {
   //todo maybe extract from pyramid...
-  mPointTracker->process(frame);
+  mPointTracker->process(prevFrame, currentFrame);
+
+  //delete mPrevFrame;
+  //mPrevFrame = currentFrame;
 
   return true;
 }

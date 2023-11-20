@@ -10,7 +10,6 @@ ImagePyramid::ImagePyramid(const ImageData& imageData)
   , mW{0}
   , mH{0}
   , mL{0} {
-
   switch (mType) {
   case ImageType::NONE:
     break;

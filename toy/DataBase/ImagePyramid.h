@@ -7,7 +7,6 @@
 namespace toy {
 namespace db {
 class ImagePyramid {
-
 public:
   ImagePyramid() = delete;
   ImagePyramid(const ImageData&);

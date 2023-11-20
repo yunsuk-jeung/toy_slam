@@ -3,7 +3,6 @@
 
 namespace io {
 Sensor* SensorFactory::createSensor(SensorType type) {
-
   switch (type) {
   case SIMULATOR:
     return new Simulator();

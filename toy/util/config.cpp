@@ -20,6 +20,8 @@ std::string Config::Vio::lineTracker  = "none";
 
 std::string Config::Vio::solverType = "SqrtLocalSolver";
 
+int Config::Vio::mapFrameSize = 6;
+
 void Config::parseConfig(const std::string& configFile) {
   spdlog::set_level(spdlog::level::debug);
 
@@ -49,6 +51,8 @@ void Config::parseConfig(const std::string& configFile) {
   bool line_on = trackerObj["Line"]["On"];
 
   Vio::solverType = jsonObj["Vio"]["Solver"];
+
+  Vio::mapFrameSize = jsonObj["Vio"]["LocalMap"]["FrameSize"];
 
   int align_width = 10;
   ToyLogI("sync mode : {}", sync);

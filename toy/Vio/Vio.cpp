@@ -45,7 +45,7 @@ void Vio::process() {
   currFrame->setCameras(cam0, cam1);
   currFrame->setLbc(Config::Vio::camInfo0.Mbc.data(), Config::Vio::camInfo1.Mbc.data());
 
-  mFeatureTracker->process(currFrame);
+  mFeatureTracker->process(nullptr, currFrame);
 }
 
 }  //namespace toy

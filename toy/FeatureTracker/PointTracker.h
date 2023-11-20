@@ -15,7 +15,7 @@ public:
   PointTracker(std::string type);
   ~PointTracker();
 
-  void process(db::Frame* frame);
+  size_t process(db::Frame* prev, db::Frame* curr);
 
 protected:
   size_t extract(db::Frame* frame);
@@ -29,16 +29,14 @@ protected:
                                    std::vector<cv::KeyPoint>& kpts,
                                    db::Feature*               feature);
 
-  size_t track(db::Frame* frame);
+  size_t track(db::Frame* prev, db::Frame* curr);
   size_t trackStereo(db::Frame* frame);
 
-  static cv::Mat createMask();
+  static cv::Mat createMask(const cv::Mat& origin, db::Feature* feature);
 
 protected:
   int                    mFeatureId = -1;
   std::string            mType      = "";
   cv::Ptr<cv::Feature2D> mFeature2D;
-
-  db::Frame* prevFrame;
 };
 }  //namespace toy

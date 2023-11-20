@@ -16,7 +16,10 @@
         "On": false
       }
     },
-    "Solver": "SqrtLocalSolver"
+    "Solver": "SqrtLocalSolver",
+    "LocalMap": {
+      "FrameSize": 8
+    }
   },
 
   "Mapper": {

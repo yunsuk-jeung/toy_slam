@@ -15,7 +15,6 @@ Camera::Camera(CameraInfo* cameraInfo)
   , mD3{cameraInfo->distortions[3]}
   , mD4{cameraInfo->distortions[4]}
   , mIsDistortion{false} {
-
   mInvFx = 1.0 / mFx;
   mInvFy = 1.0 / mFy;
   mInvCx = -mCx / mFx;

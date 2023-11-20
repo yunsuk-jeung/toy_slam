@@ -134,7 +134,6 @@ void EurocReader::syncStereo() {
 }
 
 void EurocReader::parseConfig(std::string configFile) {
-
   std::ifstream jsonFile(configFile);
 
   if (!jsonFile.is_open()) {

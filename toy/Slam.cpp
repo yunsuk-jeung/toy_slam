@@ -37,7 +37,6 @@ void SLAM::prepare(const std::string& configFile) {
 }
 
 void SLAM::setNewImage(ImageData& imageData0, ImageData& imageData1) {
-
   db::ImagePyramid* pyramids = new db::ImagePyramid[2]{imageData0, imageData1};
   vio->insert(pyramids);
 

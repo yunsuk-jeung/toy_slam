@@ -22,6 +22,8 @@ public:
     static std::string lineTracker;
 
     static std::string solverType;
+
+    static int mapFrameSize;
   };
 };
 }  //namespace toy

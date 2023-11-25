@@ -7,6 +7,16 @@ class Feature {
 public:
   class Keypoints {
   public:
+    Keypoints()  = default;
+    ~Keypoints() = default;
+    Keypoints(const Keypoints& src) {
+      mIds         = src.mIds;
+      mLevels      = src.mLevels;
+      mUvs         = src.mUvs;
+      mTrackCounts = src.mTrackCounts;
+      mUndists     = src.mUndists;
+      mStatus      = src.mStatus;
+    }
     size_t size() { return mIds.size(); }
 
     void reserve(size_t size) {
@@ -39,6 +49,8 @@ public:
 
   Feature()  = default;
   ~Feature() = default;
+
+  Feature(const Feature* src) { this->mKeypoints = src->mKeypoints; }
 
 protected:
   Keypoints mKeypoints;

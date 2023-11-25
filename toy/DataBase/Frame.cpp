@@ -1,19 +1,34 @@
 #include "ToyLogger.h"
+#include "Camera.h"
 #include "Feature.h"
 #include "ImagePyramid.h"
+#include "MemoryPointerPool.h"
 #include "Frame.h"
-
 namespace toy {
 namespace db {
 
 Frame::Frame(ImagePyramid* imagePyramid)
-    : mId{-1}
-    , mImagePyramids{&imagePyramid[0], &imagePyramid[1]}
-    , mFeatures{
-          new Feature(),
-          new Feature(),
-      } ,
-       mLbcs{Eigen::Vector6d(), Eigen::Vector6d()} {}
+  : mId{-1}
+  , mImagePyramids{&imagePyramid[0], &imagePyramid[1]}
+  , mCameras{nullptr, nullptr}
+  , mFeatures{new Feature(), new Feature()}
+  , mLbcs{Eigen::Vector6d(), Eigen::Vector6d()} {}
+
+Frame::Frame(const Frame* in) {
+  this->mId = in->mId;
+
+  db::ImagePyramid* pyramids =
+    new db::ImagePyramid[2]{in->mImagePyramids[0], in->mImagePyramids[1]};
+
+  this->mImagePyramids[0] = &pyramids[0];
+  this->mImagePyramids[1] = &pyramids[1];
+
+  mCameras[0] = in->mCameras[0]->clone();
+  mCameras[1] = in->mCameras[1]->clone();
+
+  mFeatures[0] = new Feature(in->mFeatures[0]);
+  mFeatures[1] = new Feature(in->mFeatures[1]);
+}
 
 Frame::~Frame() {
   delete[] mImagePyramids[0];
@@ -46,6 +61,14 @@ void Frame::setLbc(float* pfbc0, float* pfbc1) {
   Sophus::SO3d SObc1 = Sophus::SO3d(Qbc1);
   mLbcs[1].head(3)   = SObc1.log();
   mLbcs[1].tail(3)   = Tbc1;
+}
+
+Frame* Frame::clone() {
+  return MemoryPointerPool::clone<Frame>(this);
+}
+
+void FramePtr::release() {
+  MemoryPointerPool::release<Frame>(mPointer);
 }
 
 }  //namespace db

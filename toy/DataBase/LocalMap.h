@@ -1,5 +1,6 @@
 #pragma once
 #include "Map.h"
+#include "Frame.h"
 
 namespace toy {
 namespace db {
@@ -9,14 +10,14 @@ public:
   LocalMap();
   ~LocalMap();
 
-  void   addFrame(Frame* in);
+  void   addFramePtr(FramePtr& in);
   Frame* getLatestFrame();
 
 protected:
-  std::vector<Frame*> mFrames;
+  std::vector<FramePtr> mFramePtrs;
 
 public:
-  std::vector<Frame*>& getFrames() { return mFrames; }
+  std::vector<FramePtr>& getFrameShells() { return mFramePtrs; }
 };
 
 }  //namespace db

@@ -1,16 +1,15 @@
 #pragma once
 
 #include <tbb/concurrent_queue.h>
-
 namespace toy {
-
 template <typename IN_, typename OUT_>
-class Processor {
+class Thread {
 public:
-  Processor() {}
-  virtual ~Processor() {}
-  void registerOutQueue(tbb::concurrent_queue<OUT_*>* out) { outQueue = out; }
+  Thread() {}
+  virtual ~Thread() {}
 
+  tbb::concurrent_queue<IN_*>& getInQueue() { return mInQueue; }
+  void registerOutQueue(tbb::concurrent_queue<OUT_*>* out) { mOutQueue = out; }
   void insert(IN_* in) { mInQueue.push(in); }
 
 protected:

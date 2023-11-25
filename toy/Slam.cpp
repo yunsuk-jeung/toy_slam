@@ -4,7 +4,7 @@
 #include "MemoryPointerPool.h"
 #include "Frame.h"
 #include "Map.h"
-#include "Vio.h"
+#include "VioCore.h"
 #include "Slam.h"
 #include "types.h"
 
@@ -13,13 +13,13 @@
 namespace toy {
 
 SLAM::SLAM()
-  : vio{nullptr} {};
+  : mVioCore{nullptr} {};
 
 SLAM::~SLAM() {
-  delete vio;
-  vio = nullptr;
+  delete mVioCore;
+  mVioCore = nullptr;
 
-  db::MemoryPointerPool::deleteInstance();
+  db::MemoryPointerPool::clear();
 };
 
 void SLAM::setSensorInfo(CameraInfo* cam0, CameraInfo* cam1, ImuInfo* imu) {
@@ -30,17 +30,17 @@ void SLAM::setSensorInfo(CameraInfo* cam0, CameraInfo* cam1, ImuInfo* imu) {
 }
 
 void SLAM::prepare(const std::string& configFile) {
-  db::MemoryPointerPool::getInstance();
+  db::MemoryPointerPool::ready();
   Config::parseConfig(configFile);
-  vio = new Vio();
-  vio->prepare();
+  mVioCore = new VioCore();
+  mVioCore->prepare();
 }
 
 void SLAM::setNewImage(ImageData& imageData0, ImageData& imageData1) {
   db::ImagePyramid* pyramids = new db::ImagePyramid[2]{imageData0, imageData1};
-  vio->insert(pyramids);
+  mVioCore->insert(pyramids);
 
-  if (Config::sync) vio->process();
+  if (Config::sync) mVioCore->processSync();
 }
 
 void SLAM::setAcc(const uint64_t& ns, float* acc) {}

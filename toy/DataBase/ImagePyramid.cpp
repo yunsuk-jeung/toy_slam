@@ -35,6 +35,16 @@ ImagePyramid::ImagePyramid(const ImageData& imageData)
   }
 }
 
+ImagePyramid::ImagePyramid(const ImagePyramid* src) {
+  this->mH  = src->mH;
+  mType     = src->mType;
+  mOrigin   = src->mOrigin;
+  mW        = src->mW;
+  mH        = src->mH;
+  mL        = src->mL;
+  mPyramids = src->mPyramids;
+}
+
 ImagePyramid::~ImagePyramid() {
   mPyramids.clear();
 }

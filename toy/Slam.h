@@ -8,7 +8,7 @@
 class CameraInfo;
 class ImuInfo;
 namespace toy {
-class Vio;
+class VioCore;
 class SLAM : public Singleton<SLAM> {
 public:
   friend class Singleton<SLAM>;
@@ -24,6 +24,6 @@ private:
   SLAM();
   ~SLAM() override;
 
-  Vio* vio;
+  VioCore* mVioCore;
 };
 }  //namespace toy

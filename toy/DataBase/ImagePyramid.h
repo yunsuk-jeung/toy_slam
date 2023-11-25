@@ -3,17 +3,14 @@
 #include <memory>
 #include <opencv2/core.hpp>
 #include "types.h"
-
+#include "Pointer.h"
 namespace toy {
 namespace db {
 class ImagePyramid {
 public:
   ImagePyramid() = delete;
   ImagePyramid(const ImageData&);
-  //ImagePyramid(ImageType type, cv::Mat mat);
-  //ImagePyramid(ImageType type, int format, uint8_t* buffer, int width, int
-  //height);
-
+  ImagePyramid(const ImagePyramid* src);
   ~ImagePyramid();
 
 protected:
@@ -33,5 +30,6 @@ public:
   cv::Mat&              getOrigin() { return mOrigin; }
   std::vector<cv::Mat>& getPyramids() { return mPyramids; }
 };
+
 };  //namespace db
 }  //namespace toy

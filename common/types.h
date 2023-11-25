@@ -11,7 +11,7 @@ struct ImageData {
 };
 
 struct CameraInfo {
-  int                type;             //1
+  int                id;
   int                w;                //2
   int                h;                //3
   int                cameraModel;      //4
@@ -21,7 +21,7 @@ struct CameraInfo {
   std::vector<float> Mbc;              //30
 
   CameraInfo()
-    : type{0}
+    : id{0}
     , w{0}
     , h{0}
     , cameraModel{0}

@@ -11,12 +11,13 @@ CameraInfo Config::Vio::camInfo0;
 CameraInfo Config::Vio::camInfo1;
 ImuInfo    Config::Vio::imuInfo;
 
-int         Config::Vio::pyramidLevel = 3;
-int         Config::Vio::patchSize    = 52;
-int         Config::Vio::rowGridCount = 12;
-int         Config::Vio::colGridCount = 8;
-std::string Config::Vio::pointTracker = "Fast.OpticalflowLK";
-std::string Config::Vio::lineTracker  = "none";
+int         Config::Vio::pyramidLevel          = 3;
+int         Config::Vio::patchSize             = 52;
+int         Config::Vio::rowGridCount          = 12;
+int         Config::Vio::colGridCount          = 8;
+std::string Config::Vio::pointTracker          = "Fast.OpticalflowLK";
+std::string Config::Vio::lineTracker           = "none";
+bool        Config::Vio::frameTrackerSolvePose = false;
 
 std::string Config::Vio::solverType = "SqrtLocalSolver";
 
@@ -31,28 +32,29 @@ void Config::parseConfig(const std::string& configFile) {
     throw std::runtime_error("config File is wrong!");
   }
 
-  nlohmann::json jsonObj;
-  file >> jsonObj;
+  nlohmann::json json;
+  file >> json;
 
   file.close();
 
-  sync        = jsonObj["Sync"];
-  bool vio_on = jsonObj["Vio"]["On"];
+  sync        = json["Sync"];
+  bool vio_on = json["Vio"]["On"];
 
-  auto trackerObj = jsonObj["Vio"]["Tracker"];
+  auto frameTrackerJson = json["Vio"]["FrameTracker"];
+  Vio::pyramidLevel     = frameTrackerJson["PyramidLevel"];
 
-  Vio::pyramidLevel = trackerObj["PyramidLevel"];
-  bool point_on     = trackerObj["Point"]["On"];
-  Vio::patchSize    = trackerObj["Point"]["PatchSize"];
-  Vio::rowGridCount = trackerObj["Point"]["RowGridCount"];
-  Vio::colGridCount = trackerObj["Point"]["ColGridCount"];
-  Vio::pointTracker = trackerObj["Point"]["Tracker"];
+  auto feautreJson  = frameTrackerJson["Feature"];
+  bool point_on     = feautreJson["Point"]["On"];
+  Vio::patchSize    = feautreJson["Point"]["PatchSize"];
+  Vio::rowGridCount = feautreJson["Point"]["RowGridCount"];
+  Vio::colGridCount = feautreJson["Point"]["ColGridCount"];
+  Vio::pointTracker = feautreJson["Point"]["Tracker"];
 
-  bool line_on = trackerObj["Line"]["On"];
+  bool line_on               = feautreJson["Line"]["On"];
+  Vio::frameTrackerSolvePose = frameTrackerJson["SolvePose"];
 
-  Vio::solverType = jsonObj["Vio"]["Solver"];
-
-  Vio::mapFrameSize = jsonObj["Vio"]["LocalMap"]["FrameSize"];
+  Vio::solverType   = json["Vio"]["Solver"];
+  Vio::mapFrameSize = json["Vio"]["LocalMap"]["FrameSize"];
 
   int align_width = 10;
   ToyLogI("sync mode : {}", sync);

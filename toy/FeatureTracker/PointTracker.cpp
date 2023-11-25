@@ -185,7 +185,18 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
   }
 
   //#####################################################################
-  for (const auto& uv : uvs1) { cv::circle(image1, uv, 3, {0, 255, 0}, -1); }
+  auto calcColor = [](int trackCount) -> cv::Scalar {
+    trackCount   = std::max(0, std::min(trackCount, 20));
+    double ratio = trackCount / 30.0;
+    int    blue  = static_cast<int>((1 - ratio) * 255);
+    int    red   = static_cast<int>(ratio * 255);
+    return cv::Scalar(blue, 0, red);
+  };
+  int iiii = 0;
+  for (const auto& uv : uvs1) {
+    auto color = calcColor(trackCount1[iiii++]);
+    cv::circle(image1, uv, 3, color, -1);
+  }
   cv::imshow("mono opticalflow", image1);
   cv::waitKey(1);
   //#####################################################################
@@ -245,27 +256,31 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
   }
   //#####################################################################
 
-  Sophus::SE3d    Sbc0    = Sophus::SE3d::exp(frame->getLbc(0));
-  Sophus::SE3d    Sbc1    = Sophus::SE3d::exp(frame->getLbc(1));
-  Sophus::SE3d    Sc1c0   = Sbc1.inverse() * Sbc0;
-  Eigen::Matrix3d Rc1c0   = Sc1c0.so3().matrix();
-  Eigen::Matrix3d Tc1c0_x = Sophus::SO3d::hat(Sc1c0.translation());
-  Eigen::Matrix3d E       = Rc1c0 * Tc1c0_x;
+  //std::vector<uchar> statusE;
+  cv::Mat I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
+  cv::findEssentialMat(undists0, undists1, I, cv::RANSAC, 0.99, 1.0 / 640, status);
 
-  constexpr double epipolarThreashold = 0.0015625;  //1.0 / 640;
+  //Sophus::SE3d    Sbc0    = Sophus::SE3d::exp(frame->getLbc(0));
+  //Sophus::SE3d    Sbc1    = Sophus::SE3d::exp(frame->getLbc(1));
+  //Sophus::SE3d    Sc1c0   = Sbc1.inverse() * Sbc0;
+  //Eigen::Matrix3d Rc1c0   = Sc1c0.so3().matrix();
+  //Eigen::Matrix3d Tc1c0_x = Sophus::SO3d::hat(Sc1c0.translation());
+  //Eigen::Matrix3d E       = Rc1c0 * Tc1c0_x;
 
-  auto trackedSize = uvs0.size();
-  for (int i = 0; i < trackedSize; i++) {
-    if (status[i] == 0) continue;
-    const auto& undist0 = undists0[i];
-    const auto& undist1 = undists1[i];
+  //constexpr double epipolarThreashold = 0.0015625;  //1.0 / 640;
 
-    Eigen::Vector3d nuv0 = Eigen::Vector3d(undist0.x, undist0.y, 1.0);
-    Eigen::Vector3d nuv1 = Eigen::Vector3d(undist0.x, undist0.y, 1.0);
+  //auto trackedSize = uvs0.size();
+  //for (int i = 0; i < trackedSize; i++) {
+  //  if (status[i] == 0) continue;
+  //  const auto& undist0 = undists0[i];
+  //  const auto& undist1 = undists1[i];
 
-    double err = nuv1.transpose() * E * nuv0;
-    if (err > epipolarThreashold) status[i] = 0;
-  }
+  //Eigen::Vector3d nuv0 = Eigen::Vector3d(undist0.x, undist0.y, 1.0);
+  //Eigen::Vector3d nuv1 = Eigen::Vector3d(undist0.x, undist0.y, 1.0);
+
+  //double err = nuv1.transpose() * E * nuv0;
+  //if (err > epipolarThreashold) status[i] = 0;
+  //}
 
   //#####################################################################
   for (int i = 0; i < uvs0.size(); i++) {

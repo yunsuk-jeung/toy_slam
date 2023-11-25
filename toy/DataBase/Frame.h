@@ -4,6 +4,7 @@
 #include <sophus/so3.hpp>
 #include <sophus/se3.hpp>
 #include "usings.h"
+#include "Pointer.h"
 namespace toy {
 class Camera;
 namespace db {
@@ -15,11 +16,13 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   friend class MemoryPointerPool;
 
-  void setLbc(float*, float*);
+  void   setLbc(float*, float*);
+  Frame* clone();
 
 protected:
   Frame() = delete;
   Frame(ImagePyramid*);
+  Frame(const Frame* in);
   ~Frame();
 
 protected:
@@ -45,6 +48,18 @@ public:
   Feature* getFeature(int i) { return mFeatures[i]; }
 
   Eigen::Vector6d& getLbc(int i) { return mLbcs[i]; }
+};
+
+class FramePtr : public Pointer<Frame> {
+public:
+  FramePtr() = default;
+
+  explicit FramePtr(Frame* frame)
+    : Pointer<Frame>(frame) {}
+
+  ~FramePtr() = default;
+
+  void release() override;
 };
 }  //namespace db
 }  //namespace toy

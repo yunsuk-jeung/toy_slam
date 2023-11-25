@@ -23,6 +23,27 @@ Camera::Camera(CameraInfo* cameraInfo)
   if (mD0 != 0.0 || mD1 != 0.0 || mD2 != 0.0 || mD3 != 0.0) { mIsDistortion = true; }
 }
 
+Camera::Camera(Camera* src) {
+  this->mW            = src->mW;
+  this->mH            = src->mH;
+  this->mFx           = src->mFx;
+  this->mFy           = src->mFy;
+  this->mCx           = src->mCx;
+  this->mCy           = src->mCy;
+  this->mD0           = src->mD0;
+  this->mD1           = src->mD1;
+  this->mD2           = src->mD2;
+  this->mD3           = src->mD3;
+  this->mD4           = src->mD4;
+  this->mInvFx        = src->mInvFx;
+  this->mInvFy        = src->mInvFy;
+  this->mInvCx        = src->mInvCx;
+  this->mInvCy        = src->mInvCy;
+  this->mIsDistortion = src->mIsDistortion;
+  this->mK            = src->mK.clone();
+  this->mD            = src->mD.clone();
+}
+
 Camera* CameraFactory::createCamera(CameraInfo* camInfo) {
   switch (camInfo->cameraModel) {
   case 0 /*pinhole*/:

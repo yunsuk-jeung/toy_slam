@@ -145,7 +145,7 @@ void EurocReader::parseConfig(std::string configFile) {
 
   {
     auto cam0Json             = jsonObject["cam0"];
-    mCamInfo0.type            = 0;
+    mCamInfo0.id              = 0;
     mCamInfo0.w               = cam0Json["resolution"][0].get<int>();
     mCamInfo0.h               = cam0Json["resolution"][1].get<int>();
     mCamInfo0.cameraModel     = cam0Json["cameraModel"];
@@ -165,7 +165,7 @@ void EurocReader::parseConfig(std::string configFile) {
   }
   {
     auto cam1Json             = jsonObject["cam1"];
-    mCamInfo1.type            = 1;
+    mCamInfo1.id              = 1;
     mCamInfo1.w               = cam1Json["resolution"].get<std::vector<int>>()[0];
     mCamInfo1.h               = cam1Json["resolution"].get<std::vector<int>>()[1];
     mCamInfo1.cameraModel     = cam1Json["cameraModel"];

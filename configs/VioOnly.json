@@ -3,18 +3,21 @@
 
   "Vio": {
     "On": true,
-    "Tracker": {
+    "FrameTracker": {
       "PyramidLevel": 3,
-      "Point": {
-        "PatchSize": 31,
-        "RowGridCount": 10,
-        "ColGridCount": 14,
-        "On": true,
-        "Tracker": "Fast.OpticalflowLK"
+      "Feature": {
+        "Point": {
+          "PatchSize": 31,
+          "RowGridCount": 10,
+          "ColGridCount": 14,
+          "On": true,
+          "Tracker": "Fast.OpticalflowLK"
+        },
+        "Line": {
+          "On": false
+        }
       },
-      "Line": {
-        "On": false
-      }
+      "SolvePose": false
     },
     "Solver": "SqrtLocalSolver",
     "LocalMap": {

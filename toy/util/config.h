@@ -20,7 +20,7 @@ public:
 
     static std::string pointTracker;
     static std::string lineTracker;
-
+    static bool        frameTrackerSolvePose;
     static std::string solverType;
 
     static int mapFrameSize;

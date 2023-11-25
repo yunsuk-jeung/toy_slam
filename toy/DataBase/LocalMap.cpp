@@ -5,18 +5,18 @@
 namespace toy {
 namespace db {
 LocalMap::LocalMap() {
-  mFrames.reserve(Config::Vio::mapFrameSize);
+  mFramePtrs.reserve(Config::Vio::mapFrameSize);
 }
 
 LocalMap::~LocalMap() {}
 
-void LocalMap::addFrame(Frame* in) {
-  mFrames.push_back(in);
+void LocalMap::addFramePtr(FramePtr& in) {
+  mFramePtrs.push_back(in);
 }
 
 Frame* LocalMap::getLatestFrame() {
-  if (mFrames.empty()) return nullptr;
-  return mFrames.back();
+  if (mFramePtrs.empty()) return nullptr;
+  return mFramePtrs.back().get();
 }
 
 }  //namespace db

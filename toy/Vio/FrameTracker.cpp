@@ -49,7 +49,6 @@ void FrameTracker::process() {
   }
   case Status::INITIALIZING: {
     mStatus = Status::TRACKING;
-    //landmark initialize...? but dont add to map!
     break;
   }
   case Status::TRACKING: {

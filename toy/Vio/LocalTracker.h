@@ -23,9 +23,11 @@ private:
   using Thread<db::Frame, void>::getLatestInput;
   using Thread<db::Frame, void>::mInQueue;
 
-  enum class Status { NONE = -1, INITIALIZING = 0, TRACKING = 1 };
+  bool initialize(db::Frame*);
 
 private:
+  enum class Status { NONE = -1, INITIALIZING = 0, TRACKING = 1 };
+  Status        mStatus;
   db::LocalMap* mLocalMap;
 };
 

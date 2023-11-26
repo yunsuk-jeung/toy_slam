@@ -30,6 +30,7 @@ void VioCore::prepare() {
 
 void VioCore::processSync() {
   mFrameTracker->process();
+  mLocalTracker->process();
 }
 
 }  //namespace toy

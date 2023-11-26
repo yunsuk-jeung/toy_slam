@@ -27,10 +27,6 @@ bool FeatureTracker::process(db::Frame* prevFrame, db::Frame* currentFrame) {
   //todo maybe extract from pyramid...
   mPointTracker->process(prevFrame, currentFrame);
 
-  //delete mPrevFrame;
-  //mPrevFrame = currentFrame;
-
   return true;
 }
-
 }  //namespace toy

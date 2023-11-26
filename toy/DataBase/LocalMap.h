@@ -10,8 +10,12 @@ public:
   LocalMap();
   ~LocalMap();
 
+  void   reset();
   void   addFramePtr(FramePtr& in);
   Frame* getLatestFrame();
+
+protected:
+  void createMapPoints();
 
 protected:
   std::vector<FramePtr> mFramePtrs;

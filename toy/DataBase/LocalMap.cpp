@@ -10,6 +10,11 @@ LocalMap::LocalMap() {
 
 LocalMap::~LocalMap() {}
 
+void LocalMap::reset() {
+  for (auto& framePtr : mFramePtrs) { framePtr.release(); }
+  mFramePtrs.clear();
+}
+
 void LocalMap::addFramePtr(FramePtr& in) {
   mFramePtrs.push_back(in);
 }

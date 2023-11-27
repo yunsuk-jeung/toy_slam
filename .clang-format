@@ -58,7 +58,8 @@ NamespaceIndentation: None
 ObjCBlockIndentWidth: 2
 ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: false
-PenaltyBreakBeforeFirstCallParameter: 120
+PenaltyBreakAssignment: 400
+PenaltyBreakBeforeFirstCallParameter: 400
 PointerAlignment: Left
 # ReflowComments: false
 SpacesInLineCommentPrefix: 

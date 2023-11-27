@@ -15,8 +15,8 @@ ImagePyramid::ImagePyramid(const ImageData& imageData)
     break;
   case ImageType::MAIN:
   case ImageType::SUB: {
-    cv::Mat in =
-      cv::Mat(imageData.h, imageData.w, imageData.format, imageData.buffer).clone();
+    cv::Mat in = cv::Mat(imageData.h, imageData.w, imageData.format, imageData.buffer)
+                   .clone();
 
     convertToGray(in, mOrigin);
     createImagePyrmid();

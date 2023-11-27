@@ -17,8 +17,8 @@ Frame::Frame(ImagePyramid* imagePyramid)
 Frame::Frame(const Frame* in) {
   this->mId = in->mId;
 
-  db::ImagePyramid* pyramids =
-    new db::ImagePyramid[2]{in->mImagePyramids[0], in->mImagePyramids[1]};
+  db::ImagePyramid* pyramids = new db::ImagePyramid[2]{in->mImagePyramids[0],
+                                                       in->mImagePyramids[1]};
 
   this->mImagePyramids[0] = &pyramids[0];
   this->mImagePyramids[1] = &pyramids[1];

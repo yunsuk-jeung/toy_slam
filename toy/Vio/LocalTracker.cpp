@@ -18,7 +18,7 @@ void LocalTracker::prepare() {
 }
 
 void LocalTracker::process() {
-  ToyLogD("localTracker in queue size : {}", mInQueue.unsafe_size());
+  ToyLogD("localTracker queue size : {}", mInQueue.unsafe_size());
 
   db::Frame* currFrame = getLatestInput();
 
@@ -41,6 +41,9 @@ void LocalTracker::process() {
 
 bool LocalTracker::initialize(db::Frame* currFrame) {
   db::FramePtr framePtr(currFrame);
+
+  db::Frame* aaa = framePtr.get();
+
   mLocalMap->addFramePtr(framePtr);
 
   return true;

@@ -3,7 +3,7 @@
 namespace toy {
 namespace db {
 void MapPointPtr::release() {
-  MemoryPointerPool::release<MapPoint>(mPointer);
+  MemoryPointerPool::release<MapPoint>(*mPointer);
 }
 
 }  //namespace db

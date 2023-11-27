@@ -17,6 +17,8 @@ void LocalMap::reset() {
 }
 
 void LocalMap::addFramePtr(FramePtr& in) {
+  db::Frame* af = in.get();
+
   mFramePtrs.push_back(in);
   auto& keyPoints0 = in->getFeature(0)->getKeypoints();
 

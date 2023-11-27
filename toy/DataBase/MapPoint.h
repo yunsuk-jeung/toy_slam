@@ -25,7 +25,7 @@ class MapPointPtr : public Pointer<MapPoint> {
 public:
   MapPointPtr() = default;
 
-  explicit MapPointPtr(MapPoint* mp)
+  explicit MapPointPtr(MapPoint*& mp)
     : Pointer<MapPoint>(mp) {}
 
   ~MapPointPtr() = default;

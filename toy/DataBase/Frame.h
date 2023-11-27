@@ -55,7 +55,7 @@ class FramePtr : public Pointer<Frame> {
 public:
   FramePtr() = default;
 
-  explicit FramePtr(Frame* frame)
+  explicit FramePtr(Frame*& frame)
     : Pointer<Frame>(frame) {}
 
   ~FramePtr() = default;

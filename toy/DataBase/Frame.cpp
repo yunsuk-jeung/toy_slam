@@ -68,7 +68,7 @@ Frame* Frame::clone() {
 }
 
 void FramePtr::release() {
-  MemoryPointerPool::release<Frame>(mPointer);
+  MemoryPointerPool::release<Frame>(*mPointer);
 }
 
 }  //namespace db

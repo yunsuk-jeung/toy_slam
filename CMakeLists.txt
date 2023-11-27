@@ -10,6 +10,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 option(BUILD_TEST "Build test" OFF)
 option(BUILD_SAMPLES "Build samples" ON)
 
+set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../lib)
+add_subdirectory(${EXTERNAL_LIB_DIR} ${CMAKE_BINARY_DIR}/lib)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/toy ${CMAKE_BINARY_DIR}/toy)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/io ${CMAKE_BINARY_DIR}/io)
 
@@ -28,12 +30,6 @@ if(WIN32)
   set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../lib)
 
   include(${EXTERNAL_LIB_DIR}/copyDLL.cmake)
-
-  if(LINK_WITH_TBB)
-    copy_tbb_dlls(euroc_vio ${EXTERNAL_LIB_DIR})
-  endif()
-
-  if(LINK_WITH_OPENCV34)
-    copy_cv34_dlls(euroc_vio ${EXTERNAL_LIB_DIR})
-  endif()
+  copy_tbb_dlls(euroc_vio ${EXTERNAL_LIB_DIR})
+  copy_cv34_dlls(euroc_vio ${EXTERNAL_LIB_DIR})
 endif()

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <tbb/concurrent_queue.h>
+#include "MemoryPointerPool.h"
+
 namespace toy {
 template <typename IN_, typename OUT_>
 class Thread {
@@ -16,10 +18,8 @@ protected:
   IN_* getLatestInput() {
     IN_* out;
     while (mInQueue.try_pop(out)) {
-      if (!mInQueue.empty())
-        delete[] out;
-      else
-        return out;
+      if (!mInQueue.empty()) { db::MemoryPointerPool::release<IN_>(out); }
+      else { return out; }
     }
     return nullptr;
   }

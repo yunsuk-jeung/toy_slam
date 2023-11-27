@@ -1,4 +1,6 @@
 #include "ToyLogger.h"
+#include "ImagePyramid.h"
+#include "Frame.h"
 #include "MemoryPointerPool.h"
 
 namespace toy {
@@ -16,7 +18,7 @@ void MemoryPointerPool::clear() {
   }
 }
 
-Frame* MemoryPointerPool::createFramePtr(ImagePyramid* in) {
+Frame* MemoryPointerPool::createFrame(ImagePyramid* in) {
   Frame* out = new Frame(in);
   out->mId   = mFrameId++;
   mFrames.insert(out);
@@ -31,6 +33,11 @@ Frame* MemoryPointerPool::clone<Frame>(Frame* in) {
 }
 
 template <>
+void MemoryPointerPool::release<db::ImagePyramid>(db::ImagePyramid* in) {
+  delete in;
+}
+
+template <>
 void MemoryPointerPool::release<Frame>(Frame* in) {
   if (mFrames.unsafe_erase(in)) { delete in; }
   else { ToyLogE("YOU ARE DELETING NON CREATED FRAME!!!!!!"); }
@@ -38,6 +45,7 @@ void MemoryPointerPool::release<Frame>(Frame* in) {
 
 template Frame* MemoryPointerPool::clone<Frame>(Frame* in);
 
+template void MemoryPointerPool::release<db::ImagePyramid>(db::ImagePyramid* in);
 template void MemoryPointerPool::release<Frame>(Frame* in);
 
 }  //namespace db

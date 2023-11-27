@@ -28,16 +28,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   ${SUBDIRECTORIES}
 )
 
-set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../lib)
-
-option(LINK_WITH_EIGEN "link with eigen" ON)
-option(LINK_WITH_TBB "link with tbb" ON)
-option(LINK_WITH_SPDLOG "link with SPDLOG" ON)
-option(LINK_WITH_JSON "link with JSON" ON)
-option(LINK_WITH_OPENCV34 "link with cv34" ON)
-option(LINK_WITH_CERES "link with cv34" ON)
-
-add_subdirectory(${EXTERNAL_LIB_DIR} ${CMAKE_BINARY_DIR}/lib)
 target_link_libraries(${PROJECT_NAME} PUBLIC libs)
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})

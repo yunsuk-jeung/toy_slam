@@ -68,7 +68,7 @@ db::Frame* FrameTracker::getLatestFrame() {
   db::ImagePyramid* pyramids = getLatestInput();
   if (!pyramids) return nullptr;
 
-  db::Frame* currFrame = db::MemoryPointerPool::createFramePtr(pyramids);
+  db::Frame* currFrame = db::MemoryPointerPool::createFrame(pyramids);
 
   Camera* cam0 = CameraFactory::createCamera(&Config::Vio::camInfo0);
   Camera* cam1 = CameraFactory::createCamera(&Config::Vio::camInfo1);

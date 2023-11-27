@@ -1,9 +1,10 @@
 #include "ToyLogger.h"
 #include "LocalMap.h"
 #include "LocalTracker.h"
+
 namespace toy {
 LocalTracker::LocalTracker()
-  : mStatus{nullptr}
+  : mStatus{Status::NONE}
   , mLocalMap{nullptr} {}
 
 LocalTracker::~LocalTracker() {
@@ -12,7 +13,7 @@ LocalTracker::~LocalTracker() {
 }
 
 void LocalTracker::prepare() {
-  mLocalMap = new LocalMap();
+  mLocalMap = new db::LocalMap();
   mStatus   = Status::INITIALIZING;
 }
 

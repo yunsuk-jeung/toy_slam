@@ -1,16 +1,15 @@
 #pragma once
 #include <tbb/concurrent_set.h>
-#include "Frame.h"
 
 namespace toy {
 namespace db {
-
+class Frame;
 class MemoryPointerPool {
 public:
   static void ready();
   static void clear();
 
-  static Frame* createFramePtr(ImagePyramid* in);
+  static Frame* createFrame(ImagePyramid* in);
 
   template <typename T>
   static T* clone(T* in);

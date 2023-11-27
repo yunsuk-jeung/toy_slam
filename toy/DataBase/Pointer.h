@@ -10,6 +10,9 @@ public:
   Pointer(T* in) { mPointer = in; }
   virtual ~Pointer() = default;
 
+  T*       operator->() { return mPointer; }
+  const T* operator->() const { return mPointer; }
+
   T*           get() { return mPointer; }
   const T*     get() const { return mPointer; }
   virtual void release() = 0;

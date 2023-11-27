@@ -42,6 +42,7 @@ void LocalTracker::process() {
 bool LocalTracker::initialize(db::Frame* currFrame) {
   db::FramePtr framePtr(currFrame);
   mLocalMap->addFramePtr(framePtr);
+
   return true;
 }
 

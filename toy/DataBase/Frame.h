@@ -37,6 +37,7 @@ protected:
   std::array<Eigen::Vector6d, 2> mLbcs;
 
 public:
+  const int     Id() const { return mId; }
   ImagePyramid* getImagePyramid(int i) { return mImagePyramids[i]; }
 
   Camera* getCamera(int i) { return mCameras[i]; }

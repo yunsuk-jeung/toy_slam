@@ -1,5 +1,7 @@
 #pragma once
+#include <unordered_map>
 #include "Map.h"
+#include "MapPoint.h"
 #include "Frame.h"
 
 namespace toy {
@@ -18,7 +20,8 @@ protected:
   void createMapPoints();
 
 protected:
-  std::vector<FramePtr> mFramePtrs;
+  std::vector<FramePtr>                mFramePtrs;
+  std::unordered_map<int, MapPointPtr> mMapPointPtrs;
 
 public:
   std::vector<FramePtr>& getFrameShells() { return mFramePtrs; }

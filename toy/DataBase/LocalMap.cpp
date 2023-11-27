@@ -1,6 +1,7 @@
 #include "config.h"
 #include "ToyLogger.h"
-#include "Frame.h"
+#include "Feature.h"
+#include "MemoryPointerPool.h"
 #include "LocalMap.h"
 namespace toy {
 namespace db {
@@ -17,6 +18,17 @@ void LocalMap::reset() {
 
 void LocalMap::addFramePtr(FramePtr& in) {
   mFramePtrs.push_back(in);
+  auto& keyPoints0 = in->getFeature(0)->getKeypoints();
+
+  auto size = keyPoints0.size();
+
+  for (size_t i = 0; i < size; ++i) {
+    if (mMapPointPtrs.find(keyPoints0.mIds[i]) != mMapPointPtrs.end()) continue;
+    MapPoint*   mp = MemoryPointerPool::createMapPoint();
+    MapPointPtr mpPtr(mp);
+
+    mMapPointPtrs.insert({mp->Id(), mpPtr});
+  }
 }
 
 Frame* LocalMap::getLatestFrame() {

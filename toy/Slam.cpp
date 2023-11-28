@@ -1,7 +1,6 @@
 #include "config.h"
 #include "ToyLogger.h"
 #include "ImagePyramid.h"
-#include "MemoryPointerPool.h"
 #include "Frame.h"
 #include "Map.h"
 #include "VioCore.h"
@@ -18,8 +17,6 @@ SLAM::SLAM()
 SLAM::~SLAM() {
   delete mVioCore;
   mVioCore = nullptr;
-
-  db::MemoryPointerPool::clear();
 };
 
 void SLAM::setSensorInfo(CameraInfo* cam0, CameraInfo* cam1, ImuInfo* imu) {
@@ -30,15 +27,17 @@ void SLAM::setSensorInfo(CameraInfo* cam0, CameraInfo* cam1, ImuInfo* imu) {
 }
 
 void SLAM::prepare(const std::string& configFile) {
-  db::MemoryPointerPool::ready();
   Config::parseConfig(configFile);
   mVioCore = new VioCore();
   mVioCore->prepare();
 }
 
 void SLAM::setNewImage(ImageData& imageData0, ImageData& imageData1) {
-  db::ImagePyramid* pyramids = new db::ImagePyramid[2]{imageData0, imageData1};
-  mVioCore->insert(pyramids);
+  db::ImagePyramid* imagePyramid0{new db::ImagePyramid(imageData0)};
+  db::ImagePyramid* imagePyramid1{new db::ImagePyramid(imageData1)};
+
+  db::ImagePyramidSet::Ptr set{new db::ImagePyramidSet(imagePyramid0, imagePyramid1)};
+  mVioCore->insert(set);
 
   if (Config::sync) mVioCore->processSync();
 }

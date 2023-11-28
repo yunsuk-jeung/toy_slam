@@ -14,7 +14,7 @@ VioCore::~VioCore() {
   mFrameTracker = nullptr;
 }
 
-void VioCore::insert(db::ImagePyramid* imagePyramid) {
+void VioCore::insert(db::ImagePyramidSet::Ptr imagePyramid) {
   mFrameTracker->insert(imagePyramid);
 }
 

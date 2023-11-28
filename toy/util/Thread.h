@@ -1,7 +1,6 @@
 #pragma once
-
+#include <memory>
 #include <tbb/concurrent_queue.h>
-#include "MemoryPointerPool.h"
 
 namespace toy {
 template <typename IN_, typename OUT_>
@@ -10,23 +9,26 @@ public:
   Thread() {}
   virtual ~Thread() {}
 
-  tbb::concurrent_queue<IN_*>& getInQueue() { return mInQueue; }
-  void registerOutQueue(tbb::concurrent_queue<OUT_*>* out) { mOutQueue = out; }
-  void insert(IN_* in) { mInQueue.push(in); }
+  using IPtr = std::shared_ptr<IN_>;
+  using OPtr = std::shared_ptr<OUT_>;
+
+  tbb::concurrent_queue<IPtr>& getInQueue() { return mInQueue; }
+  void registerOutQueue(tbb::concurrent_queue<OPtr>* out) { mOutQueue = out; }
+  void insert(IPtr in) { mInQueue.push(in); }
 
 protected:
-  IN_* getLatestInput() {
-    IN_* out;
+  IPtr getLatestInput() {
+    IPtr out;
     while (mInQueue.try_pop(out)) {
-      if (!mInQueue.empty()) { db::MemoryPointerPool::release<IN_>(out); }
-      else { return out; }
+      if (!mInQueue.empty()) continue;
+      return out;
     }
     return nullptr;
   }
 
 protected:
-  tbb::concurrent_queue<IN_*>   mInQueue;
-  tbb::concurrent_queue<OUT_*>* mOutQueue;
+  tbb::concurrent_queue<IPtr>   mInQueue;
+  tbb::concurrent_queue<OPtr>* mOutQueue;
 };
 
 }  //namespace toy

@@ -2,11 +2,13 @@
 #include <vector>
 #include <Eigen/Dense>
 #include <opencv2/core/core.hpp>
+#include "macros.h"
 #include "types.h"
 namespace toy {
 class Camera {
 public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  TOY_SMART_PTR(Camera);
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
   Camera(CameraInfo* camInfo);
   Camera(Camera* src);

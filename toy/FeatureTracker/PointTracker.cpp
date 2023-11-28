@@ -12,7 +12,6 @@ PointTracker::PointTracker(std::string type)
   : mType{type} {
   if (mType == "Fast.OpticalflowLK") {
     mFeature2D = cv::FastFeatureDetector::create();
-    std::cout << std::endl;
   }
 }
 

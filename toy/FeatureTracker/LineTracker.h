@@ -3,7 +3,6 @@
 #include <vector>
 
 namespace toy {
-class Camera;
 namespace db {
 class Feature;
 class Frame;

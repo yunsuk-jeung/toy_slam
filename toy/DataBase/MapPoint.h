@@ -1,36 +1,30 @@
 #pragma once
+#include <memory>
 #include <unordered_map>
-#include "Frame.h"
+#include <Eigen/Dense>
+#include "macros.h"
 
 namespace toy {
 namespace db {
-
+class Frame;
 class MapPoint {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  friend class MemoryPointerPool;
+  TOY_SMART_PTR(MapPoint);
+  TOY_DELETE_COPY_CONSTRUCTORS(MapPoint);
+  TOY_DELETE_MOVE_CONSTRUCTORS(MapPoint);
+
+  MapPoint();
 
 protected:
-  MapPoint() = default;
 
 protected:
-  int                                   mId;
-  std::unordered_map<int, db::FramePtr> mFramePtrs;
+  int                                               mId;
+  std::unordered_map<int, std::weak_ptr<db::Frame>> mFrames;
 
 public:
+  static int globalId;
   const int Id() { return mId; }
-};
-
-class MapPointPtr : public Pointer<MapPoint> {
-public:
-  MapPointPtr() = default;
-
-  explicit MapPointPtr(MapPoint*& mp)
-    : Pointer<MapPoint>(mp) {}
-
-  ~MapPointPtr() = default;
-
-  void release() override;
 };
 
 }  //namespace db

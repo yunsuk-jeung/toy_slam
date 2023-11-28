@@ -7,6 +7,7 @@ class PinholeRadialTangential : public Camera {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+  PinholeRadialTangential() = default;
   PinholeRadialTangential(CameraInfo* cameraInfo)
     : Camera(cameraInfo) {
     mK = (cv::Mat_<double>(3, 3) << mFx, 0.0, mCx, 0.0, mFy, mCy, 0.0, 0.0, 1.0);

@@ -1,44 +1,52 @@
-#include "ToyLogger.h"
+#include "Frame.h"
 #include "Camera.h"
 #include "Feature.h"
 #include "ImagePyramid.h"
-#include "MemoryPointerPool.h"
-#include "Frame.h"
+#include "ToyLogger.h"
+
 namespace toy {
 namespace db {
-
-Frame::Frame(ImagePyramid* imagePyramid)
-  : mId{-1}
-  , mImagePyramids{&imagePyramid[0], &imagePyramid[1]}
+int Frame::globalId = 0;
+Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
+  : mId{globalId++}
+  , mImagePyramids{std::move(set->mImagePyramid0), std::move(set->mImagePyramid1)}
   , mCameras{nullptr, nullptr}
-  , mFeatures{new Feature(), new Feature()}
+  , mFeatures{Feature::Uni(new Feature()), Feature::Uni(new Feature())}
   , mLbcs{Eigen::Vector6d(), Eigen::Vector6d()} {}
 
-Frame::Frame(const Frame* in) {
-  this->mId = in->mId;
+Frame::Frame(Frame* src) {
+  this->mId = src->mId;
 
-  db::ImagePyramid* pyramids = new db::ImagePyramid[2]{in->mImagePyramids[0],
-                                                       in->mImagePyramids[1]};
+  db::ImagePyramid* pyramid0 = src->mImagePyramids[0]->clone();
+  db::ImagePyramid* pyramid1 = src->mImagePyramids[1]->clone();
+  this->mImagePyramids[0]    = std::unique_ptr<db::ImagePyramid>(pyramid0);
+  this->mImagePyramids[1]    = std::unique_ptr<db::ImagePyramid>(pyramid1);
 
-  this->mImagePyramids[0] = &pyramids[0];
-  this->mImagePyramids[1] = &pyramids[1];
+  Camera* cam0      = src->mCameras[0]->clone();
+  Camera* cam1      = src->mCameras[1]->clone();
+  this->mCameras[0] = std::unique_ptr<Camera>(cam0);
+  this->mCameras[1] = std::unique_ptr<Camera>(cam1);
 
-  mCameras[0] = in->mCameras[0]->clone();
-  mCameras[1] = in->mCameras[1]->clone();
-
-  mFeatures[0] = new Feature(in->mFeatures[0]);
-  mFeatures[1] = new Feature(in->mFeatures[1]);
+  auto* feature0     = src->mFeatures[0]->clone();
+  auto* feature1     = src->mFeatures[1]->clone();
+  this->mFeatures[0] = std::unique_ptr<Feature>(feature0);
+  this->mFeatures[1] = std::unique_ptr<Feature>(feature1);
 }
 
 Frame::~Frame() {
-  delete[] mImagePyramids[0];
-  mImagePyramids.fill(nullptr);
+  for (ImagePyramid::Uni& ptr : mImagePyramids) { ptr.reset(); }
+  for (Camera::Uni& ptr : mCameras) { ptr.reset(); }
+  for (Feature::Uni& ptr : mFeatures) { ptr.reset(); }
+}
 
-  for (auto* ptr : mCameras) { delete ptr; }
-  mCameras.fill(nullptr);
+Frame::Ptr Frame::clonePtr() {
+  Frame::Ptr out(new Frame(this));
+  return out;
+}
 
-  for (auto* ptr : mFeatures) { delete ptr; }
-  mFeatures.fill(nullptr);
+void Frame::setCameras(Camera* cam0, Camera* cam1) {
+  mCameras[0] = std::unique_ptr<Camera>(cam0);
+  mCameras[1] = std::unique_ptr<Camera>(cam1);
 }
 
 void Frame::setLbc(float* pfbc0, float* pfbc1) {
@@ -61,14 +69,6 @@ void Frame::setLbc(float* pfbc0, float* pfbc1) {
   Sophus::SO3d SObc1 = Sophus::SO3d(Qbc1);
   mLbcs[1].head(3)   = SObc1.log();
   mLbcs[1].tail(3)   = Tbc1;
-}
-
-Frame* Frame::clone() {
-  return MemoryPointerPool::clone<Frame>(this);
-}
-
-void FramePtr::release() {
-  MemoryPointerPool::release<Frame>(*mPointer);
 }
 
 }  //namespace db

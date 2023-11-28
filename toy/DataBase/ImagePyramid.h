@@ -11,7 +11,7 @@ class ImagePyramid {
 public:
   ;
   TOY_SMART_PTR(ImagePyramid);
-  
+
   ImagePyramid() = default;
   ImagePyramid(const ImageData&);
 
@@ -48,8 +48,8 @@ public:
 
   using Ptr = std::shared_ptr<ImagePyramidSet>;
 
-  ImagePyramid::UPtr mImagePyramid0;
-  ImagePyramid::UPtr mImagePyramid1;
+  ImagePyramid::Uni mImagePyramid0;
+  ImagePyramid::Uni mImagePyramid1;
 };
 
 };  //namespace db

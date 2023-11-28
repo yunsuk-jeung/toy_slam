@@ -11,7 +11,7 @@ Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   : mId{globalId++}
   , mImagePyramids{std::move(set->mImagePyramid0), std::move(set->mImagePyramid1)}
   , mCameras{nullptr, nullptr}
-  , mFeatures{Feature::UPtr(new Feature()), Feature::UPtr(new Feature())}
+  , mFeatures{Feature::Uni(new Feature()), Feature::Uni(new Feature())}
   , mLbcs{Eigen::Vector6d(), Eigen::Vector6d()} {}
 
 Frame::Frame(Frame* src) {
@@ -34,9 +34,9 @@ Frame::Frame(Frame* src) {
 }
 
 Frame::~Frame() {
-  for (ImagePyramid::UPtr& ptr : mImagePyramids) { ptr.reset(); }
-  for (Camera::UPtr& ptr : mCameras) { ptr.reset(); }
-  for (Feature::UPtr& ptr : mFeatures) { ptr.reset(); }
+  for (ImagePyramid::Uni& ptr : mImagePyramids) { ptr.reset(); }
+  for (Camera::Uni& ptr : mCameras) { ptr.reset(); }
+  for (Feature::Uni& ptr : mFeatures) { ptr.reset(); }
 }
 
 Frame* Frame::clone() {

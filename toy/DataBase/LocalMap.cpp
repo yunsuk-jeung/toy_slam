@@ -16,7 +16,7 @@ void LocalMap::reset() {
   mMapPoints.clear();
 }
 
-void LocalMap::addFrame(Frame::Ptr frame) {
+void LocalMap::addFrame(std::shared_ptr<Frame> frame) {
   mFrames.insert({frame->Id(), frame});
   auto& keyPoints0 = frame->getFeature(0)->getKeypoints();
 

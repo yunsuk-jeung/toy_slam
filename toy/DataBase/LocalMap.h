@@ -18,7 +18,6 @@ public:
   std::shared_ptr<Frame> getLatestFrame();
 
 protected:
-  void createMapPoints();
 
 protected:
   //in the case of not using sliding window, map is used for frames

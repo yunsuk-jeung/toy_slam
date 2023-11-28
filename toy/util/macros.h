@@ -8,10 +8,10 @@
 #define TOY_SMART_PTR(TypeName)                                                          \
   using Ptr   = std::shared_ptr<TypeName>;                                               \
   using CPtr  = std::shared_ptr<const TypeName>;                                         \
-  using UPtr  = std::unique_ptr<TypeName>;                                               \
-  using UCPtr = std::unique_ptr<const TypeName>;                                         \
-  using WPtr  = std::weak_ptr<TypeName>;                                                 \
-  using WCPtr = std::weak_ptr<const TypeName>
+  using Uni   = std::unique_ptr<TypeName>;                                               \
+  using Cuni  = std::unique_ptr<const TypeName>;                                         \
+  using Weak  = std::weak_ptr<TypeName>;                                                 \
+  using CWeak = std::weak_ptr<const TypeName>
 
 #define TOY_DELETE_COPY_CONSTRUCTORS(TypeName)                                           \
   TypeName(const TypeName&)       = delete;                                              \

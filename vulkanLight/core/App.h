@@ -3,9 +3,7 @@
 #include <memory>
 #include <vulkan/vulkan.hpp>
 
-#include "RenderContext.h"
-#include "Buffer.h"
-#include "Uniform.h"
+#include "types.h"
 #include "ShaderTypes.h"
 
 namespace vkl {
@@ -16,7 +14,6 @@ class Window;
 class Device;
 class RenderContext;
 class GraphicsCamera;
-class Uniform;
 class App {
 public:
   App();
@@ -69,9 +66,9 @@ protected:
 
   vk::DescriptorPool vkDescPool = VK_NULL_HANDLE;
 
-  vk::Fence          currCmdFence     = VK_NULL_HANDLE;
-  SwapchainSemaphore currScSemaphore  = {VK_NULL_HANDLE, VK_NULL_HANDLE};
-  uint32_t           currSwapchainIdx = 0;
+  vk::Fence          currCmdFence    = VK_NULL_HANDLE;
+  BufferingSemaphore currScSemaphore = {VK_NULL_HANDLE, VK_NULL_HANDLE};
+  uint32_t           currScIdx       = 0;
 
   std::unique_ptr<GUI>           gui           = nullptr;
   std::unique_ptr<InputCallback> inputCallback = nullptr;

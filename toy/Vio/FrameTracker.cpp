@@ -57,8 +57,7 @@ void FrameTracker::process() {
   }
   }
 
-  db::Frame*     n = currFrame->clone();
-  db::Frame::Ptr out(n);
+  db::Frame::Ptr out = currFrame->clonePtr();
 
   mOutQueue->push(out);
   mPrevFrame = currFrame;
@@ -70,7 +69,7 @@ db::Frame::Ptr FrameTracker::getLatestFrame() {
 
   Camera* cam0 = CameraFactory::createCamera(&Config::Vio::camInfo0);
   Camera* cam1 = CameraFactory::createCamera(&Config::Vio::camInfo1);
-  
+
   db::Frame::Ptr currFrame(new db::Frame(set));
   currFrame->setCameras(cam0, cam1);
   currFrame->setLbc(Config::Vio::camInfo0.Mbc.data(), Config::Vio::camInfo1.Mbc.data());

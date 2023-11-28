@@ -1,0 +1,29 @@
+cmake_minimum_required(VERSION 3.18.1)
+
+project(vulkanLight C CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+find_package(Vulkan REQUIRED)
+
+file(GLOB_RECURSE VKL_SRC
+  ${CMAKE_CURRENT_SOURCE_DIR}/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+)
+
+add_library(${PROJECT_NAME} STATIC ${VKL_SRC})
+
+file(GLOB SUBDIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} */)
+
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${SUBDIRECTORIES}
+)
+target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan libs graphicslib)
+
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})

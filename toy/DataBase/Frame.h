@@ -23,7 +23,7 @@ public:
   Frame(std::shared_ptr<ImagePyramidSet> set);
   ~Frame();
 
-  Frame* clone();
+  Frame::Ptr clonePtr();
 
   void setCameras(Camera* cam0, Camera* cam1);
   void setLbc(float*, float*);

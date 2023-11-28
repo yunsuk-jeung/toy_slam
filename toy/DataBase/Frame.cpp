@@ -15,15 +15,15 @@ Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   , mLbcs{Eigen::Vector6d(), Eigen::Vector6d()} {}
 
 Frame::Frame(Frame* src) {
-  this->mId    = src->mId;
-  
+  this->mId = src->mId;
+
   db::ImagePyramid* pyramid0 = src->mImagePyramids[0]->clone();
   db::ImagePyramid* pyramid1 = src->mImagePyramids[1]->clone();
-  this->mImagePyramids[0] = std::unique_ptr<db::ImagePyramid>(pyramid0);
-  this->mImagePyramids[1] = std::unique_ptr<db::ImagePyramid>(pyramid1);
+  this->mImagePyramids[0]    = std::unique_ptr<db::ImagePyramid>(pyramid0);
+  this->mImagePyramids[1]    = std::unique_ptr<db::ImagePyramid>(pyramid1);
 
-  Camera* cam0 = src->mCameras[0]->clone();
-  Camera* cam1 = src->mCameras[1]->clone();
+  Camera* cam0      = src->mCameras[0]->clone();
+  Camera* cam1      = src->mCameras[1]->clone();
   this->mCameras[0] = std::unique_ptr<Camera>(cam0);
   this->mCameras[1] = std::unique_ptr<Camera>(cam1);
 
@@ -39,8 +39,8 @@ Frame::~Frame() {
   for (Feature::Uni& ptr : mFeatures) { ptr.reset(); }
 }
 
-Frame* Frame::clone() {
-  Frame* out = new Frame(this);
+Frame::Ptr Frame::clonePtr() {
+  Frame::Ptr out(new Frame(this));
   return out;
 }
 

@@ -1,11 +1,11 @@
 #pragma once
 #include <array>
 #include "Thread.h"
-#include "Frame.h"
 
 namespace toy {
 namespace db {
-LocalMap;
+class LocalMap;
+class Frame;
 }
 
 class FeatureTracker;
@@ -23,7 +23,7 @@ private:
   using Thread<db::Frame, void>::getLatestInput;
   using Thread<db::Frame, void>::mInQueue;
 
-  bool initialize(db::Frame*);
+  bool initialize(std::shared_ptr<db::Frame>);
 
 private:
   enum class Status { NONE = -1, INITIALIZING = 0, TRACKING = 1 };

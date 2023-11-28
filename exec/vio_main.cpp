@@ -10,8 +10,9 @@
 io::Sensor*     sensor           = nullptr;
 io::DataReader* dataReader       = nullptr;
 std::string     dataPath         = "D:/dataset/EUROC/MH_01_easy";
-std::string     sensorConfigFile = "D:/workspaceD/toy_vio/configs/euroc_sensor.json";
-std::string     slamConfigFile   = "D:/workspaceD/toy_vio/configs/VioOnly.json";
+std::string     sensorConfigFile = "F:/transfer/toy_slam/configs/euroc_sensor.json";
+std::string     slamConfigFile   = "F:/transfer/toy_slam/configs/VioOnly.json";
+
 void setupSensor() {
   sensor = io::SensorFactory::createSensor(io::SensorFactory::SensorType::SIMULATOR);
 

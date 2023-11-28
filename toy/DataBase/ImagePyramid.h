@@ -3,17 +3,25 @@
 #include <memory>
 #include <opencv2/core.hpp>
 #include "types.h"
-#include "Pointer.h"
+#include "macros.h"
+
 namespace toy {
 namespace db {
 class ImagePyramid {
 public:
-  ImagePyramid() = delete;
+  ;
+  TOY_SMART_PTR(ImagePyramid);
+  
+  ImagePyramid() = default;
   ImagePyramid(const ImageData&);
-  ImagePyramid(const ImagePyramid* src);
+
   ~ImagePyramid();
 
+  //static ImagePyramid* clone(ImagePyramid* src);
+  ImagePyramid* clone();
+
 protected:
+  ImagePyramid(const ImagePyramid* src);
   void        createImagePyrmid();
   static void convertToGray(cv::Mat& src, cv::Mat& dst);
 
@@ -29,6 +37,19 @@ public:
   int                   type() { return mType; }
   cv::Mat&              getOrigin() { return mOrigin; }
   std::vector<cv::Mat>& getPyramids() { return mPyramids; }
+};
+
+class ImagePyramidSet {
+public:
+  ImagePyramidSet(ImagePyramid* i0, ImagePyramid* i1) {
+    mImagePyramid0 = std::unique_ptr<ImagePyramid>(i0);
+    mImagePyramid1 = std::unique_ptr<ImagePyramid>(i1);
+  }
+
+  using Ptr = std::shared_ptr<ImagePyramidSet>;
+
+  ImagePyramid::UPtr mImagePyramid0;
+  ImagePyramid::UPtr mImagePyramid1;
 };
 
 };  //namespace db

@@ -1,9 +1,10 @@
 #include "MapPoint.h"
-#include "MemoryPointerPool.h"
 namespace toy {
 namespace db {
-void MapPointPtr::release() {
-  MemoryPointerPool::release<MapPoint>(*mPointer);
+int MapPoint::globalId = 0;
+
+MapPoint::MapPoint() {
+  mId = globalId++;
 }
 
 }  //namespace db

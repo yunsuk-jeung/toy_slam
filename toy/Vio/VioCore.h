@@ -1,6 +1,9 @@
+#pragma once
+#include <memory>
+
 namespace toy {
 namespace db {
-ImagePyramid;
+class ImagePyramidSet;
 }  //namespace db
 class FrameTracker;
 class LocalTracker;
@@ -8,7 +11,8 @@ class VioCore {
 public:
   VioCore();
   ~VioCore();
-  void insert(db::ImagePyramid* imagePyramids);
+
+  void insert(std::shared_ptr<db::ImagePyramidSet> imagePyramids);
   void prepare();
 
   void processSync();

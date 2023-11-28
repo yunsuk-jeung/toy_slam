@@ -49,6 +49,11 @@ ImagePyramid::~ImagePyramid() {
   mPyramids.clear();
 }
 
+ImagePyramid* ImagePyramid::clone() {
+  ImagePyramid* out = new ImagePyramid(this);
+  return out;
+}
+
 void ImagePyramid::createImagePyrmid() {
   const cv::Point2i patch(Config::Vio::patchSize, Config::Vio::patchSize);
   const int&        level = Config::Vio::pyramidLevel;

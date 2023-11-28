@@ -5,7 +5,6 @@
 #include "Camera.h"
 #include "ImagePyramid.h"
 #include "Frame.h"
-#include "MemoryPointerPool.h"
 #include "LocalMap.h"
 #include "FeatureTracker.h"
 #include "VioSolver.h"
@@ -35,11 +34,11 @@ void FrameTracker::prepare() {
 }
 
 void FrameTracker::process() {
-  db::Frame* currFrame = getLatestFrame();
+  db::Frame::Ptr currFrame = getLatestFrame();
   if (!currFrame) return;
 
   bool OK{false};
-  OK = mFeatureTracker->process(mPrevFrame, currFrame);
+  OK = mFeatureTracker->process(mPrevFrame.get(), currFrame.get());
 
   if (!OK) { ToyLogD("Do something like reject frame .. ") };
 
@@ -53,26 +52,26 @@ void FrameTracker::process() {
   }
   case Status::TRACKING: {
     if (Config::Vio::frameTrackerSolvePose) { trackPose(); }
-    db::MemoryPointerPool::release(mPrevFrame);
+    //db::MemoryPointerPool::release(mPrevFrame);
     break;
   }
   }
 
-  db::Frame* out = currFrame->clone();
-  mOutQueue->push(out);
+  db::Frame*     n = currFrame->clone();
+  db::Frame::Ptr out(n);
 
+  mOutQueue->push(out);
   mPrevFrame = currFrame;
 }
 
-db::Frame* FrameTracker::getLatestFrame() {
-  db::ImagePyramid* pyramids = getLatestInput();
-  if (!pyramids) return nullptr;
-
-  db::Frame* currFrame = db::MemoryPointerPool::createFrame(pyramids);
+db::Frame::Ptr FrameTracker::getLatestFrame() {
+  db::ImagePyramidSet::Ptr set = getLatestInput();
+  if (!set) return nullptr;
 
   Camera* cam0 = CameraFactory::createCamera(&Config::Vio::camInfo0);
   Camera* cam1 = CameraFactory::createCamera(&Config::Vio::camInfo1);
-
+  
+  db::Frame::Ptr currFrame(new db::Frame(set));
   currFrame->setCameras(cam0, cam1);
   currFrame->setLbc(Config::Vio::camInfo0.Mbc.data(), Config::Vio::camInfo1.Mbc.data());
 

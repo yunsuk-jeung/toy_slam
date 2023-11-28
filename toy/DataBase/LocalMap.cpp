@@ -1,41 +1,38 @@
 #include "config.h"
 #include "ToyLogger.h"
 #include "Feature.h"
-#include "MemoryPointerPool.h"
+#include "Frame.h"
+#include "MapPoint.h"
 #include "LocalMap.h"
+
 namespace toy {
 namespace db {
-LocalMap::LocalMap() {
-  mFramePtrs.reserve(Config::Vio::mapFrameSize);
-}
+LocalMap::LocalMap() {}
 
 LocalMap::~LocalMap() {}
 
 void LocalMap::reset() {
-  for (auto& framePtr : mFramePtrs) { framePtr.release(); }
-  mFramePtrs.clear();
+  mFrames.clear();
+  mMapPoints.clear();
 }
 
-void LocalMap::addFramePtr(FramePtr& in) {
-  db::Frame* af = in.get();
-
-  mFramePtrs.push_back(in);
-  auto& keyPoints0 = in->getFeature(0)->getKeypoints();
+void LocalMap::addFrame(Frame::Ptr frame) {
+  mFrames.insert({frame->Id(), frame});
+  auto& keyPoints0 = frame->getFeature(0)->getKeypoints();
 
   auto size = keyPoints0.size();
 
   for (size_t i = 0; i < size; ++i) {
-    if (mMapPointPtrs.find(keyPoints0.mIds[i]) != mMapPointPtrs.end()) continue;
-    MapPoint*   mp = MemoryPointerPool::createMapPoint();
-    MapPointPtr mpPtr(mp);
+    if (mMapPoints.find(keyPoints0.mIds[i]) != mMapPoints.end()) continue;
 
-    mMapPointPtrs.insert({mp->Id(), mpPtr});
+    MapPoint::Ptr mp = MapPoint::Ptr(new MapPoint());
+    mMapPoints.insert({mp->Id(), mp});
   }
 }
 
-Frame* LocalMap::getLatestFrame() {
-  if (mFramePtrs.empty()) return nullptr;
-  return mFramePtrs.back().get();
+Frame::Ptr LocalMap::getLatestFrame() {
+  if (mFrames.empty()) return nullptr;
+  return mFrames.rbegin()->second;
 }
 
 }  //namespace db

@@ -1,10 +1,14 @@
 #pragma once
 #include <opencv2/core.hpp>
 #include <Eigen/Dense>
+#include "macros.h"
+
 namespace toy {
 namespace db {
 class Feature {
 public:
+  TOY_SMART_PTR(Feature);
+
   class Keypoints {
   public:
     Keypoints()  = default;
@@ -50,9 +54,14 @@ public:
   Feature()  = default;
   ~Feature() = default;
 
-  Feature(const Feature* src) { this->mKeypoints = src->mKeypoints; }
+  Feature* clone() {
+    Feature* out = new Feature(this);
+    return out;
+  }
 
 protected:
+  Feature(const Feature* src) { this->mKeypoints = src->mKeypoints; }
+
   Keypoints mKeypoints;
 
   //struct Lines {

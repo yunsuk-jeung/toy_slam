@@ -16,6 +16,7 @@ class Window;
 class Device;
 class RenderContext;
 class GraphicsCamera;
+class UniformBuffer;
 class App {
 public:
   App();
@@ -72,8 +73,8 @@ protected:
   vk::DescriptorPool             mVkDescPool;
 
   vk::Fence          mCurrCmdFence;
-  BufferingSemaphore mCurrScSemaphore;
-  uint32_t           mCurrSwapchainIdx;
+  BufferingSemaphore mCurrBufferingSemaphore;
+  uint32_t           mCurrBufferingIdx;
 
   uint32_t                       mLastSubpass;
   std::unique_ptr<GUI>           mGui;
@@ -81,10 +82,7 @@ protected:
 
   //used for camera
   std::unique_ptr<GraphicsCamera> mGraphicsCamera;
-
-  std::vector<Buffer>            mCamUBs;
-  vk::DescriptorSetLayout        mCamDescLayout;
-  std::vector<vk::DescriptorSet> mCamDescSets;
+  std::unique_ptr<UniformBuffer>  mCameraUB;
 
 public:
   Device*        getDevice() { return mDevice.get(); }

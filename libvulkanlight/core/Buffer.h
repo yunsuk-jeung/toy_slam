@@ -1,13 +1,15 @@
 #pragma once
 
-#include <vulkan/vulkan.hpp>
+#include <memory>
 #include <vk_mem_alloc.h>
+#include "Object.h"
 
 namespace vkl {
 
 class Device;
-class Buffer {
+class Buffer : public Object<vk::Buffer> {
 public:
+  USING_SMART_PTR(Buffer);
   Buffer()              = default;
   Buffer(const Buffer&) = delete;
   ~Buffer();
@@ -23,8 +25,7 @@ public:
   explicit Buffer(Buffer&& other) noexcept;
 
   Buffer& operator=(const Buffer&) = delete;
-
-  Buffer& operator=(Buffer&& buffer) noexcept;
+  Buffer& operator=(Buffer&&)      = delete;
 
   void     swap(Buffer& buffer);
   void     clear();
@@ -37,7 +38,6 @@ public:
   void update(uint8_t* data, size_t size, size_t offset);
 
 public:
-  vk::Buffer       vkBuffer;
   vk::DeviceMemory memory;
   vk::DeviceSize   size;
   uint8_t*         mapped_data;

@@ -7,7 +7,7 @@ namespace toy {
 namespace db {
 class Feature {
 public:
-  TOY_SMART_PTR(Feature);
+  USING_SMART_PTR(Feature);
 
   class Keypoints {
   public:

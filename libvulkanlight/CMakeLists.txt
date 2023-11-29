@@ -24,6 +24,7 @@ target_include_directories(${PROJECT_NAME}
 
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${SUBDIRECTORIES}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../common
 )
 target_compile_definitions(
   ${PROJECT_NAME}

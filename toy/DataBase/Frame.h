@@ -16,8 +16,8 @@ class LocalMap;
 class Feature;
 class Frame {
 public:
-  TOY_SMART_PTR(Frame);
-  TOY_DELETE_COPY_CONSTRUCTORS(Frame);
+  USING_SMART_PTR(Frame);
+  DELETE_COPY_CONSTRUCTORS(Frame);
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Frame(std::shared_ptr<ImagePyramidSet> set);

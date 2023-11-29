@@ -11,6 +11,10 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # target_link_libraries(sample_optflow PRIVATE toy::toy)
 # target_link_libraries(sample_optflow PRIVATE io)
 add_executable(sample_vulkan sample_vulkan.cpp)
+target_compile_options(sample_vulkan PUBLIC
+  $<$<CONFIG:Debug>:/MDd>
+  $<$<NOT:$<CONFIG:Debug>>:/MD>
+)
 target_link_libraries(sample_vulkan PRIVATE libs vulkanLight::vulkanLight)
 
 # target_link_libraries(sample_optflow PRIVATE io)

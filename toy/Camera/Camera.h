@@ -7,7 +7,7 @@
 namespace toy {
 class Camera {
 public:
-  TOY_SMART_PTR(Camera);
+  USING_SMART_PTR(Camera);
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
   Camera(CameraInfo* camInfo);

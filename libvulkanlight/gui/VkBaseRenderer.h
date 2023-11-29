@@ -2,6 +2,7 @@
 
 #include <stack>
 #include <Eigen/Dense>
+#include "vkltypes.h"
 #include "VkShaderUtil.h"
 
 namespace vkl {
@@ -51,17 +52,10 @@ protected:
 public:
 
 protected:
-  std::string name{"Basic Renderer"};
-
-  enum class ShaderSourceType {
-    STRING_FILE,
-    STRING,
-    SPV_FILE,
-    SPV,
-  } shaderSrcType;
-
-  std::string vertShaderSource{"Please set vert shader Path"};
-  std::string fragShaderSource{"Please set frag shader Path"};
+  std::string      name{"Basic Renderer"};
+  ShaderSourceType shaderSrcType;
+  std::string      vertShaderSource{"Please set vert shader Path"};
+  std::string      fragShaderSource{"Please set frag shader Path"};
 
   Device*        device        = nullptr;
   RenderContext* renderContext = nullptr;

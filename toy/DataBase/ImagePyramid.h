@@ -10,7 +10,7 @@ namespace db {
 class ImagePyramid {
 public:
   ;
-  TOY_SMART_PTR(ImagePyramid);
+  USING_SMART_PTR(ImagePyramid);
 
   ImagePyramid() = default;
   ImagePyramid(const ImageData&);

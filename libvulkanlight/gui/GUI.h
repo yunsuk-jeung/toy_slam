@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vulkan/vulkan.hpp>
-#include "Buffer.h"
 #include "Image.h"
 #include "VkBaseRenderer.h"
 namespace vkl {
@@ -10,6 +9,7 @@ class Device;
 class RenderContext;
 class Window;
 class GraphicsCamera;
+class Buffer;
 class GUI : public VkBaseRenderer {
 public:
   GUI();
@@ -49,15 +49,15 @@ public:
   std::vector<InputCallback*> inputCallbacks;
 
   //used for imgui
-  std::vector<size_t>     prevVBSizes;
-  std::vector<size_t>     prevIBSizes;
-  std::vector<Buffer>     VBs;
-  std::vector<Buffer>     IBs;
-  Image                   fontImage;
-  vk::Sampler             fontSampler      = VK_NULL_HANDLE;
-  vk::DescriptorSet       fontDescSet      = VK_NULL_HANDLE;
-  vk::DescriptorSetLayout texDescSetLayout = VK_NULL_HANDLE;
-  vk::PushConstantRange   pushConstants;
+  std::vector<size_t>                  prevVBSizes;
+  std::vector<size_t>                  prevIBSizes;
+  std::vector<std::unique_ptr<Buffer>> VBs;
+  std::vector<std::unique_ptr<Buffer>> IBs;
+  Image                                fontImage;
+  vk::Sampler                          fontSampler      = VK_NULL_HANDLE;
+  vk::DescriptorSet                    fontDescSet      = VK_NULL_HANDLE;
+  vk::DescriptorSetLayout              texDescSetLayout = VK_NULL_HANDLE;
+  vk::PushConstantRange                pushConstants;
 
   vk::CommandBuffer guiCmdBuffer = VK_NULL_HANDLE;
 };

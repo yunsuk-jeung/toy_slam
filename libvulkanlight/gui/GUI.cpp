@@ -5,7 +5,6 @@
 #include "RenderContext.h"
 #include "Buffer.h"
 #include "InputCallback.h"
-
 #include "window/Window.h"
 #include "Utils.h"
 #include "VkShaderUtil.h"
@@ -72,15 +71,15 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
   cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, vkPipeline);
   //Bind Vertex And Index Buffer:
 
-  auto& VBO = VBs[idx];
-  auto& IB  = IBs[idx];
+  auto& VB = VBs[idx];
+  auto& IB = IBs[idx];
 
   auto indexType = sizeof(ImDrawIdx) == 2 ? vk::IndexType::eUint16
                                           : vk::IndexType::eUint32;
 
   if (dd->TotalVtxCount > 0) {
-    cmd.bindVertexBuffers(0, {VBO.vkBuffer}, {0});
-    cmd.bindIndexBuffer(IB.vkBuffer, 0, indexType);
+    cmd.bindVertexBuffers(0, {VB->getVkObject()}, {0});
+    cmd.bindIndexBuffer(IB->getVkObject(), 0, indexType);
   }
 
   std::vector<float> scale(2);
@@ -167,28 +166,6 @@ void GUI::onRender() {
   ImGui::Begin("test");
   ImGui::Text("fps: %f", io.Framerate);
 
-  //ImGui::Button("WTF");
-  //ImTextureID my_tex_id = io.Fonts->TexID;
-  //float       my_tex_w  = (float)io.Fonts->TexWidth;
-  //float       my_tex_h  = (float)io.Fonts->TexHeight;
-  //{
-  //  static bool use_text_color_for_tint = false;
-  //  //ImGui::Checkbox("Use Text Color for Tint", &use_text_color_for_tint);
-  //  //ImGui::Text("%.0fx%.0f", my_tex_w, my_tex_h);
-  //  ImVec2 pos      = ImGui::GetCursorScreenPos();
-  //  ImVec2 uv_min   = ImVec2(0.0f, 0.0f);  //Top-left
-  //  ImVec2 uv_max   = ImVec2(1.0f, 1.0f);  //Lower-right
-  //  ImVec4 tint_col = use_text_color_for_tint ? ImGui::GetStyleColorVec4(ImGuiCol_Text)
-  //                                            : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);  //No
-
-  //ImVec4 border_col = ImGui::GetStyleColorVec4(ImGuiCol_Border);
-  //ImGui::Image(my_tex_id,
-  //             ImVec2(my_tex_w, my_tex_h),
-  //             uv_min,
-  //             uv_max,
-  //             tint_col,
-  //             border_col);
-  //}
   ImGui::End();
   ImGui::Render();
 }
@@ -499,6 +476,9 @@ void GUI::createVkPipeline(vk::RenderPass renderPass) {
 void GUI::createVertexBuffers() {
   auto size = renderContext->getContextImageCount();
   VBs.resize(size);
+
+  for (auto& VB : VBs) { VB = Buffer::Uni(new Buffer); }
+
   prevVBSizes.resize(size, 0);
   prevIBSizes.resize(size, 0);
 }
@@ -506,6 +486,7 @@ void GUI::createVertexBuffers() {
 void GUI::createIndexBuffers() {
   auto size = renderContext->getContextImageCount();
   IBs.resize(size);
+  for (auto& IB : IBs) { IB = Buffer::Uni(new Buffer); }
 }
 
 void GUI::createUniformBuffers() {}
@@ -572,7 +553,7 @@ void GUI::createTextures() {
   region.imageSubresource.layerCount = fontImgViewCI.subresourceRange.layerCount;
   region.imageExtent                 = fontImgCI.extent;
 
-  cmdBuffer.copyBufferToImage(stagingBuffer.vkBuffer,
+  cmdBuffer.copyBufferToImage(stagingBuffer.getVkObject(),
                               fontImage.vkImage,
                               vk::ImageLayout::eTransferDstOptimal,
                               region);
@@ -622,21 +603,21 @@ void GUI::updateImGuiBuffer(uint32_t idx) {
     auto& IB = IBs[idx];
 
     if (VBSize > prevVBSize) {
-      VB = Buffer(device,
-                  VBSize,
-                  vk::BufferUsageFlagBits::eVertexBuffer,
-                  vk::MemoryPropertyFlagBits::eHostVisible,
-                  vk::MemoryPropertyFlagBits::eHostCoherent);
+      VB = Buffer::Uni(new Buffer(device,
+                                  VBSize,
+                                  vk::BufferUsageFlagBits::eVertexBuffer,
+                                  vk::MemoryPropertyFlagBits::eHostVisible,
+                                  vk::MemoryPropertyFlagBits::eHostCoherent));
     }
     if (IBSize > prevIBSize) {
-      IB = Buffer(device,
-                  IBSize,
-                  vk::BufferUsageFlagBits::eIndexBuffer,
-                  vk::MemoryPropertyFlagBits::eHostVisible,
-                  vk::MemoryPropertyFlagBits::eHostCoherent);
+      IB = Buffer::Uni(new Buffer(device,
+                                  IBSize,
+                                  vk::BufferUsageFlagBits::eIndexBuffer,
+                                  vk::MemoryPropertyFlagBits::eHostVisible,
+                                  vk::MemoryPropertyFlagBits::eHostCoherent));
     }
-    uint8_t* pVBO = VB.map();
-    uint8_t* pIBO = IB.map();
+    uint8_t* pVBO = VB->map();
+    uint8_t* pIBO = IB->map();
 
     for (int n = 0; n < dd->CmdListsCount; n++) {
       const ImDrawList* cmd_list = dd->CmdLists[n];
@@ -650,25 +631,13 @@ void GUI::updateImGuiBuffer(uint32_t idx) {
       pIBO += cmd_list->IdxBuffer.Size;
     }
 
-    VB.flush();
-    IB.flush();
-
-    VB.unmap();
-    IB.unmap();
+    VB->flush();
+    IB->flush();
+    VB->unmap();
+    IB->unmap();
 
     prevVBSize = VBSize;
     prevIBSize = IBSize;
   }
 }
-
-//void GUI::createInputCallback() {
-//  inputCallback   = std::make_unique<InputCallback>();
-//  auto mouseClick = [](int type, int x, int y) {
-//    std::cout << type << " " << x << " " << y << std::endl;
-//  };
-//
-//  inputCallback->registerMouseClick(mouseClick);
-//  addInputCallback(inputCallback.get());
-//}
-
 }  //namespace vkl

@@ -18,12 +18,12 @@ vk::Extent2D chooseExtent(vk::Extent2D        request_extent,
   if (current_extent.width == 0xFFFFFFFF) { return request_extent; }
 
   if (request_extent.width < 1 || request_extent.height < 1) {
-    LOGW("(HPPSwapchain) Image extent ({}, {}) not supported. Selecting ({}, "
-         "{}).",
-         request_extent.width,
-         request_extent.height,
-         current_extent.width,
-         current_extent.height);
+    VklLogW("(HPPSwapchain) Image extent ({}, {}) not supported. Selecting ({}, "
+            "{}).",
+            request_extent.width,
+            request_extent.height,
+            current_extent.width,
+            current_extent.height);
     return current_extent;
   }
 
@@ -65,14 +65,15 @@ choosePresentMode(vk::PresentModeKHR                     request_present_mode,
                                                      ? *chosen_present_mode_it
                                                      : vk::PresentModeKHR::eFifo;
 
-    LOGW("(HPPSwapchain) Present mode '{}' not supported. Selecting '{}'.",
-         vk::to_string(request_present_mode),
-         vk::to_string(chosen_present_mode));
+    VklLogW("(HPPSwapchain) Present mode '{}' not supported. Selecting '{}'.",
+            vk::to_string(request_present_mode),
+            vk::to_string(chosen_present_mode));
     return chosen_present_mode;
   }
   else {
     if (log)
-      LOGI("(HPPSwapchain) Present mode selected: {}", to_string(request_present_mode));
+      VklLogI("(HPPSwapchain) Present mode selected: {}",
+              to_string(request_present_mode));
     return request_present_mode;
   }
 }
@@ -107,18 +108,18 @@ chooseSurfaceFormat(const vk::SurfaceFormatKHR               requested_surface_f
                                                           ? *chosen_surface_format_it
                                                           : available_surface_formats[0];
 
-    LOGW("(Swapchain) Surface format ({}) not supported. Selecting ({}).",
-         vk::to_string(requested_surface_format.format) + ", "
-           + vk::to_string(requested_surface_format.colorSpace),
-         vk::to_string(chosen_surface_format.format) + ", "
-           + vk::to_string(chosen_surface_format.colorSpace));
+    VklLogW("(Swapchain) Surface format ({}) not supported. Selecting ({}).",
+            vk::to_string(requested_surface_format.format) + ", "
+              + vk::to_string(requested_surface_format.colorSpace),
+            vk::to_string(chosen_surface_format.format) + ", "
+              + vk::to_string(chosen_surface_format.colorSpace));
     return chosen_surface_format;
   }
   else {
     if (log)
-      LOGI("(Swapchain) Surface format selected: {}",
-           vk::to_string(requested_surface_format.format) + ", "
-             + vk::to_string(requested_surface_format.colorSpace));
+      VklLogI("(Swapchain) Surface format selected: {}",
+              vk::to_string(requested_surface_format.format) + ", "
+                + vk::to_string(requested_surface_format.colorSpace));
     return requested_surface_format;
   }
 }
@@ -129,9 +130,9 @@ chooseTransform(vk::SurfaceTransformFlagBitsKHR request_transform,
                 vk::SurfaceTransformFlagBitsKHR current_transform) {
   if (request_transform & supported_transform) { return request_transform; }
 
-  LOGW("(HPPSwapchain) Surface transform '{}' not supported. Selecting '{}'.",
-       vk::to_string(request_transform),
-       vk::to_string(current_transform));
+  VklLogW("(HPPSwapchain) Surface transform '{}' not supported. Selecting '{}'.",
+          vk::to_string(request_transform),
+          vk::to_string(current_transform));
   return current_transform;
 }
 
@@ -158,9 +159,9 @@ chooseCompositeAlpha(vk::CompositeAlphaFlagBitsKHR request_composite_alpha,
     throw std::runtime_error("No compatible composite alpha found.");
   }
   else {
-    LOGW("(HPPSwapchain) Composite alpha '{}' not supported. Selecting '{}.",
-         vk::to_string(request_composite_alpha),
-         vk::to_string(*chosen_composite_alpha_it));
+    VklLogW("(HPPSwapchain) Composite alpha '{}' not supported. Selecting '{}.",
+            vk::to_string(request_composite_alpha),
+            vk::to_string(*chosen_composite_alpha_it));
     return *chosen_composite_alpha_it;
   }
 }
@@ -183,8 +184,8 @@ chooseImageUsage(const std::set<vk::ImageUsageFlagBits>& requested_image_usage_f
       validated_image_usage_flags.insert(flag);
     }
     else {
-      LOGW("(HPPSwapchain) Image usage ({}) requested but not supported.",
-           vk::to_string(flag));
+      VklLogW("(HPPSwapchain) Image usage ({}) requested but not supported.",
+              vk::to_string(flag));
     }
   }
 
@@ -217,7 +218,7 @@ chooseImageUsage(const std::set<vk::ImageUsageFlagBits>& requested_image_usage_f
     for (vk::ImageUsageFlagBits image_usage : validated_image_usage_flags) {
       usage_list += to_string(image_usage) + " ";
     }
-    if (log) LOGI("(HPPSwapchain) Image usage flags: {}", usage_list);
+    if (log) VklLogI("(HPPSwapchain) Image usage flags: {}", usage_list);
   }
 
   return validated_image_usage_flags;
@@ -455,11 +456,11 @@ void SwapchainRenderContext::setSwapChainProperties(
   if (!_oldSC) log = true;
 
   if (log) {
-    LOGI("Surface supports the following surface formats:");
+    VklLogI("Surface supports the following surface formats:");
     for (auto& surfaceFormat_ : availableSurfaceFormats) {
-      LOGI("  \t{}",
-           vk::to_string(surfaceFormat_.format) + ", "
-             + vk::to_string(surfaceFormat_.colorSpace));
+      VklLogI("  \t{}",
+              vk::to_string(surfaceFormat_.format) + ", "
+                + vk::to_string(surfaceFormat_.colorSpace));
     }
   }
 
@@ -468,9 +469,9 @@ void SwapchainRenderContext::setSwapChainProperties(
   auto& availablePresentModes = VkSettings::availablePresentModes;
 
   if (log) {
-    LOGI("Surface supports the following present modes:");
+    VklLogI("Surface supports the following present modes:");
     for (auto& presenMode : availablePresentModes) {
-      LOGI("  \t{}", to_string(presenMode));
+      VklLogI("  \t{}", to_string(presenMode));
     }
   }
 

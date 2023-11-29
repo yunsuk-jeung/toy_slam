@@ -4,7 +4,7 @@
 #include <spdlog/spdlog.h>
 #include "spdlog/sinks/android_sink.h"
 #define LOGGER_FORMAT "[%^%l%$] %v"
-#define PROJECT_NAME "MAXST_VULKAN"
+#define PROJECT_NAME "VULKAN_LIGHT"
 
 #define __FILENAME__ vkl::LogUtil::extractFileName(__FILE__)
 

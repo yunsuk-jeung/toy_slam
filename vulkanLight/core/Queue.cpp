@@ -7,12 +7,11 @@ Queue::Queue(Device*                    _device,
              vk::QueueFamilyProperties& props,
              vk::Bool32                 supportPresent,
              uint32_t                   index)
-    : device{_device}
-    , familyIdx{_familyIdx}
-    , vkQueueFamilyProps{&props}
-    , supportPresent{supportPresent}
-    , index{index} {
-
+  : device{_device}
+  , familyIdx{_familyIdx}
+  , vkQueueFamilyProps{&props}
+  , supportPresent{supportPresent}
+  , index{index} {
   vkQueue = device->getVkDevice().getQueue(familyIdx, index);
 }
 }  //namespace vkl

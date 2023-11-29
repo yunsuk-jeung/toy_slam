@@ -18,12 +18,22 @@ add_library(${PROJECT_NAME} STATIC ${VKL_SRC})
 
 file(GLOB SUBDIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} */)
 
+target_link_libraries(${PROJECT_NAME} PUBLIC Vulkan::Vulkan libs graphicslib)
 target_include_directories(${PROJECT_NAME}
   PUBLIC
 
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${SUBDIRECTORIES}
 )
-target_link_libraries(${PROJECT_NAME} Vulkan::Vulkan libs graphicslib)
+target_compile_definitions(
+  ${PROJECT_NAME}
+  PUBLIC
+  VKL_DEBUG
+  VKL_VALIDATION_LAYERS
+  VK_NO_PROTOTYPES
+  VK_USE_PLATFORM_WIN32_KHR
+  VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+  VMA_STATIC_VULKAN_FUNCTIONS=0
+  VMA_DYNAMIC_VULKAN_FUNCTIONS=0)
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})

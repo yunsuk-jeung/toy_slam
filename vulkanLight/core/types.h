@@ -1,7 +1,10 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 
+#include "core/Image.h"
+
 namespace vkl {
+
 struct ContextProps {
   vk::SwapchainKHR                oldSwapchain;
   uint32_t                        imageCount;
@@ -19,4 +22,10 @@ struct BufferingSemaphore {
   vk::Semaphore available{VK_NULL_HANDLE};
   vk::Semaphore rendered{VK_NULL_HANDLE};
 };
+
+enum class DistortionModel {
+  RADTAN,
+  EQUI,
+};
+
 }  //namespace vkl

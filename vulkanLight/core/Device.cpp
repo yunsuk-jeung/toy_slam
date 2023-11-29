@@ -1,9 +1,10 @@
-#include <Volk/volk.h>
+#include <volk.h>
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 
 #include "Device.h"
-#include "Queue.h"
+
+#include "core/Queue.h"
 
 #include "util/VkSettings.h"
 #include "util/VkLogger.h"
@@ -12,8 +13,9 @@
 namespace vkl {
 
 Device::Device(vk::Instance instance, vk::PhysicalDevice device, vk::SurfaceKHR surface)
-    : vkInstance(instance), vkPhysicalDevice(device), vkSurface(surface) {
-
+  : vkInstance(instance)
+  , vkPhysicalDevice(device)
+  , vkSurface(surface) {
   queueFamilyProps = vkPhysicalDevice.getQueueFamilyProperties();
   memoryProps      = vkPhysicalDevice.getMemoryProperties();
 }
@@ -28,7 +30,6 @@ Device::~Device() {
 }
 
 void Device::initLogicalDevice() {
-
   auto queueFamSize = queueFamilyProps.size();
 
   std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos(queueFamSize);
@@ -46,13 +47,9 @@ void Device::initLogicalDevice() {
         queuePriorities[queueFamIdx].resize(queueFamilyProp.queueCount, 0.5f);
         queuePriorities[queueFamIdx][0] = 1.0f;
       }
-      else {
-        queuePriorities[queueFamIdx].resize(queueFamilyProp.queueCount, 0.5f);
-      }
+      else { queuePriorities[queueFamIdx].resize(queueFamilyProp.queueCount, 0.5f); }
     }
-    else {
-      queuePriorities[queueFamIdx].resize(queueFamilyProp.queueCount, 0.5f);
-    }
+    else { queuePriorities[queueFamIdx].resize(queueFamilyProp.queueCount, 0.5f); }
 
     vk::DeviceQueueCreateInfo& queueCreateInfo = queueCreateInfos[queueFamIdx];
 
@@ -67,21 +64,19 @@ void Device::initLogicalDevice() {
 
   vkDevice = vkPhysicalDevice.createDevice(deviceCreateInfo);
   if (!vkDevice) {
-    LOGE("Could not create vkDevice!");
+    VklLogE("Could not create vkDevice!");
     throw std::runtime_error("Could not create vkDevice");
   }
 
   //save every queue data
   queues.resize(queueFamSize);
   for (auto queueFamIdx = 0U; queueFamIdx < queueFamSize; ++queueFamIdx) {
-
     vk::QueueFamilyProperties& queueFamilyprop = queueFamilyProps[queueFamIdx];
 
-    vk::Bool32 supportPresent
-        = vkPhysicalDevice.getSurfaceSupportKHR(queueFamIdx, vkSurface);
+    vk::Bool32 supportPresent = vkPhysicalDevice.getSurfaceSupportKHR(queueFamIdx,
+                                                                      vkSurface);
 
     for (auto queueIndex = 0U; queueIndex < queueFamilyprop.queueCount; ++queueIndex) {
-
       queues[queueFamIdx].emplace_back(this,
                                        queueFamIdx,
                                        queueFamilyprop,
@@ -100,7 +95,7 @@ void Device::initLogicalDevice() {
 
   //if (!vkPhysicalDevice.getSurfaceSupportKHR(primaryQueue.getFamilyIdx(),
   //                                           vkSurface)) {
-  //  LOGW("This queue does not supprot SurfaceKHR");
+  //  VklLogW("This queue does not supprot SurfaceKHR");
   //  throw std::runtime_error("This queue does not supprot SurfaceKHR");
   //}
 
@@ -111,16 +106,20 @@ void Device::initLogicalDevice() {
 
 Queue& Device::getPresentableQueue() {
   for (auto queueFamIdx = 0U; queueFamIdx < queues.size(); ++queueFamIdx) {
-
     Queue&   frontQueue = queues[queueFamIdx].front();
     uint32_t queueCount = frontQueue.getVkQueueFamilyProps()->queueCount;
 
     if (frontQueue.canPresent() && queueCount > 0) {
+      VklLogD("RETURNING Queue : {} - {}", queueFamIdx, 0);
       return queues[queueFamIdx][0];
     }
   }
 
   return getQueueByFlags(vk::QueueFlagBits::eGraphics, 0);
+}
+
+Queue& Device::getLowPrioritydQueue(vk::QueueFlags queueFlags) {
+  return getQueueByFlags(queueFlags, 1);
 }
 
 vk::Format Device::getSuitableDepthFormat() {
@@ -139,14 +138,13 @@ vk::Format Device::getSuitableDepthFormat() {
   }
 
   //if (depthFormat != vk::Format::eUndefined) {
-  //  LOGI("Depth Format : {}", to_string(depthFormat).c_str());
+  //  VklLogI("Depth Format : {}", to_string(depthFormat).c_str());
   //}
   return depthFormat;
 }
 
 uint32_t Device::findMemoryTypeIndex(const vk::MemoryRequirements& requirements,
                                      vk::MemoryPropertyFlags       properties) {
-
   for (auto i = 0; i != memoryProps.memoryTypeCount; ++i) {
     if (!(requirements.memoryTypeBits & (1 << i))) continue;
 
@@ -163,12 +161,13 @@ void Device::checkVkMemoryStatus() {
   VmaTotalStatistics stats;
   vmaCalculateStatistics(vmaAllocator, &stats);
 
-  //LOGE("Total device blockCount     : {} bytes.", stats.total.statistics.blockCount);
-  //LOGE("Total device allocationCount: {} bytes.",
-  //stats.total.statistics.allocationCount); LOGE("Total device blockBytes     : {}
+  //VklLogE("Total device blockCount     : {} bytes.", stats.total.statistics.blockCount);
+  //VklLogE("Total device allocationCount: {} bytes.",
+  //stats.total.statistics.allocationCount); VklLogE("Total device blockBytes     : {}
   //bytes.", stats.total.statistics.blockBytes);
-  LOGW("Total device allocationBytes: {} bytes.", stats.total.statistics.allocationBytes);
-  //LOGW("----------------------------------------");
+  VklLogW("Total device allocationBytes: {} bytes.",
+          stats.total.statistics.allocationBytes);
+  //VklLogW("----------------------------------------");
 }
 
 void Device::initVmaAllocator() {
@@ -198,19 +197,19 @@ void Device::initVmaAllocator() {
   allocator_info.device         = static_cast<VkDevice>(vkDevice);
   allocator_info.instance       = static_cast<VkInstance>(vkInstance);
 
-  bool canGetMemroy
-      = VkSettings::isInDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+  bool canGetMemroy = VkSettings::isInDeviceExtension(
+    VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 
-  bool hasDedicatedAlloc
-      = VkSettings::isInDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+  bool hasDedicatedAlloc = VkSettings::isInDeviceExtension(
+    VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 
   if (canGetMemroy && hasDedicatedAlloc) {
     allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
     vmaVkFunc.vkGetBufferMemoryRequirements2KHR = vkGetBufferMemoryRequirements2KHR;
     vmaVkFunc.vkGetImageMemoryRequirements2KHR  = vkGetImageMemoryRequirements2KHR;
   }
-  bool hasBufferDeviceAddress
-      = VkSettings::isInDeviceExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+  bool hasBufferDeviceAddress = VkSettings::isInDeviceExtension(
+    VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 
   if (hasBufferDeviceAddress) {
     allocator_info.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
@@ -252,28 +251,30 @@ uint32_t Device::getQueueFamilyIndex(vk::QueueFlagBits queueFlags) {
   //For other queue types or if no separate compute queue is present, return the
   //first one to support the requested flags
   for (uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProps.size()); i++) {
-    if ((queueFamilyProps[i].queueFlags & queueFlags) == queueFlags) {
-      return i;
-    }
+    if ((queueFamilyProps[i].queueFlags & queueFlags) == queueFlags) { return i; }
   }
 
-  LOGW("Cannot find queue Family for {}", static_cast<int>(queueFlags));
+  VklLogW("Cannot find queue Family for {}", static_cast<int>(queueFlags));
   throw std::runtime_error("Could not find a matching queue family index");
 }
 
 Queue& Device::getQueueByFlags(vk::QueueFlags requiredFlags, uint32_t queueidx) {
-
   auto queueFamSize = queues.size();
 
   for (auto queueFamIdx = 0U; queueFamIdx < queueFamSize; ++queueFamIdx) {
-
     auto& queue = queues[queueFamIdx][0];
 
     vk::QueueFlags queue_flags = queue.getVkQueueFamiliyProps()->queueFlags;
     uint32_t       queue_count = queue.getVkQueueFamiliyProps()->queueCount;
 
-    if (((queue_flags & requiredFlags) == requiredFlags) && queueidx < queue_count) {
-      return queues[queueFamIdx][queueidx];
+    if (((queue_flags & requiredFlags) == requiredFlags)) {
+      if (queueidx < queue_count) {
+        VklLogD("Using Queue : {} - {}", queueFamIdx, queueidx);
+
+        return queues[queueFamIdx][queueidx];
+      }
+      else { VklLogD("Using Queue : {} - {}", queueFamIdx, queue_count - 1); }
+      return queues[queueFamIdx][queue_count - 1];
     }
   }
 

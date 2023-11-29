@@ -293,7 +293,7 @@ vk::ShaderModule VkShaderUtil::compileShader(vk::Device                  device,
   GLSLCompiler          glsl_compiler;
 
   if (!glsl_compiler.compile_to_spirv(stage, src, "main", {}, spirv, info_log)) {
-    LOGE("Failed to compile shader from source, Error: {}", info_log.c_str());
+    VklLogE("Failed to compile shader from source, Error: {}", info_log.c_str());
     return VK_NULL_HANDLE;
   }
 

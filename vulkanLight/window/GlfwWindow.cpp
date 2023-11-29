@@ -5,7 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include "GlfwWindow.h"
-#include "app/App.h"
+#include "core/Application.h"
 
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
@@ -21,13 +21,14 @@ void glfw_error_callback(int error, const char* description) {
   fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 void window_size_callback(GLFWwindow* window, int width, int height) {
-  if (auto app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window))) {
+  if (auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window))) {
     app->onWindowResized(width, height);
   }
 }
 }  //namespace
 
-GlfwWindow::GlfwWindow(WindowInfo& _info, App* app) : Window(_info, app) {
+GlfwWindow::GlfwWindow(WindowInfo& _info, Application* app)
+  : Window(_info, app) {
   createWindow();
 }
 
@@ -37,22 +38,17 @@ GlfwWindow::~GlfwWindow() {
 }
 
 VkSurfaceKHR GlfwWindow::createSurface(Instance* instance) {
-
   return createSurface(instance->getVkInstance(), VK_NULL_HANDLE);
 };
 
 VkSurfaceKHR GlfwWindow::createSurface(VkInstance instance, VkPhysicalDevice device) {
-  if (instance == VK_NULL_HANDLE || !window) {
-    return VK_NULL_HANDLE;
-  }
+  if (instance == VK_NULL_HANDLE || !window) { return VK_NULL_HANDLE; }
 
   VkSurfaceKHR surface;
 
   VkResult errCode = glfwCreateWindowSurface(instance, window, NULL, &surface);
 
-  if (errCode != VK_SUCCESS) {
-    return nullptr;
-  }
+  if (errCode != VK_SUCCESS) { return nullptr; }
 
   return surface;
 }
@@ -148,13 +144,6 @@ void GlfwWindow::newGUIFrame() {
 
 void GlfwWindow::endGUIFrame() {
   //this function is not used
-  ImGuiIO& io = ImGui::GetIO();
-  (void)io;
-
-  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-    ImGui::UpdatePlatformWindows();
-    ImGui::RenderPlatformWindowsDefault();
-  }
 }
 
 void GlfwWindow::endGUI() {

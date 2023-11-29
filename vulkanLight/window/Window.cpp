@@ -1,7 +1,9 @@
 #include "Window.h"
 
 namespace vkl {
-Window::Window(WindowInfo& info, App* _app) : windowInfo(info), app(_app) {
+Window::Window(WindowInfo& info, Application* _app)
+  : windowInfo(info)
+  , app(_app) {
   //createWindow();
 }
 void Window::updateExtent(uint32_t w, uint32_t h) {

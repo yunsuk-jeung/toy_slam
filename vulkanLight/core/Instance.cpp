@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include <Volk/volk.h>
+#include <volk.h>
 #include "Instance.h"
 #include "util/VkLogger.h"
 #include "util/VkSettings.h"
@@ -17,16 +17,16 @@ debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_se
                                void*                                       user_data) {
   //Log debug message
   if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-    LOGW("{} - {}: {}",
-         callback_data->messageIdNumber,
-         callback_data->pMessageIdName,
-         callback_data->pMessage);
+    VklLogW("{} - {}: {}",
+            callback_data->messageIdNumber,
+            callback_data->pMessageIdName,
+            callback_data->pMessage);
   }
   else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-    LOGE("{} - {}: {}",
-         callback_data->messageIdNumber,
-         callback_data->pMessageIdName,
-         callback_data->pMessage);
+    VklLogE("{} - {}: {}",
+            callback_data->messageIdNumber,
+            callback_data->pMessageIdName,
+            callback_data->pMessage);
   }
   return VK_FALSE;
 }
@@ -39,18 +39,14 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
                                                      const char* layer_prefix,
                                                      const char* message,
                                                      void* /*user_data*/) {
-  if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
-    LOGE("{}: {}", layer_prefix, message);
-  }
+  if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) { VklLogE("{}: {}", layer_prefix, message); }
   else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
-    LOGW("{}: {}", layer_prefix, message);
+    VklLogW("{}: {}", layer_prefix, message);
   }
   else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
-    LOGW("{}: {}", layer_prefix, message);
+    VklLogW("{}: {}", layer_prefix, message);
   }
-  else {
-    LOGI("{}: {}", layer_prefix, message);
-  }
+  else { VklLogI("{}: {}", layer_prefix, message); }
   return VK_FALSE;
 }
 #endif
@@ -60,7 +56,6 @@ Instance::Instance(const std::string&              name,
                    const std::vector<const char*>& enabledExts,
                    const std::vector<const char*>& enabledLayers,
                    uint32_t                        apiVersion) {
-
   auto& availableExtensions = VkSettings::availableInstanceExtProps;
 
   VkSettings::addInstanceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
@@ -77,20 +72,20 @@ Instance::Instance(const std::string&              name,
   vk::DebugReportCallbackCreateInfoEXT debug_report_create_info;
   if (debugEnabled) {
     debug_utils_create_info = vk::DebugUtilsMessengerCreateInfoEXT(
-        {},
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eError
-            | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
-        vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
-            | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-        debug_utils_messenger_callback);
+      {},
+      vk::DebugUtilsMessageSeverityFlagBitsEXT::eError
+        | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+      vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
+        | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+      debug_utils_messenger_callback);
 
     instance_info.pNext = &debug_utils_create_info;
   }
   else {
     debug_report_create_info = vk::DebugReportCallbackCreateInfoEXT(
-        vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning
-            | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
-        debug_callback);
+      vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning
+        | vk::DebugReportFlagBitsEXT::ePerformanceWarning,
+      debug_callback);
 
     instance_info.pNext = &debug_report_create_info;
   }
@@ -99,7 +94,7 @@ Instance::Instance(const std::string&              name,
   vkInstance = vk::createInstance(instance_info);
 
   if (!vkInstance) {
-    LOGW("Failed to create vkInstance");
+    VklLogW("Failed to create vkInstance");
     throw std::runtime_error("Failted to create vkInstance");
   }
 
@@ -109,12 +104,12 @@ Instance::Instance(const std::string&              name,
 
 #if defined(VKL_DEBUG) || defined(VKL_VALIDATION_LAYERS)
   if (debugEnabled) {
-    debugUtilsmessenger
-        = vkInstance.createDebugUtilsMessengerEXT(debug_utils_create_info);
+    debugUtilsmessenger = vkInstance.createDebugUtilsMessengerEXT(
+      debug_utils_create_info);
   }
   else {
-    debugReportCallback
-        = vkInstance.createDebugReportCallbackEXT(debug_report_create_info);
+    debugReportCallback = vkInstance.createDebugReportCallbackEXT(
+      debug_report_create_info);
   }
 #endif
 }

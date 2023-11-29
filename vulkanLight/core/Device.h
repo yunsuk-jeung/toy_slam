@@ -17,7 +17,9 @@ public:
    * @brief get queue that supports present orgrahics queue
    * @return queue that supports present or graphics queue
    */
-  Queue&     getPresentableQueue();
+  Queue& getPresentableQueue();
+  Queue& getLowPrioritydQueue(vk::QueueFlags queueFlags);
+
   vk::Format getSuitableDepthFormat();
   uint32_t   findMemoryTypeIndex(const vk::MemoryRequirements& requirements,
                                  vk::MemoryPropertyFlags       properties);

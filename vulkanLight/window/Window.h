@@ -1,14 +1,13 @@
 #pragma once
 
-#include <Volk/volk.h>
+#include <volk.h>
 #include <unordered_map>
 #include "core/Instance.h"
 
 namespace vkl {
-class App;
+class Application;
 class WindowInfo {
 public:
-
   enum class Mode {
     Headless,
     Fullscreen,
@@ -19,18 +18,28 @@ public:
 
   enum class Vsync { OFF, ON, Default };
 
+  enum class Orientation { Landscape, Portrait };
+
   class Extent {
   public:
-
     uint32_t width;
     uint32_t height;
   };
 
-  WindowInfo(std::string title, Mode mode, bool resizable, Vsync vsync, Extent extent)
-      : title(title), mode(mode), resizable(resizable), vsync(vsync), extent(extent) {}
+  WindowInfo(std::string title_,
+             Mode        mode_,
+             bool        resizable_,
+             Vsync       vsync_,
+             Orientation ori,
+             Extent      extent_)
+    : title(title_)
+    , mode(mode_)
+    , resizable(resizable_)
+    , vsync(vsync_)
+    , orientation(ori)
+    , extent(extent_) {}
 
   WindowInfo(const WindowInfo& info) {
-
     this->title     = info.title;
     this->mode      = info.mode;
     this->resizable = info.resizable;
@@ -38,19 +47,18 @@ public:
     this->extent    = info.extent;
   }
 
-  std::string title     = "Default";
-  Mode        mode      = Mode::Default;
-  bool        resizable = true;
-  Vsync       vsync     = Vsync::Default;
-  Extent      extent    = {1280, 720};
+  std::string title       = "Default";
+  Mode        mode        = Mode::Default;
+  bool        resizable   = true;
+  Vsync       vsync       = Vsync::Default;
+  Orientation orientation = Orientation::Landscape;
+  Extent      extent      = {1280, 720};
 };
 
 class Window {
 public:
-
   Window() = delete;
-  //Window(WindowInfo& info);
-  Window(WindowInfo& info, App* app);
+  Window(WindowInfo& info, Application* app);
   virtual ~Window() = default;
 
   // clang-format off
@@ -70,17 +78,14 @@ public:
   virtual void endGUI()      = 0;
 
 protected:
-
   virtual void createWindow() = 0;
 
 protected:
-
-  WindowInfo windowInfo;
-  App*       app = nullptr;
+  WindowInfo   windowInfo;
+  Application* app = nullptr;
 
 public:
-
   WindowInfo& getWindowInfo() { return windowInfo; }
-  void        setApplication(App* _app) { app = _app; }
+  void        setApplication(Application* _app) { app = _app; }
 };
 }  //namespace vkl

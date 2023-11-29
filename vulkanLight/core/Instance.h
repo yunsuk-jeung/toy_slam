@@ -7,7 +7,6 @@ namespace vkl {
 
 class Instance {
 public:
-
   Instance() = delete;
 
   Instance(const std::string&              name,
@@ -17,7 +16,6 @@ public:
   ~Instance();
 
 protected:
-
   vk::Instance vkInstance{VK_NULL_HANDLE};
 
 #if defined(VKL_DEBUG) || defined(VKL_VALIDATION_LAYERS)
@@ -26,7 +24,6 @@ protected:
 #endif
 
 public:
-
   //getters and setters
   vk::Instance& getVkInstance() { return vkInstance; }
 };

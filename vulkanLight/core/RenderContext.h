@@ -4,26 +4,9 @@
 #include <vulkan/vulkan.hpp>
 
 #include "core/Image.h"
+#include "core/types.h"
 
 namespace vkl {
-
-struct RenderContextProps {
-  vk::SwapchainKHR                oldSwapchain;
-  uint32_t                        imageCount;
-  vk::Extent2D                    extent;
-  vk::SurfaceFormatKHR            surfaceFormat;
-  uint32_t                        arrayLayers;
-  vk::ImageUsageFlags             imageUsage;
-  vk::SurfaceTransformFlagBitsKHR preTransform;
-  vk::CompositeAlphaFlagBitsKHR   compositeAlpha;
-  vk::PresentModeKHR              presentMode;
-  vk::Format                      depthFormat;
-};
-
-struct BufferingSemaphore {
-  vk::Semaphore available{VK_NULL_HANDLE};
-  vk::Semaphore rendered{VK_NULL_HANDLE};
-};
 
 class Device;
 class Queue;
@@ -34,11 +17,11 @@ public:
   RenderContext(Device* _device, Window* _window, vk::PresentModeKHR presentMode);
   virtual ~RenderContext();
 
-  void              prepare();
-  void              createCommandPool(vk::CommandPoolCreateFlagBits cmdPoolCreateFlag);
-  void              createCommandBuffer(vk::CommandBufferLevel priority);
-  void              initializeSwapchainImages();
-  void              resizeSwapChain();
+  virtual void prepare();
+  void         createCommandPool(vk::CommandPoolCreateFlagBits cmdPoolCreateFlag);
+  void         createCommandBuffer(vk::CommandBufferLevel priority);
+  virtual void resizeSwapChain();
+
   vk::CommandBuffer getOneTimeCommandBuffer();
   void              freeOneTimeCommandBuffer(vk::CommandBuffer cmd);
 

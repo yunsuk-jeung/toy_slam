@@ -3,8 +3,8 @@
 #include <iostream>
 #include <volk.h>
 #include "Instance.h"
-#include "util/VkLogger.h"
-#include "util/VkSettings.h"
+#include "VkLogger.h"
+#include "VkSettings.h"
 
 namespace vkl {
 namespace {
@@ -61,7 +61,7 @@ Instance::Instance(const std::string&              name,
   VkSettings::addInstanceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
                                    availableExtensions);
 
-  vk::ApplicationInfo appInfo{name.c_str(), 0, "Vulkan Application", 0, apiVersion};
+  vk::ApplicationInfo appInfo{name.c_str(), 0, "Vulkan App", 0, apiVersion};
 
   vk::InstanceCreateInfo instance_info({}, &appInfo, enabledLayers, enabledExts);
 

@@ -2,12 +2,13 @@
 
 #include "window/Window.h"
 
+struct GLFWwindow;
 namespace vkl {
-class HeadlessWindow : public Window {
+class GlfwWindow : public Window {
 public:
-  HeadlessWindow() = delete;
-  HeadlessWindow(WindowInfo& _info, Application* app);
-  ~HeadlessWindow();
+  GlfwWindow() = delete;
+  GlfwWindow(WindowInfo& _info, App* app);
+  ~GlfwWindow();
 
   VkSurfaceKHR createSurface(Instance* instance) override;
   VkSurfaceKHR createSurface(VkInstance       instance,
@@ -25,5 +26,6 @@ protected:
   void createWindow() override;
 
 protected:
+  GLFWwindow* window{nullptr};
 };
 }  //namespace vkl

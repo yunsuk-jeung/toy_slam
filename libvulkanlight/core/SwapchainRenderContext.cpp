@@ -1,8 +1,8 @@
 #include "SwapchainRenderContext.h"
 #include "Device.h"
 #include "window/Window.h"
-#include "util/VkSettings.h"
-#include "util/VkLogger.h"
+#include "VkSettings.h"
+#include "VkLogger.h"
 
 namespace vkl {
 namespace {

@@ -1,7 +1,7 @@
 #include "HeadlessWindow.h"
 
 namespace vkl {
-HeadlessWindow::HeadlessWindow(WindowInfo& _info, Application* app)
+HeadlessWindow::HeadlessWindow(WindowInfo& _info, App* app)
   : Window(_info, app) {}
 
 HeadlessWindow::~HeadlessWindow() {}

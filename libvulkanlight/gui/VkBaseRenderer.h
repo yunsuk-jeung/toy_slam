@@ -2,7 +2,7 @@
 
 #include <stack>
 #include <Eigen/Dense>
-#include "util/VkShaderUtil.h"
+#include "VkShaderUtil.h"
 
 namespace vkl {
 

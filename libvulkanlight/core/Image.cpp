@@ -1,7 +1,7 @@
 #include "Image.h"
 #include "Device.h"
-#include "util/VkError.h"
-#include "util/VkLogger.h"
+#include "VkError.h"
+#include "VkLogger.h"
 
 namespace vkl {
 

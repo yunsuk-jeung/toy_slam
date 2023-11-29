@@ -1,8 +1,8 @@
 #include <iostream>
 #include "VkBaseRenderer.h"
-#include "core/Device.h"
-#include "core/RenderContext.h"
-#include "util/Utils.h"
+#include "Device.h"
+#include "RenderContext.h"
+#include "Utils.h"
 
 namespace vkl {
 VkBaseRenderer::VkBaseRenderer()

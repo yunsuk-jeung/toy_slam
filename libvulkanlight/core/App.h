@@ -4,7 +4,7 @@
 #include <memory>
 #include <volk.h>
 #include <vulkan/vulkan.hpp>
-#include "core/Buffer.h"
+#include "Buffer.h"
 #include "shaders/ShaderTypes.h"
 #include "types.h"
 
@@ -16,10 +16,10 @@ class Window;
 class Device;
 class RenderContext;
 class GraphicsCamera;
-class Application {
+class App {
 public:
-  Application();
-  virtual ~Application();
+  App();
+  virtual ~App();
 
   void setShaderPath(const std::string& shaderPath);
   void setResourcePath(const std::string& shaderPath);
@@ -57,40 +57,37 @@ protected:
   void presentFrame();
 
 protected:
-  std::string name           = "Default Application";
-  uint32_t    apiVersion     = VK_API_VERSION_1_0;
-  bool        prepared       = false;
-  bool        endApplication = true;
+  std::string mName;
+  uint32_t    mApiVersion;
+  bool        mPrepared;
+  bool        mEndApplication = true;
 
-  std::unique_ptr<Instance>      instance;
-  std::unique_ptr<Window>        window;
-  vk::SurfaceKHR                 vkSurface;
-  std::unique_ptr<Device>        device;
-  std::unique_ptr<RenderContext> renderContext;
-  vk::RenderPass                 vkRenderPass;
-  std::vector<vk::Framebuffer>   vkFramebuffers;
-  vk::DescriptorPool             vkDescPool;
+  std::unique_ptr<Instance>      mInstance;
+  std::unique_ptr<Window>        mWindow;
+  vk::SurfaceKHR                 mVkSurface;
+  std::unique_ptr<Device>        mDevice;
+  std::unique_ptr<RenderContext> mRenderContext;
+  vk::RenderPass                 mVkRenderPass;
+  std::vector<vk::Framebuffer>   mVkFramebuffers;
+  vk::DescriptorPool             mVkDescPool;
 
-  vk::Fence          currCmdFence;
-  BufferingSemaphore currScSemaphore;
-  uint32_t           currSwapchainIdx;
+  vk::Fence          mCurrCmdFence;
+  BufferingSemaphore mCurrScSemaphore;
+  uint32_t           mCurrSwapchainIdx;
 
-  uint32_t                       lastSubpass;
-  std::unique_ptr<GUI>           gui;
-  std::unique_ptr<InputCallback> inputCallback;
+  uint32_t                       mLastSubpass;
+  std::unique_ptr<GUI>           mGui;
+  std::unique_ptr<InputCallback> mInputCallback;
 
   //used for camera
-  std::unique_ptr<GraphicsCamera> graphicsCamera;
+  std::unique_ptr<GraphicsCamera> mGraphicsCamera;
 
-  std::vector<Buffer> camUBs;
-  //vk::DescriptorPool             camDescPool = VK_NULL_HANDLE;
-  vk::DescriptorSetLayout        camDescLayout;
-  std::vector<vk::DescriptorSet> camDescSets;
+  std::vector<Buffer>            mCamUBs;
+  vk::DescriptorSetLayout        mCamDescLayout;
+  std::vector<vk::DescriptorSet> mCamDescSets;
 
 public:
-  Device*        getDevice() { return device.get(); }
-  RenderContext* getRenderContext() { return renderContext.get(); }
-  //std::vector<const char*> intanceExtensions;
-  //std::vector<const char*> validationLayers;
+  Device*        getDevice() { return mDevice.get(); }
+  RenderContext* getRenderContext() { return mRenderContext.get(); }
 };
 }  //namespace vkl

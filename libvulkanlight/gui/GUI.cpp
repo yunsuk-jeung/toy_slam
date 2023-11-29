@@ -1,16 +1,16 @@
 #include <iostream>
 #include <imgui.h>
 #include "GUI.h"
-#include "core/Device.h"
-#include "core/RenderContext.h"
-#include "core/Buffer.h"
-#include "gui/InputCallback.h"
+#include "Device.h"
+#include "RenderContext.h"
+#include "Buffer.h"
+#include "InputCallback.h"
 
 #include "window/Window.h"
-#include "util/Utils.h"
-#include "util/VkShaderUtil.h"
-#include "util/VkLogger.h"
-#include "util/VkError.h"
+#include "Utils.h"
+#include "VkShaderUtil.h"
+#include "VkLogger.h"
+#include "VkError.h"
 
 namespace vkl {
 

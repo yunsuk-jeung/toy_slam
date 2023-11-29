@@ -2,9 +2,9 @@
 #include <glslang/Public/ResourceLimits.h>
 
 #include "VkShaderUtil.h"
-#include "util/VkLogger.h"
-#include "util/VkError.h"
-#include "util/Utils.h"
+#include "VkLogger.h"
+#include "VkError.h"
+#include "Utils.h"
 
 namespace vkl {
 

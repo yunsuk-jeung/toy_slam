@@ -5,7 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include "GlfwWindow.h"
-#include "core/Application.h"
+#include "App.h"
 
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
@@ -21,13 +21,13 @@ void glfw_error_callback(int error, const char* description) {
   fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 void window_size_callback(GLFWwindow* window, int width, int height) {
-  if (auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window))) {
+  if (auto app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window))) {
     app->onWindowResized(width, height);
   }
 }
 }  //namespace
 
-GlfwWindow::GlfwWindow(WindowInfo& _info, Application* app)
+GlfwWindow::GlfwWindow(WindowInfo& _info, App* app)
   : Window(_info, app) {
   createWindow();
 }

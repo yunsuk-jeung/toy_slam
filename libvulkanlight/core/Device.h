@@ -3,7 +3,7 @@
 #include <vector>
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
-#include "core/Queue.h"
+#include "Queue.h"
 namespace vkl {
 
 class Device {

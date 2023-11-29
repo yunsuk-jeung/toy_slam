@@ -1,9 +1,9 @@
 #pragma once
 
 #include <vulkan/vulkan.hpp>
-#include "core/Buffer.h"
-#include "core/Image.h"
-#include "gui/VkBaseRenderer.h"
+#include "Buffer.h"
+#include "Image.h"
+#include "VkBaseRenderer.h"
 namespace vkl {
 class InputCallback;
 class Device;

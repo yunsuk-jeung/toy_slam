@@ -14,7 +14,7 @@ set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../lib)
 add_subdirectory(${EXTERNAL_LIB_DIR} ${CMAKE_BINARY_DIR}/lib)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/toy ${CMAKE_BINARY_DIR}/toy)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/io ${CMAKE_BINARY_DIR}/io)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vulkanLight ${CMAKE_BINARY_DIR}/vulkanLight)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libvulkanlight ${CMAKE_BINARY_DIR}/libvulkanlight)
 
 if(BUILD_SAMPLES)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/samples)

@@ -4,11 +4,11 @@
 
 #include "Device.h"
 
-#include "core/Queue.h"
+#include "Queue.h"
 
-#include "util/VkSettings.h"
-#include "util/VkLogger.h"
-#include "util/VkError.h"
+#include "VkSettings.h"
+#include "VkLogger.h"
+#include "VkError.h"
 
 namespace vkl {
 

@@ -3,8 +3,8 @@
 #include <set>
 #include <vulkan/vulkan.hpp>
 
-#include "core/Image.h"
-#include "core/types.h"
+#include "Image.h"
+#include "types.h"
 
 namespace vkl {
 

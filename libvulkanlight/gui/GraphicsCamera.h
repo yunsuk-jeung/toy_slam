@@ -4,7 +4,7 @@
 #include <array>
 #include "InputCallback.h"
 #include "shaders/ShaderTypes.h"
-#include "core/types.h"
+#include "types.h"
 namespace vkl {
 
 class GraphicsCamera : public InputCallback {

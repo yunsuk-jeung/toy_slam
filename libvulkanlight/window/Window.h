@@ -2,10 +2,10 @@
 
 #include <volk.h>
 #include <unordered_map>
-#include "core/Instance.h"
+#include "Instance.h"
 
 namespace vkl {
-class Application;
+class App;
 class WindowInfo {
 public:
   enum class Mode {
@@ -58,7 +58,7 @@ public:
 class Window {
 public:
   Window() = delete;
-  Window(WindowInfo& info, Application* app);
+  Window(WindowInfo& info, App* app);
   virtual ~Window() = default;
 
   // clang-format off
@@ -81,11 +81,11 @@ protected:
   virtual void createWindow() = 0;
 
 protected:
-  WindowInfo   windowInfo;
-  Application* app = nullptr;
+  WindowInfo windowInfo;
+  App*       app = nullptr;
 
 public:
   WindowInfo& getWindowInfo() { return windowInfo; }
-  void        setApplication(Application* _app) { app = _app; }
+  void        setApplication(App* _app) { app = _app; }
 };
 }  //namespace vkl

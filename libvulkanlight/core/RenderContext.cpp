@@ -1,8 +1,8 @@
 #include "RenderContext.h"
 #include "Device.h"
 #include "window/Window.h"
-#include "util/VkSettings.h"
-#include "util/VkLogger.h"
+#include "VkSettings.h"
+#include "VkLogger.h"
 
 namespace vkl {
 RenderContext::RenderContext(Device*            _device,

@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 
-#include "core/Image.h"
+#include "Image.h"
 
 namespace vkl {
 

@@ -2,11 +2,11 @@
 
 #include <stack>
 #include <Eigen/Dense>
+#include <vulkan/vulkan.hpp>
 #include "vkltypes.h"
-#include "VkShaderUtil.h"
 
 namespace vkl {
-
+class ShaderModule;
 class Device;
 class RenderContext;
 class Buffer;
@@ -60,8 +60,8 @@ protected:
   Device*        device        = nullptr;
   RenderContext* renderContext = nullptr;
 
-  vk::ShaderModule vertShader = VK_NULL_HANDLE;
-  vk::ShaderModule fragShader = VK_NULL_HANDLE;
+  ShaderModule* vertShader;
+  ShaderModule* fragShader;
 
   uint32_t subpassId;
 

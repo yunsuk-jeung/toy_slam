@@ -46,7 +46,7 @@ public:
     }
 
     for (size_t i = 0; i < mBufferCount; i++) {
-      vk::DescriptorBufferInfo descBufferInfo(mUBs[i]->getVkObject(), 0, mMemSize);
+      vk::DescriptorBufferInfo descBufferInfo(mUBs[i]->vk(), 0, mMemSize);
 
       vk::WriteDescriptorSet writeDescriptorSet(mVkDescSets[i],
                                                 mBinding,

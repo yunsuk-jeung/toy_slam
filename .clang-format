@@ -60,6 +60,7 @@ ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: false
 PenaltyBreakAssignment: 400
 PenaltyBreakBeforeFirstCallParameter: 400
+PenaltyReturnTypeOnItsOwnLine: 400
 PointerAlignment: Left
 # ReflowComments: false
 SpacesInLineCommentPrefix: 

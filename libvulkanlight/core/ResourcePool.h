@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <vulkan/vulkan.hpp>
+#include "vkltypes.h"
 
 namespace vkl {
 class ShaderModule;
@@ -11,14 +12,10 @@ class ResourcePool {
 public:
   static void clear();
 
-  static ShaderModule* loadShader(Device* , uint32_t* spirv, vk::DeviceSize srcSize);
-
-  static ShaderModule* loadShader(Device* device, std::string& filename);
-
   static ShaderModule*
-  loadShader(Device* device, std::string& fileContents, vk::ShaderStageFlagBits stage);
+  loadShader(Device* device, ShaderSourceType srcType, std::string& src);
 
 protected:
-  static std::unordered_map<uint64_t, std::unique_ptr<ShaderModule>> shaderPools;
+  static std::unordered_map<size_t, std::unique_ptr<ShaderModule>> shaderPools;
 };
 }  //namespace vkl

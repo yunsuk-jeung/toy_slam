@@ -40,7 +40,6 @@ VkBaseRenderer::~VkBaseRenderer() {
 
   vertShader = nullptr;
   fragShader = nullptr;
-
 }
 
 void VkBaseRenderer::onWindowResized(int w, int h) {}
@@ -52,41 +51,8 @@ void VkBaseRenderer::initialize(Device*            _device,
   renderContext    = context;
   vkDescriptorPool = descPool;
 
-  switch (shaderSrcType) {
-  case ShaderSourceType::STRING_FILE: {
-    const std::string& shaderFolderPath = Utils::getShaderPath();
-    std::string        vertFile         = shaderFolderPath + "/" + vertShaderSource;
-    std::string        fragFile         = shaderFolderPath + "/" + fragShaderSource;
-
-    //vertShader = ResourcePool::loadShader(device, vertFile);
-    //fragShader = VkShaderUtil::loadShader(vkDevice, fragFile);
-    break;
-  }
-  case ShaderSourceType::STRING:
-  /*  vertShader = VkShaderUtil::loadShader(vkDevice,
-                                          vertShaderSource,
-                                          vk::ShaderStageFlagBits::eVertex);
-
-    fragShader = VkShaderUtil::loadShader(vkDevice,
-                                          fragShaderSource,
-                                          vk::ShaderStageFlagBits::eFragment);*/
-    break;
-  case ShaderSourceType::SPV_FILE:
-    break;
-  case ShaderSourceType::SPV: {
-    uint32_t* src  = (uint32_t*)vertShaderSource.c_str();
-    size_t    size = vertShaderSource.length();
-    vertShader     = ResourcePool::loadShader(device, src, size);
-
-    src        = (uint32_t*)fragShaderSource.c_str();
-    size       = fragShaderSource.length();
-    fragShader = ResourcePool::loadShader(device, src, size);
-
-    break;
-  }
-  default:
-    break;
-  }
+  vertShader = ResourcePool::loadShader(device, shaderSrcType, vertShaderSource);
+  fragShader = ResourcePool::loadShader(device, shaderSrcType, fragShaderSource);
 }
 
 void VkBaseRenderer::prepare(vk::RenderPass renderPass, uint32_t _subpassId) {

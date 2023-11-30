@@ -4,9 +4,10 @@
 #include "ShaderModule.h"
 #include "VkShaderUtil.h"
 #include "ResourcePool.h"
+#include "Utils.h"
 
 namespace vkl {
-std::unordered_map<uint64_t, std::unique_ptr<ShaderModule>> ResourcePool::shaderPools;
+std::unordered_map<size_t, std::unique_ptr<ShaderModule>> ResourcePool::shaderPools;
 
 namespace {
 struct SpirvHasher {
@@ -28,25 +29,54 @@ void ResourcePool::clear() {
   shaderPools.clear();
 }
 
-ShaderModule*
-ResourcePool::loadShader(Device* device, uint32_t* spirv, vk::DeviceSize srcSize) {
-  SpirvHasher hasher;
-  uint64_t    key = hasher(spirv, srcSize);
+ShaderModule* ResourcePool::loadShader(Device*          device,
+                                       ShaderSourceType srcType,
+                                       std::string&     shaderSrc) {
+  std::hash<std::string> hasher;
+  size_t                 key = hasher(shaderSrc);
 
-  if (shaderPools.find(key) == shaderPools.end())
+  bool createNew = false;
+  if (shaderPools.find(key) == shaderPools.end()) {
     shaderPools.insert({key, ShaderModule::Uni(new ShaderModule(device))});
+    createNew = true;
+  }
 
   ShaderModule* out = shaderPools[key].get();
+  if (!createNew) return out;
 
-  out->vk() = VkShaderUtil::loadShader(device->getVkDevice(), spirv, srcSize);
+  std::vector<uint32_t> spirv;
+  switch (srcType) {
+  case ShaderSourceType::STRING_FILE: {
+    const std::string& shaderFolderPath = Utils::getShaderPath();
+    std::string        shaderFile       = shaderFolderPath + "/" + shaderSrc;
+    out->vk() = VkShaderUtil::loadShader(device->getVkDevice(), shaderFile, spirv);
+    break;
+  }
+  case ShaderSourceType::STRING: {
+    vk::ShaderStageFlagBits stage = vk::ShaderStageFlagBits::eVertex;
+
+    if (shaderSrc.find("gl_Position") == std::string::npos) {
+      stage = vk::ShaderStageFlagBits::eFragment;
+    }
+
+    out->vk() = VkShaderUtil::loadShader(device->getVkDevice(), shaderSrc, stage, spirv);
+
+    break;
+  }
+  case ShaderSourceType::SPV_FILE:
+    break;
+  case ShaderSourceType::SPV: {
+    uint32_t* src  = (uint32_t*)shaderSrc.c_str();
+    size_t    size = shaderSrc.length();
+    out->vk()      = VkShaderUtil::loadShader(device->getVkDevice(), src, size, spirv);
+    break;
+  }
+  default:
+    break;
+  }
+
+  out->setSpirv(spirv);
   return out;
 }
-ShaderModule* ResourcePool::loadShader(Device* device, std::string& filename) {
-  return nullptr;
-}
-ShaderModule* ResourcePool::loadShader(Device*                 device,
-                                       std::string&            fileContents,
-                                       vk::ShaderStageFlagBits stage) {
-  return nullptr;
-}
+
 }  //namespace vkl

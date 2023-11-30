@@ -65,8 +65,8 @@ const std::vector<std::string>& ShaderVariant::get_processes() const {
   return processes;
 }
 
-const std::unordered_map<std::string, size_t>&
-ShaderVariant::get_runtime_array_sizes() const {
+const std::unordered_map<std::string, size_t>& ShaderVariant::get_runtime_array_sizes()
+  const {
   return runtime_array_sizes;
 }
 
@@ -251,16 +251,23 @@ vk::ShaderStageFlagBits find_shader_stage(const std::string& ext) {
 }
 }  //namespace
 
-vk::ShaderModule
-VkShaderUtil::loadShader(vk::Device device, uint32_t* src, vk::DeviceSize srcSize) {
+vk::ShaderModule VkShaderUtil::loadShader(vk::Device             device,
+                                          uint32_t*              src,
+                                          vk::DeviceSize         srcSize,
+                                          std::vector<uint32_t>& spirv) {
   vk::ShaderModuleCreateInfo shaderCI;
-  shaderCI.codeSize       = srcSize;
-  shaderCI.pCode          = src;
+  shaderCI.codeSize = srcSize;
+  shaderCI.pCode    = src;
+
+  spirv.resize(srcSize / sizeof(uint32_t));
+  memcpy(spirv.data(), src, srcSize);
   vk::ShaderModule shader = device.createShaderModule(shaderCI);
   return shader;
 }
 
-vk::ShaderModule VkShaderUtil::loadShader(vk::Device device, std::string& filename) {
+vk::ShaderModule VkShaderUtil::loadShader(vk::Device             device,
+                                          std::string&           filename,
+                                          std::vector<uint32_t>& spirv) {
   std::string              src   = readFileAsString(filename);
   std::vector<std::string> lines = replaceInclude(src);
   std::vector<uint8_t>     data  = convertStringsToBytes(lines);
@@ -269,26 +276,27 @@ vk::ShaderModule VkShaderUtil::loadShader(vk::Device device, std::string& filena
   std::string file_ext = filename;
   file_ext             = file_ext.substr(file_ext.find_last_of(".") + 1);
 
-  return compileShader(device, find_shader_stage(file_ext), data, "main", {});
+  return compileShader(device, find_shader_stage(file_ext), data, "main", {}, spirv);
 }
 
 vk::ShaderModule VkShaderUtil::loadShader(vk::Device              device,
                                           std::string&            fileContents,
-                                          vk::ShaderStageFlagBits stage) {
+                                          vk::ShaderStageFlagBits stage,
+                                          std::vector<uint32_t>&  spirv) {
   std::vector<std::string> lines = replaceInclude(fileContents);
   std::vector<uint8_t>     data  = convertStringsToBytes(lines);
   //std::vector<uint8_t>     data;
   //data.resize(fileContents.length());
   //memcpy(data.data(), fileContents.c_str(), data.size());
-  return compileShader(device, stage, data, "main", {});
+  return compileShader(device, stage, data, "main", {}, spirv);
 }
 
 vk::ShaderModule VkShaderUtil::compileShader(vk::Device                  device,
                                              vk::ShaderStageFlagBits     stage,
                                              const std::vector<uint8_t>& src,
                                              const std::string&          entry_point,
-                                             const ShaderVariant&        shader_variant) {
-  std::vector<uint32_t> spirv;
+                                             const ShaderVariant&        shader_variant,
+                                             std::vector<uint32_t>&      spirv) {
   std::string           info_log;
   GLSLCompiler          glsl_compiler;
 

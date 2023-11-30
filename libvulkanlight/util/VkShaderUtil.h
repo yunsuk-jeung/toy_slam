@@ -58,8 +58,9 @@ protected:
 
   //Search for a valid "local" path based on combining the stack of include
   //directories and the nominal name of the header.
-  virtual IncludeResult*
-  readLocalPath(const char* headerName, const char* includerName, int depth) {
+  virtual IncludeResult* readLocalPath(const char* headerName,
+                                       const char* includerName,
+                                       int         depth) {
     //Discard popped include directories, and
     //initialize when at parse-time first level.
     directoryStack.resize(depth + externalLocalDirectoryCount);
@@ -87,8 +88,9 @@ protected:
   }
 
   //Do actual reading of the file, filling in a new include result.
-  virtual IncludeResult*
-  newIncludeResult(const std::string& path, std::ifstream& file, int length) const {
+  virtual IncludeResult* newIncludeResult(const std::string& path,
+                                          std::ifstream&     file,
+                                          int                length) const {
     char* content = new tUserDataElement[length];
     file.seekg(0, file.beg);
     file.read(content, length);
@@ -174,9 +176,9 @@ public:
    * @param target_language The language to translate to
    * @param target_language_version The version of the language to translate to
    */
-  static void
-  set_target_environment(glslang::EShTargetLanguage        target_language,
-                         glslang::EShTargetLanguageVersion target_language_version);
+  static void set_target_environment(
+    glslang::EShTargetLanguage        target_language,
+    glslang::EShTargetLanguageVersion target_language_version);
 
   /**
    * @brief Reset the glslang target environment to the default values
@@ -218,18 +220,26 @@ public:
 
 class VkShaderUtil {
 public:
-  static vk::ShaderModule loadShader(vk::Device, uint32_t* src, vk::DeviceSize srcSize);
+  static vk::ShaderModule loadShader(vk::Device,
+                                     uint32_t*              src,
+                                     vk::DeviceSize         srcSize,
+                                     std::vector<uint32_t>& spirv);
 
-  static vk::ShaderModule loadShader(vk::Device device, std::string& filename);
+  static vk::ShaderModule loadShader(vk::Device             device,
+                                     std::string&           filename,
+                                     std::vector<uint32_t>& spirv);
 
-  static vk::ShaderModule
-  loadShader(vk::Device device, std::string& fileContents, vk::ShaderStageFlagBits stage);
+  static vk::ShaderModule loadShader(vk::Device              device,
+                                     std::string&            fileContents,
+                                     vk::ShaderStageFlagBits stage,
+                                     std::vector<uint32_t>&  spirv);
 
   static vk::ShaderModule compileShader(vk::Device                  device,
                                         vk::ShaderStageFlagBits     stage,
                                         const std::vector<uint8_t>& glsl_source,
                                         const std::string&          entry_point,
-                                        const ShaderVariant&        shader_variant);
+                                        const ShaderVariant&        shader_variant,
+                                        std::vector<uint32_t>&      spirv);
 
 protected:
   static std::vector<std::string> replaceInclude(std::string& src);

@@ -1,48 +1,41 @@
 #pragma once
-
+#include "VkLogger.h"
 #include "Device.h"
 #include "ShaderModule.h"
 #include "VkShaderUtil.h"
 #include "ResourcePool.h"
 #include "Utils.h"
+#include "SPIRVReflection.h"
 
 namespace vkl {
-std::unordered_map<size_t, std::unique_ptr<ShaderModule>> ResourcePool::shaderPools;
-
-namespace {
-struct SpirvHasher {
-  uint64_t operator()(uint32_t* arr, vk::DeviceSize srcSize) const {
-    uint64_t hash = 0;
-    int      num  = srcSize / sizeof(uint32_t);
-
-    for (int i = 0; i < num; i++) {
-      uint32_t val = arr[i];
-      hash ^= std::hash<uint32_t>{}(val) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-    }
-    return hash;
-  }
-};
-
-}  //namespace
+std::unordered_map<size_t, std::unique_ptr<ShaderModule>> ResourcePool::mShaderPools;
+std::unordered_map<size_t, vk::DescriptorSetLayout> ResourcePool::mDescriptorSetLayouts;
 
 void ResourcePool::clear() {
-  shaderPools.clear();
+  mShaderPools.clear();
 }
 
-ShaderModule* ResourcePool::loadShader(Device*          device,
-                                       ShaderSourceType srcType,
-                                       std::string&     shaderSrc) {
+ShaderModule* ResourcePool::loadShader(const std::string&      name,
+                                       Device*                 device,
+                                       ShaderSourceType        srcType,
+                                       vk::ShaderStageFlagBits stage,
+                                       std::string&            shaderSrc) {
+  std::string type = stage == vk::ShaderStageFlagBits::eVertex ? "_vert_" : "_frag_";
+  std::string hash = name + type;
+
   std::hash<std::string> hasher;
-  size_t                 key = hasher(shaderSrc);
+  size_t                 key = hasher(hash);
 
   bool createNew = false;
-  if (shaderPools.find(key) == shaderPools.end()) {
-    shaderPools.insert({key, ShaderModule::Uni(new ShaderModule(device))});
+  if (mShaderPools.find(key) == mShaderPools.end()) {
+    mShaderPools.insert({key, ShaderModule::Uni(new ShaderModule(device, stage))});
     createNew = true;
   }
 
-  ShaderModule* out = shaderPools[key].get();
+  ShaderModule* out = mShaderPools[key].get();
   if (!createNew) return out;
+
+  out->setName(hash);
 
   std::vector<uint32_t> spirv;
   switch (srcType) {
@@ -53,14 +46,7 @@ ShaderModule* ResourcePool::loadShader(Device*          device,
     break;
   }
   case ShaderSourceType::STRING: {
-    vk::ShaderStageFlagBits stage = vk::ShaderStageFlagBits::eVertex;
-
-    if (shaderSrc.find("gl_Position") == std::string::npos) {
-      stage = vk::ShaderStageFlagBits::eFragment;
-    }
-
     out->vk() = VkShaderUtil::loadShader(device->getVkDevice(), shaderSrc, stage, spirv);
-
     break;
   }
   case ShaderSourceType::SPV_FILE:
@@ -76,7 +62,18 @@ ShaderModule* ResourcePool::loadShader(Device*          device,
   }
 
   out->setSpirv(spirv);
+  SPIRVReflection::reflectShaderRresources(out->getStage(),
+                                           out->getSpirv(),
+                                           out->getShaderResources(),
+                                           {});
   return out;
+}
+
+void ResourcePool::addDescriptorSetLayouts(const std::string&      name,
+                                           vk::DescriptorSetLayout descSetLayout) {
+  std::hash<std::string> hasher;
+  size_t                 key = hasher(name);
+  mDescriptorSetLayouts.insert({key, descSetLayout});
 }
 
 }  //namespace vkl

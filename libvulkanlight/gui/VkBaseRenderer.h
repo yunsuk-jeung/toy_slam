@@ -54,6 +54,7 @@ public:
 protected:
   std::string      name{"Basic Renderer"};
   ShaderSourceType shaderSrcType;
+  std::string      shaderName{"Base"};
   std::string      vertShaderSource{"Please set vert shader Path"};
   std::string      fragShaderSource{"Please set frag shader Path"};
 

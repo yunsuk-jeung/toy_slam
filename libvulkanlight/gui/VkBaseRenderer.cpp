@@ -1,10 +1,11 @@
 #include <iostream>
-#include "VkBaseRenderer.h"
+#include "VkLogger.h"
 #include "Device.h"
 #include "RenderContext.h"
 #include "Utils.h"
 #include "ShaderModule.h"
 #include "ResourcePool.h"
+#include "VkBaseRenderer.h"
 
 namespace vkl {
 VkBaseRenderer::VkBaseRenderer()
@@ -51,8 +52,19 @@ void VkBaseRenderer::initialize(Device*            _device,
   renderContext    = context;
   vkDescriptorPool = descPool;
 
-  vertShader = ResourcePool::loadShader(device, shaderSrcType, vertShaderSource);
-  fragShader = ResourcePool::loadShader(device, shaderSrcType, fragShaderSource);
+  if (shaderName == "Base") { VklLogE("please set shaderName"); }
+
+  vertShader = ResourcePool::loadShader(shaderName,
+                                        device,
+                                        shaderSrcType,
+                                        vk::ShaderStageFlagBits::eVertex,
+                                        vertShaderSource);
+
+  fragShader = ResourcePool::loadShader(shaderName,
+                                        device,
+                                        shaderSrcType,
+                                        vk::ShaderStageFlagBits::eFragment,
+                                        fragShaderSource);
 }
 
 void VkBaseRenderer::prepare(vk::RenderPass renderPass, uint32_t _subpassId) {

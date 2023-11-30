@@ -4,18 +4,28 @@
 #include <unordered_map>
 #include <vulkan/vulkan.hpp>
 #include "vkltypes.h"
+#include "ShaderModule.h"
 
 namespace vkl {
-class ShaderModule;
 class Device;
 class ResourcePool {
 public:
   static void clear();
 
-  static ShaderModule*
-  loadShader(Device* device, ShaderSourceType srcType, std::string& src);
+  static ShaderModule* loadShader(const std::string&      name,
+                                  Device*                 device,
+                                  ShaderSourceType        srcType,
+                                  vk::ShaderStageFlagBits stage,
+                                  std::string&            shaderSrc);
+
+  static void addDescriptorSetLayouts(const std::string&      name,
+                                      vk::DescriptorSetLayout descSetLayout);
 
 protected:
-  static std::unordered_map<size_t, std::unique_ptr<ShaderModule>> shaderPools;
+
+protected:
+  static std::unordered_map<size_t, std::unique_ptr<ShaderModule>> mShaderPools;
+  //static std::unordered_map<size_t, std::unique_ptr<>> mShaderPools;
+  static std::unordered_map<size_t, vk::DescriptorSetLayout>       mDescriptorSetLayouts;
 };
 }  //namespace vkl

@@ -6,7 +6,7 @@
 #include <vulkan/vulkan.hpp>
 #include "Buffer.h"
 #include "shaders/ShaderTypes.h"
-#include "types.h"
+#include "vkltypes.h"
 
 namespace vkl {
 class InputCallback;

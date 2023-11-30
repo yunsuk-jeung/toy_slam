@@ -26,9 +26,11 @@ target_include_directories(${PROJECT_NAME}
   ${SUBDIRECTORIES}
   ${CMAKE_CURRENT_SOURCE_DIR}/../common
 )
+
 target_compile_definitions(
   ${PROJECT_NAME}
   PUBLIC
+  NOMINMAX
   VKL_DEBUG
   VKL_VALIDATION_LAYERS
   VK_NO_PROTOTYPES

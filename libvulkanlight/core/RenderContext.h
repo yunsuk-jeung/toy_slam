@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Image.h"
-#include "types.h"
+#include "vkltypes.h"
 
 namespace vkl {
 

@@ -3,16 +3,16 @@
 #include "macros.h"
 namespace vkl {
 template <typename T>
-class Object {
+class VkObject {
 public:
-  Object()
+  VkObject()
     : mVkObject{VK_NULL_HANDLE} {}
-  ~Object() { mVkObject = VK_NULL_HANDLE; }
+  ~VkObject() { mVkObject = VK_NULL_HANDLE; }
 
-  DELETE_COPY_CONSTRUCTORS(Object);
-  void operator=(Object&&) = delete;
+  DELETE_COPY_CONSTRUCTORS(VkObject);
+  void operator=(VkObject&&) = delete;
 
-  T getVkObject() { return mVkObject; }
+  T& vk() { return mVkObject; }
 
 protected:
   T mVkObject;

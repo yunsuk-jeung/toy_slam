@@ -2,12 +2,12 @@
 
 #include <memory>
 #include <vk_mem_alloc.h>
-#include "Object.h"
+#include "VkObject.h"
 
 namespace vkl {
 
 class Device;
-class Buffer : public Object<vk::Buffer> {
+class Buffer : public VkObject<vk::Buffer> {
 public:
   USING_SMART_PTR(Buffer);
   Buffer()              = default;

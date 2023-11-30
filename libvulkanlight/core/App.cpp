@@ -15,6 +15,7 @@
 #include "SwapchainRenderContext.h"
 #include "Queue.h"
 #include "UniformBuffer.h"
+#include "ResourcePool.h"
 
 #include "GUI.h"
 #include "InputCallback.h"
@@ -74,6 +75,9 @@ App::~App() {
   if (mVkRenderPass) { mDevice->getVkDevice().destroyRenderPass(mVkRenderPass); }
 
   mRenderContext.reset();
+
+  ResourcePool::clear();
+
   mDevice.reset();
 
   if (mVkSurface) { mInstance->getVkInstance().destroySurfaceKHR(mVkSurface); }

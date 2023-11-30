@@ -10,6 +10,7 @@
 #include "VkShaderUtil.h"
 #include "VkLogger.h"
 #include "VkError.h"
+#include "ShaderModule.h"
 
 namespace vkl {
 
@@ -78,8 +79,8 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
                                           : vk::IndexType::eUint32;
 
   if (dd->TotalVtxCount > 0) {
-    cmd.bindVertexBuffers(0, {VB->getVkObject()}, {0});
-    cmd.bindIndexBuffer(IB->getVkObject(), 0, indexType);
+    cmd.bindVertexBuffers(0, {VB->vk()}, {0});
+    cmd.bindIndexBuffer(IB->vk(), 0, indexType);
   }
 
   std::vector<float> scale(2);
@@ -393,8 +394,8 @@ void GUI::createVkPipeline(vk::RenderPass renderPass) {
   if (vkPipeline) { device->getVkDevice().destroyPipeline(vkPipeline); }
 
   std::vector<vk::PipelineShaderStageCreateInfo> shaderStageCIs{
-    {{},   vk::ShaderStageFlagBits::eVertex, vertShader, "main"},
-    {{}, vk::ShaderStageFlagBits::eFragment, fragShader, "main"}
+    {{},   vk::ShaderStageFlagBits::eVertex, vertShader->vk(), "main"},
+    {{}, vk::ShaderStageFlagBits::eFragment, fragShader->vk(), "main"}
   };
 
   std::vector<vk::VertexInputBindingDescription> vertBindingDescription{
@@ -553,7 +554,7 @@ void GUI::createTextures() {
   region.imageSubresource.layerCount = fontImgViewCI.subresourceRange.layerCount;
   region.imageExtent                 = fontImgCI.extent;
 
-  cmdBuffer.copyBufferToImage(stagingBuffer.getVkObject(),
+  cmdBuffer.copyBufferToImage(stagingBuffer.vk(),
                               fontImage.vkImage,
                               vk::ImageLayout::eTransferDstOptimal,
                               region);

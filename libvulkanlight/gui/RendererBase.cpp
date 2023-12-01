@@ -1,8 +1,8 @@
 #include "ShaderModule.h"
 #include "PipelineLayout.h"
+#include "Pipeline.h"
 #include "ResourcePool.h"
 #include "RendererBase.h"
-
 namespace vkl {
 RendererBase::RendererBase()
   : mName{"Base Renderer"}
@@ -28,7 +28,7 @@ void RendererBase::prepare(Device*            device,
   mRenderContext = context;
   mDescPool      = descPool;
   mVkRenderPass  = renderPass;
-  mVkPipeline    = ResourcePool::requestPipeline(pipelineName);
+  mVkPipeline    = ResourcePool::requestPipeline(pipelineName)->vk();
 
   createVertexBuffer();
   createIndexBuffers();

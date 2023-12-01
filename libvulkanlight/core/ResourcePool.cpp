@@ -3,6 +3,7 @@
 #include "Device.h"
 #include "ShaderModule.h"
 #include "PipelineLayout.h"
+#include "Pipeline.h"
 #include "VkShaderUtil.h"
 #include "ResourcePool.h"
 #include "Utils.h"
@@ -12,7 +13,7 @@ namespace vkl {
 std::unordered_map<size_t, ShaderModule::Uni>       ResourcePool::mShaderPools;
 std::unordered_map<size_t, vk::DescriptorSetLayout> ResourcePool::mDescriptorSetLayouts;
 std::unordered_map<size_t, PipelineLayout::Uni>     ResourcePool::mPipelineLayouts;
-std::unordered_map<size_t, vk::Pipeline>            ResourcePool::mPipelines;
+std::unordered_map<size_t, Pipeline::Uni>           ResourcePool::mPipelines;
 
 void ResourcePool::clear(Device* device) {
   mShaderPools.clear();
@@ -21,7 +22,9 @@ void ResourcePool::clear(Device* device) {
   }
   mPipelineLayouts.clear();
 
-  for (auto& [key, pipeline] : mPipelines) { device->vk().destroyPipeline(pipeline); }
+  for (auto& [key, pipeline] : mPipelines) {
+    device->vk().destroyPipeline(pipeline->vk());
+  }
 }
 
 ShaderModule* ResourcePool::loadShader(const std::string&      name,
@@ -118,7 +121,7 @@ PipelineLayout* ResourcePool::requestPipelineLayout(const std::string& name) {
   return it->second.get();
 }
 
-void ResourcePool::addPipeline(const std::string& name, vk::Pipeline pipeline) {
+void ResourcePool::addPipeline(const std::string& name, Pipeline* pipeline) {
   const std::string& hash = name;
 
   std::hash<std::string> hasher;
@@ -129,10 +132,10 @@ void ResourcePool::addPipeline(const std::string& name, vk::Pipeline pipeline) {
     throw std::runtime_error("existing pipeline");
   }
 
-  mPipelines[key] = pipeline;
+  mPipelines[key] = Pipeline::Uni(pipeline);
 }
 
-vk::Pipeline ResourcePool::requestPipeline(const std::string& name) {
+Pipeline* ResourcePool::requestPipeline(const std::string& name) {
   const std::string& hash = name;
 
   std::hash<std::string> hasher;
@@ -143,7 +146,7 @@ vk::Pipeline ResourcePool::requestPipeline(const std::string& name) {
     throw std::runtime_error("none existing pipeline");
   }
 
-  return mPipelines[key];
+  return mPipelines[key].get();
 }
 
 }  //namespace vkl

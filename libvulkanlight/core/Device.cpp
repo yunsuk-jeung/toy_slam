@@ -26,7 +26,7 @@ Device::~Device() {
     vmaDestroyAllocator(vmaAllocator);
   }
 
-  vkDevice.destroy();
+  mVkObject.destroy();
 }
 
 void Device::initLogicalDevice() {
@@ -62,8 +62,8 @@ void Device::initLogicalDevice() {
 
   vk::DeviceCreateInfo deviceCreateInfo{{}, queueCreateInfos, {}, extensions, {}};
 
-  vkDevice = vkPhysicalDevice.createDevice(deviceCreateInfo);
-  if (!vkDevice) {
+  mVkObject = vkPhysicalDevice.createDevice(deviceCreateInfo);
+  if (!mVkObject) {
     VklLogE("Could not create vkDevice!");
     throw std::runtime_error("Could not create vkDevice");
   }
@@ -194,7 +194,7 @@ void Device::initVmaAllocator() {
 
   VmaAllocatorCreateInfo allocator_info{};
   allocator_info.physicalDevice = static_cast<VkPhysicalDevice>(vkPhysicalDevice);
-  allocator_info.device         = static_cast<VkDevice>(vkDevice);
+  allocator_info.device         = static_cast<VkDevice>(mVkObject);
   allocator_info.instance       = static_cast<VkInstance>(vkInstance);
 
   bool canGetMemroy = VkSettings::isInDeviceExtension(

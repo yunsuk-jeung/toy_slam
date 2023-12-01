@@ -5,6 +5,8 @@
 #include "GUI.h"
 #include "VkShaderUtil.h"
 #include "App.h"
+#include "BasicRenderer.h"
+
 namespace vkl {
 class SampleApp : public App {
 public:
@@ -15,7 +17,7 @@ public:
                                          glslang::EShTargetSpv_1_3);
   }
   ~SampleApp() {
-    vk::Device vkDevice = mDevice->getVkDevice();
+    vk::Device vkDevice = mDevice->vk();
     vkDevice.waitIdle();
   }
   void onWindowResized(int w, int h, int orientation = 0) override {
@@ -24,6 +26,9 @@ public:
 
   bool prepare() override {
     if (!App::prepare()) { return false; }
+
+    mBasicRenderer.initialize(mDevice.get(), mRenderContext.get(), mVkDescPool);
+    mBasicRenderer.prepare();
 
     return true;
   }
@@ -57,6 +62,7 @@ public:
   void updateUniform(int idx) override { updateCameraUniform(idx); }
 
 protected:
+  BasicRenderer mBasicRenderer;
 };
 }  //namespace vkl
 

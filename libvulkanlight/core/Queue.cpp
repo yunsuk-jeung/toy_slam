@@ -12,6 +12,6 @@ Queue::Queue(Device*                    _device,
   , vkQueueFamilyProps{&props}
   , supportPresent{supportPresent}
   , index{index} {
-  vkQueue = device->getVkDevice().getQueue(familyIdx, index);
+  vkQueue = device->vk().getQueue(familyIdx, index);
 }
 }  //namespace vkl

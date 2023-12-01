@@ -60,9 +60,8 @@ std::vector<vk::DescriptorSetLayout> PipelineLayout::prepareDescSetLayouts() {
       layoutBinding.descriptorType  = descriptor_type;
       layoutBinding.stageFlags      = static_cast<vk::ShaderStageFlags>(resource.stages);
 
-      auto descSet = mDevice->getVkDevice().createDescriptorSetLayout(
-        {{}, layoutBinding});
-      auto name = mName + resource.name;
+      auto descSet = mDevice->vk().createDescriptorSetLayout({{}, layoutBinding});
+      auto name    = mName + resource.name;
       ResourcePool::addDescriptorSetLayouts(name, descSet);
       layouts.push_back(descSet);
     }
@@ -89,6 +88,7 @@ PipelineLayout::PipelineLayout(Device* device, std::vector<ShaderModule*>& shade
   }
 
   vk::PipelineLayoutCreateInfo CI({}, layouts, pushConstRanges);
-  mDevice->getVkDevice().createPipelineLayout(CI);
+
+  auto result = mDevice->vk().createPipelineLayout(CI);
 }
 }  //namespace vkl

@@ -9,7 +9,7 @@ Image::Image(Device* _device, vk::Image image, vk::ImageViewCreateInfo imageView
   : device(_device)
   , vkImage(image) {
   format      = imageViewCI.format;
-  vkImageView = device->getVkDevice().createImageView(imageViewCI);
+  vkImageView = device->vk().createImageView(imageViewCI);
 }
 
 Image::Image(Device*                 _device,
@@ -37,7 +37,7 @@ Image::Image(Device*                 _device,
 
   imageViewCI.image  = vkImage;
   imageViewCI.format = format;
-  vkImageView        = device->getVkDevice().createImageView(imageViewCI);
+  vkImageView        = device->vk().createImageView(imageViewCI);
 }
 
 Image::Image(Image&& other) noexcept
@@ -64,7 +64,7 @@ Image::~Image() {
   }
 
   if (vkImageView) {
-    device->getVkDevice().destroyImageView(vkImageView);
+    device->vk().destroyImageView(vkImageView);
     vkImageView = VK_NULL_HANDLE;
   }
 }

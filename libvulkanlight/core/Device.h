@@ -4,9 +4,10 @@
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
 #include "Queue.h"
+#include "VkObject.h"
 namespace vkl {
 
-class Device {
+class Device : public VkObject<vk::Device> {
 public:
   Device() = delete;
   Device(vk::Instance instance, vk::PhysicalDevice device, vk::SurfaceKHR surface);
@@ -51,18 +52,12 @@ protected:
   uint32_t computeQueueFamily;
   uint32_t transferQueueFamily;
 
-  /**
-   * @brief vkDevice thigs
-   */
-  vk::Device vkDevice{VK_NULL_HANDLE};
-
   vk::CommandPool renderCommandPool{VK_NULL_HANDLE};
 
 public:
   //getters and setters
   vk::SurfaceKHR&     getVkSurface() { return vkSurface; };
   vk::PhysicalDevice& getVkPhysicalDevice() { return vkPhysicalDevice; }
-  vk::Device&         getVkDevice() { return vkDevice; }
   VmaAllocator&       getMemoryAllocator() { return vmaAllocator; }
 };
 }  //namespace vkl

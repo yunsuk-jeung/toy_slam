@@ -19,7 +19,7 @@ RenderContext::RenderContext(Device*            _device,
 }
 
 RenderContext::~RenderContext() {
-  vk::Device vkDevice = device->getVkDevice();
+  vk::Device vkDevice = device->vk();
   vkDevice.waitIdle();
 
   if (renderCommandPool) { vkDevice.destroyCommandPool(renderCommandPool); }
@@ -44,17 +44,17 @@ void RenderContext::createCommandPool(vk::CommandPoolCreateFlagBits cmdPoolCreat
   uint32_t famIdx = queue->getFamilyIdx();
 
   vk::CommandPoolCreateInfo poolInfo(cmdPoolCreateFlag, famIdx);
-  renderCommandPool = device->getVkDevice().createCommandPool(poolInfo);
+  renderCommandPool = device->vk().createCommandPool(poolInfo);
 }
 
 void RenderContext::createCommandBuffer(vk::CommandBufferLevel priority) {
   if (!renderCommandBuffers.empty()) {
-    device->getVkDevice().freeCommandBuffers(renderCommandPool, renderCommandBuffers);
+    device->vk().freeCommandBuffers(renderCommandPool, renderCommandBuffers);
   }
 
   vk::CommandBufferAllocateInfo info(renderCommandPool, priority, ctProps.imageCount);
 
-  renderCommandBuffers = device->getVkDevice().allocateCommandBuffers(info);
+  renderCommandBuffers = device->vk().allocateCommandBuffers(info);
 }
 
 void RenderContext::resizeSwapChain() {}
@@ -64,12 +64,12 @@ vk::CommandBuffer RenderContext::getOneTimeCommandBuffer() {
                                      vk::CommandBufferLevel::ePrimary,
                                      1);
 
-  auto cmdBuffers = device->getVkDevice().allocateCommandBuffers(info);
+  auto cmdBuffers = device->vk().allocateCommandBuffers(info);
   return cmdBuffers.front();
 }
 
 void RenderContext::freeOneTimeCommandBuffer(vk::CommandBuffer cmd) {
-  device->getVkDevice().freeCommandBuffers(renderCommandPool, cmd);
+  device->vk().freeCommandBuffers(renderCommandPool, cmd);
 }
 
 void RenderContext::prepareColor() {}

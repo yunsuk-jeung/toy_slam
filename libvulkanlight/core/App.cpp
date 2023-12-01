@@ -76,7 +76,7 @@ App::~App() {
 
   mRenderContext.reset();
 
-  ResourcePool::clear();
+  ResourcePool::clear(mDevice.get());
 
   mDevice.reset();
 
@@ -164,6 +164,9 @@ bool App::prepare() {
   //setup subpass
   createRenderPass();
   createFrameBuffer();
+
+  createPipelineLayouts();
+  createPipelines();
 
   createVkDescriptorPool();
 
@@ -489,6 +492,10 @@ void App::createVkDescriptorPool() {
   //err = vkCreateDescriptorPool(g_Device, &pool_info, g_Allocator, &g_DescriptorPool);
   //check_vk_result(err);
 }
+
+void App::createPipelineLayouts() {}
+
+void App::createPipelines() {}
 
 void App::createGUI() {
   mGui = std::make_unique<GUI>();

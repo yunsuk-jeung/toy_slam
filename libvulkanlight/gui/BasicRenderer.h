@@ -9,6 +9,5 @@ public:
 
 protected:
   virtual void setName() override;
-  virtual void setShader() override;
 };
 }  //namespace vkl

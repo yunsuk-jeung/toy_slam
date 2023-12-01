@@ -20,7 +20,6 @@ Pipeline::Pipeline(Device*         device,
   , mPipelineLayout{pipelineLayout} {}
 
 Pipeline::~Pipeline() {
-  mDevice->vk().destroyPipeline(mVkObject);
 }
 BasicTraianglePipeline::BasicTraianglePipeline(const std::string& name,
                                                Device*            device,

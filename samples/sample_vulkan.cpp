@@ -2,7 +2,7 @@
 #include "VkLogger.h"
 #include "GlfwWindow.h"
 #include "Device.h"
-#include "GUI.h"
+#include "GUI2.h"
 #include "VkShaderUtil.h"
 #include "App.h"
 #include "BasicRenderer.h"
@@ -35,7 +35,7 @@ public:
   bool prepare() override {
     if (!App::prepare()) { return false; }
 
-    std::string basicPipeline = "default_basic_vert_basic_frag";
+    std::string basicPipeline = "triangle_basic_vert_basic_frag";
     mBasicRenderer.prepare(mDevice.get(),
                            mRenderContext.get(),
                            mVkDescPool,

@@ -17,6 +17,10 @@ RendererBase::RendererBase()
   , mS{Eigen::Matrix4f::Identity()}
   , mTRS{Eigen::Matrix4f::Identity()} {}
 
+RendererBase::~RendererBase() {}
+
+void RendererBase::onWindowResized(int w, int h) {}
+
 void RendererBase::prepare(Device*            device,
                            RenderContext*     context,
                            vk::DescriptorPool descPool,
@@ -37,7 +41,6 @@ void RendererBase::prepare(Device*            device,
   createDescriptorsets();
 }
 
-RendererBase::~RendererBase() {}
 
 void RendererBase::createVertexBuffer() {}
 void RendererBase::createIndexBuffers() {}

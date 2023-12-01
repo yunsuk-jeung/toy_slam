@@ -49,11 +49,6 @@ Image::Image(Image&& other) noexcept
   swap(other);
 }
 
-Image& Image::operator=(Image&& image) noexcept {
-  swap(image);
-  return *this;
-}
-
 Image::~Image() {
   if (vkImage && vmaAllocation) {
     vmaDestroyImage(device->getMemoryAllocator(),

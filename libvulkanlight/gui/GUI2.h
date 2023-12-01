@@ -53,7 +53,7 @@ public:
   std::vector<size_t>                  prevIBSizes;
   std::vector<std::unique_ptr<Buffer>> VBs;
   std::vector<std::unique_ptr<Buffer>> IBs;
-  Image                                fontImage;
+  std::unique_ptr<Image>               fontImage;
   vk::Sampler                          fontSampler      = VK_NULL_HANDLE;
   vk::DescriptorSet                    fontDescSet      = VK_NULL_HANDLE;
   vk::DescriptorSetLayout              texDescSetLayout = VK_NULL_HANDLE;

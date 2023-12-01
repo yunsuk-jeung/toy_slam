@@ -33,8 +33,8 @@ void GUI2::onWindowResized(int w, int h) {
 }
 
 void GUI2::initialize(Device*            _device,
-                     RenderContext*     context,
-                     vk::DescriptorPool descPool) {
+                      RenderContext*     context,
+                      vk::DescriptorPool descPool) {
   VkBaseRenderer::initialize(_device, context, descPool);
 
   guiCmdBuffer = renderContext->getOneTimeCommandBuffer();
@@ -366,7 +366,7 @@ void GUI2::createVkDescriptorSets() {
 
 void GUI2::updateDescriptorSets() {
   vk::DescriptorImageInfo fontDescImageInfo(fontSampler,
-                                            fontImage.vkImageView,
+                                            fontImage->vkImageView,
                                             vk::ImageLayout::eShaderReadOnlyOptimal);
 
   vk::WriteDescriptorSet fontWriteDescSet(fontDescSet,
@@ -515,11 +515,11 @@ void GUI2::createTextures() {
   auto fontImgViewCI = Utils::createVkImageViewCI(vk::ImageViewType::e2D,
                                                   vk::ImageAspectFlagBits::eColor);
 
-  fontImage = Image(device,
-                    fontImgCI,
-                    vk::MemoryPropertyFlagBits::eDeviceLocal,
-                    vk::MemoryPropertyFlagBits::eDeviceLocal,
-                    fontImgViewCI);
+  fontImage = Image::Uni(new Image(device,
+                                   fontImgCI,
+                                   vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                   vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                   fontImgViewCI));
 
   auto stagingBuffer = Buffer(device,
                               uploadSize,
@@ -542,7 +542,7 @@ void GUI2::createTextures() {
   cmdBuffer.begin(beginInfo);
 
   cmd::setImageLayout(cmdBuffer,
-                      fontImage.vkImage,
+                      fontImage->vkImage,
                       vk::ImageLayout::eUndefined,
                       vk::ImageLayout::eTransferDstOptimal,
                       fontImgViewCI.subresourceRange,
@@ -555,12 +555,12 @@ void GUI2::createTextures() {
   region.imageExtent                 = fontImgCI.extent;
 
   cmdBuffer.copyBufferToImage(stagingBuffer.vk(),
-                              fontImage.vkImage,
+                              fontImage->vkImage,
                               vk::ImageLayout::eTransferDstOptimal,
                               region);
 
   cmd::setImageLayout(cmdBuffer,
-                      fontImage.vkImage,
+                      fontImage->vkImage,
                       vk::ImageLayout::eTransferDstOptimal,
                       vk::ImageLayout::eShaderReadOnlyOptimal,
                       fontImgViewCI.subresourceRange,

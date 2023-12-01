@@ -26,21 +26,18 @@ public:
     }
   }
   ~UniformBuffer() {
-    if (mVkDescLayout) {
-      mDevice->getVkDevice().destroyDescriptorSetLayout(mVkDescLayout);
-    }
+    if (mVkDescLayout) { mDevice->vk().destroyDescriptorSetLayout(mVkDescLayout); }
   }
 
   void createDescSets(vk::DescriptorSetLayoutBinding descSetBinding,
                       vk::DescriptorPool             descPool) {
-    mVkDescLayout = mDevice->getVkDevice().createDescriptorSetLayout(
-      {{}, descSetBinding});
-    mBinding    = descSetBinding.binding;
-    mVkDescPool = descPool;
+    mVkDescLayout = mDevice->vk().createDescriptorSetLayout({{}, descSetBinding});
+    mBinding      = descSetBinding.binding;
+    mVkDescPool   = descPool;
 
     mVkDescSets.resize(mBufferCount);
     for (auto& descset : mVkDescSets) {
-      descset = mDevice->getVkDevice()
+      descset = mDevice->vk()
                   .allocateDescriptorSets({mVkDescPool, mVkDescLayout})
                   .front();
     }
@@ -54,7 +51,7 @@ public:
                                                 vk::DescriptorType::eUniformBuffer,
                                                 {},
                                                 descBufferInfo);
-      mDevice->getVkDevice().updateDescriptorSets(writeDescriptorSet, nullptr);
+      mDevice->vk().updateDescriptorSets(writeDescriptorSet, nullptr);
     }
   }
 

@@ -21,11 +21,11 @@ VkBaseRenderer::VkBaseRenderer()
 VkBaseRenderer::~VkBaseRenderer() {
   if (!device) return;
 
-  vk::Device vkDevice = device->getVkDevice();
+  vk::Device vkDevice = device->vk();
 
   while (!createdDescriptorSetLayouts.empty()) {
     auto& descriptorSetLayout = createdDescriptorSetLayouts.top();
-    device->getVkDevice().destroyDescriptorSetLayout(descriptorSetLayout);
+    device->vk().destroyDescriptorSetLayout(descriptorSetLayout);
     createdDescriptorSetLayouts.pop();
   }
 

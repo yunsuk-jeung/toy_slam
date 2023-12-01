@@ -42,11 +42,11 @@ ShaderModule* ResourcePool::loadShader(const std::string&      name,
   case ShaderSourceType::STRING_FILE: {
     const std::string& shaderFolderPath = Utils::getShaderPath();
     std::string        shaderFile       = shaderFolderPath + "/" + shaderSrc;
-    out->vk() = VkShaderUtil::loadShader(device->getVkDevice(), shaderFile, spirv);
+    out->vk() = VkShaderUtil::loadShader(device->vk(), shaderFile, spirv);
     break;
   }
   case ShaderSourceType::STRING: {
-    out->vk() = VkShaderUtil::loadShader(device->getVkDevice(), shaderSrc, stage, spirv);
+    out->vk() = VkShaderUtil::loadShader(device->vk(), shaderSrc, stage, spirv);
     break;
   }
   case ShaderSourceType::SPV_FILE:
@@ -54,7 +54,7 @@ ShaderModule* ResourcePool::loadShader(const std::string&      name,
   case ShaderSourceType::SPV: {
     uint32_t* src  = (uint32_t*)shaderSrc.c_str();
     size_t    size = shaderSrc.length();
-    out->vk()      = VkShaderUtil::loadShader(device->getVkDevice(), src, size, spirv);
+    out->vk()      = VkShaderUtil::loadShader(device->vk(), src, size, spirv);
     break;
   }
   default:

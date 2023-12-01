@@ -55,7 +55,7 @@ public:
     : mName{""}
     , mDevice{device}
     , mStage{stage} {}
-  ~ShaderModule() { mDevice->getVkDevice().destroyShaderModule(this->vk()); }
+  ~ShaderModule() { mDevice->vk().destroyShaderModule(this->vk()); }
 
 protected:
 
@@ -70,8 +70,8 @@ protected:
   std::vector<vk::PushConstantRange>   mPushConstRanges;
 
 public:
-  void setName(const std::string& name) { mName = name; }
-  std::string&                 getName() { return mName; }
+  void                    setName(const std::string& name) { mName = name; }
+  std::string&            getName() { return mName; }
   vk::ShaderStageFlagBits getStage() const { return mStage; }
   void                    setSpirv(const std::vector<uint32_t>& spirv) { mSpirv = spirv; }
   std::vector<uint32_t>&  getSpirv() { return mSpirv; }

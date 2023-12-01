@@ -23,7 +23,7 @@ GUI::~GUI() {
   window->endGUI();
   ImGui::DestroyContext();
 
-  device->getVkDevice().destroySampler(fontSampler);
+  device->vk().destroySampler(fontSampler);
 }
 
 void GUI::onWindowResized(int w, int h) {
@@ -226,7 +226,6 @@ void GUI::setName() {
 }
 
 void GUI::setShader() {
-
   shaderName = "imgui";
   //glsl_shader.vert, compiled with:
   //# glslangValidator -V -x -o glsl_shader.vert.u32 glsl_shader.vert
@@ -352,12 +351,12 @@ void GUI::createVkDescriptorSetLayout() {
       1,
       vk::ShaderStageFlagBits::eFragment}}};
 
-  texDescSetLayout = device->getVkDevice().createDescriptorSetLayout({{}, bindings});
+  texDescSetLayout = device->vk().createDescriptorSetLayout({{}, bindings});
   createdDescriptorSetLayouts.push(texDescSetLayout);
 }
 
 void GUI::createVkDescriptorSets() {
-  fontDescSet = device->getVkDevice()
+  fontDescSet = device->vk()
                   .allocateDescriptorSets({vkDescriptorPool, texDescSetLayout})
                   .front();
 
@@ -376,7 +375,7 @@ void GUI::updateDescriptorSets() {
                                           vk::DescriptorType::eCombinedImageSampler,
                                           fontDescImageInfo);
 
-  device->getVkDevice().updateDescriptorSets(fontWriteDescSet, {});
+  device->vk().updateDescriptorSets(fontWriteDescSet, {});
 
   auto count = renderContext->getContextImageCount();
 }
@@ -389,11 +388,11 @@ void GUI::createVkPipelineLayout() {
 
   vk::PipelineLayoutCreateInfo pipelineLayoutCI({}, texDescSetLayout, pushConst);
 
-  vkPipelineLayout = device->getVkDevice().createPipelineLayout(pipelineLayoutCI);
+  vkPipelineLayout = device->vk().createPipelineLayout(pipelineLayoutCI);
 }
 
 void GUI::createVkPipeline(vk::RenderPass renderPass) {
-  if (vkPipeline) { device->getVkDevice().destroyPipeline(vkPipeline); }
+  if (vkPipeline) { device->vk().destroyPipeline(vkPipeline); }
 
   std::vector<vk::PipelineShaderStageCreateInfo> shaderStageCIs{
     {{},   vk::ShaderStageFlagBits::eVertex, vertShader->vk(), "main"},
@@ -470,9 +469,8 @@ void GUI::createVkPipeline(vk::RenderPass renderPass) {
                                             subpassId);
 
   vk::Result result;
-  std::tie(result,
-           vkPipeline) = device->getVkDevice().createGraphicsPipeline(VK_NULL_HANDLE,
-                                                                      pipelineCI);
+  std::tie(result, vkPipeline) = device->vk().createGraphicsPipeline(VK_NULL_HANDLE,
+                                                                     pipelineCI);
   VK_CHECK_ERROR(static_cast<VkResult>(result), "createpipeline");
 }
 
@@ -536,7 +534,7 @@ void GUI::createTextures() {
                                      vk::CommandBufferLevel::ePrimary,
                                      1);
 
-  auto  cmdBuffers = device->getVkDevice().allocateCommandBuffers(info);
+  auto  cmdBuffers = device->vk().allocateCommandBuffers(info);
   auto& cmdBuffer  = cmdBuffers.front();
 
   vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
@@ -573,7 +571,7 @@ void GUI::createTextures() {
 
   vk::SubmitInfo submitInfo({}, {}, cmdBuffers, {});
   renderContext->getQueue()->getVkQueue().submit(submitInfo);
-  device->getVkDevice().waitIdle();
+  device->vk().waitIdle();
 
   vk::SamplerCreateInfo samplerCI;
   samplerCI.maxAnisotropy = 1.0f;
@@ -587,7 +585,7 @@ void GUI::createTextures() {
   samplerCI.maxLod        = 1000;
   samplerCI.maxAnisotropy = 1.0f;
 
-  fontSampler = device->getVkDevice().createSampler(samplerCI);
+  fontSampler = device->vk().createSampler(samplerCI);
 }
 
 void GUI::updateImGuiBuffer(uint32_t idx) {

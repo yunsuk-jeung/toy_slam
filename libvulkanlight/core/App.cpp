@@ -53,13 +53,13 @@ App::App()
 }
 
 App::~App() {
-  mDevice->getVkDevice().waitIdle();
+  mDevice->vk().waitIdle();
 
   mCurrCmdFence           = VK_NULL_HANDLE;
   mCurrBufferingSemaphore = {VK_NULL_HANDLE, VK_NULL_HANDLE};
 
   if (mVkDescPool) {
-    mDevice->getVkDevice().destroyDescriptorPool(mVkDescPool);
+    mDevice->vk().destroyDescriptorPool(mVkDescPool);
     mVkDescPool = VK_NULL_HANDLE;
   }
 
@@ -68,11 +68,11 @@ App::~App() {
   mGui.reset();
 
   for (auto& frameBuffer : mVkFramebuffers) {
-    mDevice->getVkDevice().destroyFramebuffer(frameBuffer);
+    mDevice->vk().destroyFramebuffer(frameBuffer);
   }
   mVkFramebuffers.clear();
 
-  if (mVkRenderPass) { mDevice->getVkDevice().destroyRenderPass(mVkRenderPass); }
+  if (mVkRenderPass) { mDevice->vk().destroyRenderPass(mVkRenderPass); }
 
   mRenderContext.reset();
 
@@ -118,7 +118,7 @@ void App::onWindowResized(int w, int h, int orientation) {
   if (surfaceProps.currentExtent.width != prevExtent.width
       || surfaceProps.currentExtent.height != prevExtent.height) {
     //Recreate swapchain
-    mDevice->getVkDevice().waitIdle();
+    mDevice->vk().waitIdle();
 
     mWindow->updateExtent(surfaceProps.currentExtent.width,
                           surfaceProps.currentExtent.height);
@@ -127,7 +127,7 @@ void App::onWindowResized(int w, int h, int orientation) {
 
     mRenderContext->createCommandBuffer(vk::CommandBufferLevel::ePrimary);
     //buildCommandBuffers();
-    mDevice->getVkDevice().waitIdle();
+    mDevice->vk().waitIdle();
   }
 
   if (mGraphicsCamera) {
@@ -428,13 +428,13 @@ void App::createRenderPass() {
                                         subpassDescription,
                                         dependencies);
 
-  mVkRenderPass = mDevice->getVkDevice().createRenderPass(renderPassCI);
+  mVkRenderPass = mDevice->vk().createRenderPass(renderPassCI);
 }
 
 void App::createFrameBuffer() {
   if (!mVkFramebuffers.empty()) {
     for (auto& framebuffer : mVkFramebuffers) {
-      mDevice->getVkDevice().destroyFramebuffer(framebuffer);
+      mDevice->vk().destroyFramebuffer(framebuffer);
     }
     mVkFramebuffers.clear();
   }
@@ -458,7 +458,7 @@ void App::createFrameBuffer() {
 
   for (auto& image : swapchainImages) {
     attachments[0] = image.vkImageView;
-    mVkFramebuffers.push_back(mDevice->getVkDevice().createFramebuffer(framebufferCI));
+    mVkFramebuffers.push_back(mDevice->vk().createFramebuffer(framebufferCI));
   }
 }
 
@@ -479,7 +479,7 @@ void App::createVkDescriptorPool() {
   };
 
   vk::DescriptorPoolCreateInfo poolCI({}, 30 * 11, poolSizes);
-  mVkDescPool = mDevice->getVkDevice().createDescriptorPool(poolCI);
+  mVkDescPool = mDevice->vk().createDescriptorPool(poolCI);
 
   //VkDescriptorPoolCreateInfo pool_info = {};
   //pool_info.sType                      =
@@ -607,7 +607,7 @@ void App::prepareFrame() {
 
   mCurrBufferingSemaphore = mRenderContext->getCurrBufferingSemaphore();
 
-  auto vkDevice = mDevice->getVkDevice();
+  auto vkDevice = mDevice->vk();
 
   auto result = vkDevice.acquireNextImageKHR(vkSwapchain,
                                              0xFFFFFFFFFFFFFFFF,

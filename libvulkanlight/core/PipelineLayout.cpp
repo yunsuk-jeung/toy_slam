@@ -83,7 +83,7 @@ std::vector<vk::DescriptorSetLayout> PipelineLayout::prepareDescSetLayouts() {
     for (auto& n : names) { name += n; }
 
     VklLogD("name : {} desc set : {} binding num : {}", name, key, bindings.size());
-    ResourcePool::addDescriptorSetLayouts(name, descSetLayout);
+    ResourcePool::addDescriptorSetLayout(name, descSetLayout);
     layouts.push_back(descSetLayout);
   }
 

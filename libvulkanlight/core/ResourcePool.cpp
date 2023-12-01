@@ -10,6 +10,8 @@
 #include "SPIRVReflection.h"
 
 namespace vkl {
+std::string                                         ResourcePool::mShaderPath;
+std::string                                         ResourcePool::mResourcePath;
 std::unordered_map<size_t, ShaderModule::Uni>       ResourcePool::mShaderPools;
 std::unordered_map<size_t, vk::DescriptorSetLayout> ResourcePool::mDescriptorSetLayouts;
 std::unordered_map<size_t, PipelineLayout::Uni>     ResourcePool::mPipelineLayouts;
@@ -25,6 +27,22 @@ void ResourcePool::clear(Device* device) {
   for (auto& [key, pipeline] : mPipelines) {
     device->vk().destroyPipeline(pipeline->vk());
   }
+}
+
+void ResourcePool::setShaderPath(std::string path) {
+  mShaderPath = path;
+}
+
+std::string& ResourcePool::getShaderPath() {
+  return mShaderPath;
+}
+
+void ResourcePool::setResourcePath(std::string path) {
+  mResourcePath = path;
+}
+
+std::string& ResourcePool::getResourcePath() {
+  return mResourcePath;
 }
 
 ShaderModule* ResourcePool::loadShader(const std::string&      name,
@@ -52,7 +70,7 @@ ShaderModule* ResourcePool::loadShader(const std::string&      name,
   std::vector<uint32_t> spirv;
   switch (srcType) {
   case ShaderSourceType::STRING_FILE: {
-    const std::string& shaderFolderPath = Utils::getShaderPath();
+    const std::string& shaderFolderPath = mShaderPath;
     std::string        shaderFile       = shaderFolderPath + "/" + shaderSrc;
     out->vk() = VkShaderUtil::loadShader(device->vk(), shaderFile, spirv);
     break;
@@ -81,11 +99,32 @@ ShaderModule* ResourcePool::loadShader(const std::string&      name,
   return out;
 }
 
-void ResourcePool::addDescriptorSetLayouts(const std::string&      name,
-                                           vk::DescriptorSetLayout descSetLayout) {
+void ResourcePool::addDescriptorSetLayout(const std::string&      name,
+                                          vk::DescriptorSetLayout descSetLayout) {
   std::hash<std::string> hasher;
   size_t                 key = hasher(name);
+
+  auto it = mDescriptorSetLayouts.find(key);
+  if (it != mDescriptorSetLayouts.end()) {
+    VklLogE("you are adding existing descsetlayout: {}", name);
+    throw std::runtime_error("existing descsetlayout");
+  }
+
   mDescriptorSetLayouts.insert({key, descSetLayout});
+}
+
+vk::DescriptorSetLayout ResourcePool::requestDescriptorSetLayout(
+  const std::string& name) {
+  std::hash<std::string> hasher;
+  size_t                 key = hasher(name);
+
+  auto it = mDescriptorSetLayouts.find(key);
+  if (it == mDescriptorSetLayouts.end()) {
+    VklLogE("you are requesting none existing descsetlayout: {}", name);
+    throw std::runtime_error("none existing descsetlayout");
+  }
+
+  return it->second;
 }
 
 void ResourcePool::addPipelineLayout(Device*       device,

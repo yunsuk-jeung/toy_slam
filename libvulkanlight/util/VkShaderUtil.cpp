@@ -4,7 +4,7 @@
 #include "VkShaderUtil.h"
 #include "VkLogger.h"
 #include "VkError.h"
-#include "Utils.h"
+#include "ResourcePool.h"
 
 namespace vkl {
 
@@ -333,7 +333,8 @@ std::vector<std::string> VkShaderUtil::replaceInclude(const std::string& src) {
       std::string headerFile = line.substr(10);
       size_t      last_quote = headerFile.find("\"");
       if (!headerFile.empty() && last_quote != std::string::npos) {
-        headerFile = Utils::getShaderPath() + "/" + headerFile.substr(0, last_quote);
+        headerFile = ResourcePool::getShaderPath() + "/"
+                     + headerFile.substr(0, last_quote);
       }
       std::string headerSrc    = readFileAsString(headerFile);
       auto        intermediate = replaceInclude(headerSrc);

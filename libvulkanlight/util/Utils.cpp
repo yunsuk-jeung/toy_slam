@@ -133,8 +133,6 @@ void convertImageLayout(vk::CommandBuffer         cmdBuffer,
   cmdBuffer.pipelineBarrier(srcStageMask, dstStageMask, {}, {}, {}, srcBarrier);
 }
 }  //namespace cmd
-std::string Utils::shaderPath;
-std::string Utils::resourcePath;
 
 vk::ImageCreateInfo Utils::createVkImageCI(vk::ImageType           type,
                                            vk::Format              format,
@@ -175,19 +173,5 @@ vk::ImageViewCreateInfo Utils::createVkImageViewCI(vk::ImageViewType    type,
   return imageViewCI;
 }
 
-void Utils::setShaderPath(std::string path) {
-  shaderPath = path;
-}
 
-std::string& Utils::getShaderPath() {
-  return shaderPath;
-}
-
-void Utils::setResourcePath(std::string path) {
-  resourcePath = path;
-}
-
-std::string& Utils::getResourcePath() {
-  return resourcePath;
-}
 }  //namespace vkl

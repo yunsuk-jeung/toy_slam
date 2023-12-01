@@ -11,17 +11,19 @@ class PipelineLayout;
 class RendererBase {
 public:
   RendererBase();
-
-  void prepare(Device*            device,
-               RenderContext*     context,
-               vk::DescriptorPool descPool,
-               vk::RenderPass     vkRenderPass,
-               std::string        pipelineName);
-
   virtual ~RendererBase();
 
+  virtual void onWindowResized(int w, int h);
+
+  virtual void prepare(Device*            device,
+                       RenderContext*     context,
+                       vk::DescriptorPool descPool,
+                       vk::RenderPass     vkRenderPass,
+                       std::string        pipelineName);
+
+
 protected:
-  virtual void setName()   = 0;
+  virtual void setName() = 0;
 
   virtual void createVertexBuffer();
   virtual void createIndexBuffers();

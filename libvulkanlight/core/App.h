@@ -10,7 +10,7 @@
 
 namespace vkl {
 class InputCallback;
-class GUI;
+class GUI2;
 class Instance;
 class Window;
 class Device;
@@ -81,7 +81,7 @@ protected:
   uint32_t           mCurrBufferingIdx;
 
   uint32_t                       mLastSubpass;
-  std::unique_ptr<GUI>           mGui;
+  std::unique_ptr<GUI2>           mGui;
   std::unique_ptr<InputCallback> mInputCallback;
 
   //used for camera

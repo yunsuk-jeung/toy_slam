@@ -17,7 +17,7 @@
 #include "UniformBuffer.h"
 #include "ResourcePool.h"
 
-#include "GUI.h"
+#include "GUI2.h"
 #include "InputCallback.h"
 #include "GraphicsCamera.h"
 
@@ -498,7 +498,7 @@ void App::createPipelineLayouts() {}
 void App::createPipelines() {}
 
 void App::createGUI() {
-  mGui = std::make_unique<GUI>();
+  mGui = std::make_unique<GUI2>();
   mGui->initialize(mDevice.get(), mRenderContext.get(), mVkDescPool);
   mGui->prepare(mVkRenderPass, mLastSubpass);
 

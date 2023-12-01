@@ -1,3 +1,5 @@
+#include <map>
+#include "VkLogger.h"
 #include "ResourcePool.h"
 #include "ShaderModule.h"
 #include "PipelineLayout.h"
@@ -39,7 +41,10 @@ inline vk::DescriptorType find_descriptor_type(ShaderResourceType resource_type,
 }  //namespace
 
 std::vector<vk::DescriptorSetLayout> PipelineLayout::prepareDescSetLayouts() {
-  std::vector<vk::DescriptorSetLayout> layouts;
+  std::vector<vk::DescriptorSetLayout>                       layouts;
+  std::map<int, std::vector<vk::DescriptorSetLayoutBinding>> bindingsMap;
+  std::map<int, std::vector<std::string>>                    namesMap;
+  std::map<int, std::string>                                 shaderNameMap;
   for (auto& shader : mShaderModules) {
     auto& shaderResources = shader->getShaderResources();
     for (auto& resource : shaderResources) {
@@ -60,19 +65,37 @@ std::vector<vk::DescriptorSetLayout> PipelineLayout::prepareDescSetLayouts() {
       layoutBinding.descriptorType  = descriptor_type;
       layoutBinding.stageFlags      = static_cast<vk::ShaderStageFlags>(resource.stages);
 
-      auto descSet = mDevice->vk().createDescriptorSetLayout({{}, layoutBinding});
-      auto name    = mName + resource.name;
-      ResourcePool::addDescriptorSetLayouts(name, descSet);
-      layouts.push_back(descSet);
+      auto name = "_" + resource.name;
+      VklLogD("desc set : {} binding : {} name : {}",
+              resource.set,
+              resource.binding,
+              resource.name);
+      bindingsMap[resource.set].push_back(layoutBinding);
+      namesMap[resource.set].push_back(name);
+      shaderNameMap[resource.set] = shader->getName();
     }
   }
+  for (auto& [key, bindings] : bindingsMap) {
+    auto descSetLayout = mDevice->vk().createDescriptorSetLayout({{}, bindings});
+
+    std::string name  = shaderNameMap[key];
+    auto&       names = namesMap[key];
+    for (auto& n : names) { name += n; }
+
+    VklLogD("name : {} desc set : {} binding num : {}", name, key, bindings.size());
+    ResourcePool::addDescriptorSetLayouts(name, descSetLayout);
+    layouts.push_back(descSetLayout);
+  }
+
   return layouts;
 }
 
 PipelineLayout::PipelineLayout(Device* device, std::vector<ShaderModule*>& shaderModules)
   : mDevice{device}
   , mName{""} {
-  for (auto& shader : shaderModules) { mName += shader->getName(); }
+
+  for (auto& shader : shaderModules) { mName += shader->getName() + "_"; }
+  mName.pop_back();
 
   mShaderModules = shaderModules;
 
@@ -89,6 +112,10 @@ PipelineLayout::PipelineLayout(Device* device, std::vector<ShaderModule*>& shade
 
   vk::PipelineLayoutCreateInfo CI({}, layouts, pushConstRanges);
 
-  auto result = mDevice->vk().createPipelineLayout(CI);
+  mVkObject = mDevice->vk().createPipelineLayout(CI);
+}
+
+PipelineLayout::~PipelineLayout() {
+  mDevice->vk().destroyPipelineLayout(mVkObject);
 }
 }  //namespace vkl

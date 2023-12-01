@@ -133,7 +133,6 @@ void convertImageLayout(vk::CommandBuffer         cmdBuffer,
   cmdBuffer.pipelineBarrier(srcStageMask, dstStageMask, {}, {}, {}, srcBarrier);
 }
 }  //namespace cmd
-
 std::string Utils::shaderPath;
 std::string Utils::resourcePath;
 

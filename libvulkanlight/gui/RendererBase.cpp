@@ -1,35 +1,47 @@
 #include "ShaderModule.h"
+#include "PipelineLayout.h"
 #include "ResourcePool.h"
 #include "RendererBase.h"
+
 namespace vkl {
 RendererBase::RendererBase()
   : mName{"Base Renderer"}
-  , mShaderSrcType{ShaderSourceType::STRING}
+  , mDevice{nullptr}
+  , mRenderContext{nullptr}
+  , mDescPool{VK_NULL_HANDLE}
+  , mVkRenderPass{VK_NULL_HANDLE}
+  , mVkPipeline{VK_NULL_HANDLE}
   , mM{Eigen::Matrix4f::Identity()}
   , mR{Eigen::Matrix4f::Identity()}
   , mT{Eigen::Matrix4f::Identity()}
   , mS{Eigen::Matrix4f::Identity()}
   , mTRS{Eigen::Matrix4f::Identity()} {}
 
-void RendererBase::initialize(Device*            device,
-                              RenderContext*     context,
-                              vk::DescriptorPool descPool,
-                              uint32_t           subPassId) {
+void RendererBase::prepare(Device*            device,
+                           RenderContext*     context,
+                           vk::DescriptorPool descPool,
+                           vk::RenderPass     renderPass,
+                           std::string        pipelineName) {
+  setName();
+
   mDevice        = device;
   mRenderContext = context;
   mDescPool      = descPool;
-  mSubpassId     = subPassId;
-  setName();
-  setShader();
+  mVkRenderPass  = renderPass;
+  mVkPipeline    = ResourcePool::requestPipeline(pipelineName);
 
-  mVertShader = ResourcePool::loadShader(mShaderName,
-                                         mDevice,
-                                         mShaderSrcType,
-                                         vk::ShaderStageFlagBits::eVertex,
-                                         mVertShaderSource);
+  createVertexBuffer();
+  createIndexBuffers();
+  createUniformBuffers();
+  createTextures();
+  createDescriptorsets();
 }
 
 RendererBase::~RendererBase() {}
 
-void RendererBase::prepare() {}
+void RendererBase::createVertexBuffer() {}
+void RendererBase::createIndexBuffers() {}
+void RendererBase::createUniformBuffers() {}
+void RendererBase::createTextures() {}
+void RendererBase::createDescriptorsets() {}
 }  //namespace vkl

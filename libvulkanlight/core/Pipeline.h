@@ -1,14 +1,19 @@
 #pragma once
-#include "Object.h"
+#include "VkObject.h"
 
 namespace vkl {
-class Pipeline : Object<vk::Pipeline> {
+class Device;
+class PipelineLayout;
+class Pipeline : public VkObject<vk::Pipeline> {
 public:
-  Pipeline()  = default;
-  ~Pipeline() = default;
+  Pipeline() = delete;
+  Pipeline(Device* device, vk::RenderPass renderPass, PipelineLayout* pipelineLayout);
+  virtual ~Pipeline();
 
 protected:
-  vk::PipelineLayout      mPipelineLayout;
-  vk::DescriptorSetLayout mDescSetLayouts;
-}
+  Device*         mDevice;
+  vk::RenderPass  mRenderPass;
+  PipelineLayout* mPipelineLayout;
+};
+
 }  //namespace vkl

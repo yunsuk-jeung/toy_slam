@@ -7,35 +7,36 @@ namespace vkl {
 class Device;
 class RenderContext;
 class ShaderModule;
+class PipelineLayout;
 class RendererBase {
 public:
   RendererBase();
-  void initialize(Device*            device,
-                  RenderContext*     context,
-                  vk::DescriptorPool descPool,
-                  uint32_t           subPassId = 0);
+
+  void prepare(Device*            device,
+               RenderContext*     context,
+               vk::DescriptorPool descPool,
+               vk::RenderPass     vkRenderPass,
+               std::string        pipelineName);
+
   virtual ~RendererBase();
-  virtual void prepare();
 
 protected:
   virtual void setName()   = 0;
-  virtual void setShader() = 0;
+
+  virtual void createVertexBuffer();
+  virtual void createIndexBuffers();
+  virtual void createUniformBuffers();
+  virtual void createTextures();
+  virtual void createDescriptorsets();
 
 protected:
-  std::string mName;
-
+  std::string        mName;
   Device*            mDevice;
   RenderContext*     mRenderContext;
   vk::DescriptorPool mDescPool;
 
-  ShaderSourceType mShaderSrcType;
-  std::string      mShaderName{"Base"};
-  std::string      mVertShaderSource{"Please set vert shader Path"};
-  std::string      mFragShaderSource{"Please set frag shader Path"};
-  ShaderModule*    mVertShader;
-  ShaderModule*    mFragShader;
-
-  uint32_t mSubpassId;
+  vk::RenderPass mVkRenderPass;
+  vk::Pipeline   mVkPipeline;
 
   //model matrix
   Eigen::Matrix4f mM;

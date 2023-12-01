@@ -30,15 +30,15 @@ void convertImageLayout(vk::CommandBuffer         cmdBuffer,
 
 class Utils {
 public:
-  static vk::ImageCreateInfo
-  createVkImageCI(vk::ImageType           type,
-                  vk::Format              format,
-                  vk::Extent3D            extent,
-                  vk::ImageUsageFlags     usage,
-                  uint32_t                mipLevels   = 1,
-                  uint32_t                arrayLayers = 1,
-                  vk::SampleCountFlagBits smaples     = vk::SampleCountFlagBits::e1,
-                  vk::ImageTiling         tilting     = vk::ImageTiling::eOptimal);
+  static vk::ImageCreateInfo createVkImageCI(
+    vk::ImageType           type,
+    vk::Format              format,
+    vk::Extent3D            extent,
+    vk::ImageUsageFlags     usage,
+    uint32_t                mipLevels   = 1,
+    uint32_t                arrayLayers = 1,
+    vk::SampleCountFlagBits smaples     = vk::SampleCountFlagBits::e1,
+    vk::ImageTiling         tilting     = vk::ImageTiling::eOptimal);
 
   static vk::ImageViewCreateInfo createVkImageViewCI(vk::ImageViewType    type,
                                                      vk::ImageAspectFlags aspectMask,

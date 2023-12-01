@@ -266,7 +266,7 @@ vk::ShaderModule VkShaderUtil::loadShader(vk::Device             device,
 }
 
 vk::ShaderModule VkShaderUtil::loadShader(vk::Device             device,
-                                          std::string&           filename,
+                                          const std::string&     filename,
                                           std::vector<uint32_t>& spirv) {
   std::string              src   = readFileAsString(filename);
   std::vector<std::string> lines = replaceInclude(src);
@@ -280,7 +280,7 @@ vk::ShaderModule VkShaderUtil::loadShader(vk::Device             device,
 }
 
 vk::ShaderModule VkShaderUtil::loadShader(vk::Device              device,
-                                          std::string&            fileContents,
+                                          const std::string&      fileContents,
                                           vk::ShaderStageFlagBits stage,
                                           std::vector<uint32_t>&  spirv) {
   std::vector<std::string> lines = replaceInclude(fileContents);
@@ -297,8 +297,8 @@ vk::ShaderModule VkShaderUtil::compileShader(vk::Device                  device,
                                              const std::string&          entry_point,
                                              const ShaderVariant&        shader_variant,
                                              std::vector<uint32_t>&      spirv) {
-  std::string           info_log;
-  GLSLCompiler          glsl_compiler;
+  std::string  info_log;
+  GLSLCompiler glsl_compiler;
 
   if (!glsl_compiler.compile_to_spirv(stage, src, "main", {}, spirv, info_log)) {
     VklLogE("Failed to compile shader from source, Error: {}", info_log.c_str());
@@ -317,7 +317,7 @@ vk::ShaderModule VkShaderUtil::compileShader(vk::Device                  device,
   return shader_module;
 }
 
-std::vector<std::string> VkShaderUtil::replaceInclude(std::string& src) {
+std::vector<std::string> VkShaderUtil::replaceInclude(const std::string& src) {
   std::string              line_;
   std::vector<std::string> lines;
   char                     delim = '\n';
@@ -345,7 +345,7 @@ std::vector<std::string> VkShaderUtil::replaceInclude(std::string& src) {
   return outs;
 }
 
-std::string VkShaderUtil::readFileAsString(std::string& fileName) {
+std::string VkShaderUtil::readFileAsString(const std::string& fileName) {
   std::ifstream file;
   file.open(fileName, std::ios::in | std::ios::binary);
 

@@ -226,11 +226,11 @@ public:
                                      std::vector<uint32_t>& spirv);
 
   static vk::ShaderModule loadShader(vk::Device             device,
-                                     std::string&           filename,
+                                     const std::string&     filename,
                                      std::vector<uint32_t>& spirv);
 
   static vk::ShaderModule loadShader(vk::Device              device,
-                                     std::string&            fileContents,
+                                     const std::string&      fileContents,
                                      vk::ShaderStageFlagBits stage,
                                      std::vector<uint32_t>&  spirv);
 
@@ -242,8 +242,8 @@ public:
                                         std::vector<uint32_t>&      spirv);
 
 protected:
-  static std::vector<std::string> replaceInclude(std::string& src);
-  static std::string              readFileAsString(std::string& fileName);
+  static std::vector<std::string> replaceInclude(const std::string& src);
+  static std::string              readFileAsString(const std::string& fileName);
   static std::vector<uint8_t>     convertStringsToBytes(std::vector<std::string>& src);
 };
 }  //namespace vkl

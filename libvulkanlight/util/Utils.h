@@ -47,11 +47,6 @@ public:
                                                      uint32_t baseArrayLayer = 0,
                                                      uint32_t layerCount     = 1);
 
-  static void         setShaderPath(std::string path);
-  static std::string& getShaderPath();
-
-  static void         setResourcePath(std::string path);
-  static std::string& getResourcePath();
 
 protected:
   static std::string shaderPath;

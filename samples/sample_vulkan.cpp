@@ -35,7 +35,7 @@ public:
   bool prepare() override {
     if (!App::prepare()) { return false; }
 
-    std::string basicPipeline = "triangle_basic_vert_basic_frag";
+    std::string basicPipeline = "triangle_basic";
     mBasicRenderer.prepare(mDevice.get(),
                            mRenderContext.get(),
                            mVkDescPool,

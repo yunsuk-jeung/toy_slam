@@ -17,13 +17,16 @@
 #include "UniformBuffer.h"
 #include "ResourcePool.h"
 
+#include "GUI.h"
 #include "GUI2.h"
 #include "InputCallback.h"
 #include "GraphicsCamera.h"
+#include "Pipeline.h"
 
 #include "VkError.h"
 #include "VkLogger.h"
 #include "VkSettings.h"
+#include "shaders.h"
 #include "Utils.h"
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
@@ -86,11 +89,11 @@ App::~App() {
 }
 
 void App::setShaderPath(const std::string& shaderPath) {
-  Utils::setShaderPath(shaderPath);
+  ResourcePool::setShaderPath(shaderPath);
 }
 
 void App::setResourcePath(const std::string& resourcePath) {
-  Utils::setResourcePath(resourcePath);
+  ResourcePool::setResourcePath(resourcePath);
 }
 
 void App::registerWindow(std::unique_ptr<Window>& _window) {
@@ -493,11 +496,46 @@ void App::createVkDescriptorPool() {
   //check_vk_result(err);
 }
 
-void App::createPipelineLayouts() {}
+void App::createPipelineLayouts() {
+  ShaderSourceType  type           = ShaderSourceType::SPV;
+  std::string       name           = "imgui";
+  const std::string vertexShader   = std::string((const char*)shader::imguiVertspv,
+                                               sizeof(shader::imguiVertspv));
+  const std::string fragmentShader = std::string((const char*)shader::imguiFragspv,
+                                                 sizeof(shader::imguiFragspv));
 
-void App::createPipelines() {}
+  auto* vert = ResourcePool::loadShader(name,
+                                        mDevice.get(),
+                                        type,
+                                        vk::ShaderStageFlagBits::eVertex,
+                                        vertexShader);
+
+  auto* frag = ResourcePool::loadShader(name,
+                                        mDevice.get(),
+                                        type,
+                                        vk::ShaderStageFlagBits::eFragment,
+                                        fragmentShader);
+
+  ResourcePool::addPipelineLayout(mDevice.get(), vert, frag);
+}
+
+void App::createPipelines() {
+  auto* imguiPipelineLayout = ResourcePool::requestPipelineLayout(
+    "imgui_vert_imgui_frag");
+
+  auto* imguiPipeline = new ImGuiPipeline("imgui",
+                                          mDevice.get(),
+                                          mRenderContext.get(),
+                                          mVkRenderPass,
+                                          imguiPipelineLayout,
+                                          0);
+  imguiPipeline->prepare();
+}
 
 void App::createGUI() {
+  mGUI = GUI::Uni(new GUI());
+  mGUI->prepare(mDevice.get(), mRenderContext.get(), mVkDescPool, mVkRenderPass, "imgui");
+
   mGui = std::make_unique<GUI2>();
   mGui->initialize(mDevice.get(), mRenderContext.get(), mVkDescPool);
   mGui->prepare(mVkRenderPass, mLastSubpass);

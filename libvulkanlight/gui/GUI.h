@@ -1,11 +1,12 @@
 #pragma once
 #include "RendererBase.h"
-
+#include "macros.h"
 namespace vkl {
 class Window;
 class Buffer;
 class GUI : public RendererBase {
 public:
+  USING_SMART_PTR(GUI);
   GUI();
   ~GUI();
 
@@ -23,8 +24,8 @@ protected:
   void setName() override;
   void createVertexBuffer() override;
   void createIndexBuffers() override;
-  //void createTextures();
-  //void createDescriptorsets();
+  void createTextures() override;
+  void createDescriptorsets() override;
 
 protected:
   Window* mWindow;
@@ -33,5 +34,8 @@ protected:
   std::vector<size_t>                  mPrevIBSizes;
   std::vector<std::unique_ptr<Buffer>> mVBs;
   std::vector<std::unique_ptr<Buffer>> mIBs;
+  std::unique_ptr<Image>               mFontImage;
+  vk::Sampler                          mFontSampler;
+  vk::DescriptorSet                    mFontDescSet;
 };
 }  //namespace vkl

@@ -13,7 +13,8 @@ public:
   Pipeline(Device*         device,
            RenderContext*  context,
            vk::RenderPass  renderPass,
-           PipelineLayout* pipelineLayout);
+           PipelineLayout* pipelineLayout,
+           uint32_t        subpassId);
   virtual ~Pipeline();
   virtual void prepare() = 0;
 
@@ -23,6 +24,7 @@ protected:
   RenderContext*  mRenderContext;
   vk::RenderPass  mVkRenderPass;
   PipelineLayout* mPipelineLayout;
+  uint32_t        mSubpassId;
 };
 
 class BasicTraianglePipeline : public Pipeline {
@@ -32,8 +34,23 @@ public:
                          Device*            device,
                          RenderContext*     context,
                          vk::RenderPass     renderPass,
-                         PipelineLayout*    pipelineLayout);
+                         PipelineLayout*    pipelineLayout,
+                         uint32_t           subpassId = 0);
   ~BasicTraianglePipeline();
+
+  void prepare() override;
+};
+
+class ImGuiPipeline : public Pipeline {
+public:
+  ImGuiPipeline() = delete;
+  ImGuiPipeline(const std::string& name,
+                Device*            device,
+                RenderContext*     context,
+                vk::RenderPass     renderPass,
+                PipelineLayout*    pipelineLayout,
+                uint32_t           subpassId = 0);
+  ~ImGuiPipeline();
 
   void prepare() override;
 };

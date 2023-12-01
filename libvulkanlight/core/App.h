@@ -10,6 +10,7 @@
 
 namespace vkl {
 class InputCallback;
+class GUI;
 class GUI2;
 class Instance;
 class Window;
@@ -43,9 +44,9 @@ protected:
   virtual void createRenderPass();
   virtual void createFrameBuffer();
   virtual void createVkDescriptorPool();
-  
+
   virtual void createPipelineLayouts();
-  
+
   virtual void createGUI();
   virtual void createGraphicsCamera();
   virtual void createPipelines();
@@ -81,7 +82,8 @@ protected:
   uint32_t           mCurrBufferingIdx;
 
   uint32_t                       mLastSubpass;
-  std::unique_ptr<GUI2>           mGui;
+  std::unique_ptr<GUI>           mGUI;
+  std::unique_ptr<GUI2>          mGui;
   std::unique_ptr<InputCallback> mInputCallback;
 
   //used for camera

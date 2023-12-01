@@ -8,6 +8,7 @@
 namespace vkl {
 class Device;
 class PipelineLayout;
+class Pipeline;
 class ShaderModule;
 class ResourcePool {
 public:
@@ -26,9 +27,9 @@ public:
 
   static PipelineLayout* requestPipelineLayout(const std::string& name);
 
-  static void addPipeline(const std::string& name, vk::Pipeline pipeline);
+  static void addPipeline(const std::string& name, Pipeline* pipeline);
 
-  static vk::Pipeline requestPipeline(const std::string& name);
+  static Pipeline* requestPipeline(const std::string& name);
 
 protected:
 
@@ -36,6 +37,6 @@ protected:
   static std::unordered_map<size_t, std::unique_ptr<ShaderModule>> mShaderPools;
   static std::unordered_map<size_t, vk::DescriptorSetLayout>       mDescriptorSetLayouts;
   static std::unordered_map<size_t, std::unique_ptr<PipelineLayout>> mPipelineLayouts;
-  static std::unordered_map<size_t, vk::Pipeline>                    mPipelines;
+  static std::unordered_map<size_t, std::unique_ptr<Pipeline>>       mPipelines;
 };
 }  //namespace vkl

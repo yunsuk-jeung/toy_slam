@@ -6,7 +6,7 @@
 #include <vulkan/vulkan.hpp>
 #include "Buffer.h"
 #include "shaders/ShaderTypes.h"
-#include "types.h"
+#include "vkltypes.h"
 
 namespace vkl {
 class InputCallback;
@@ -16,6 +16,7 @@ class Window;
 class Device;
 class RenderContext;
 class GraphicsCamera;
+class UniformBuffer;
 class App {
 public:
   App();
@@ -42,8 +43,12 @@ protected:
   virtual void createRenderPass();
   virtual void createFrameBuffer();
   virtual void createVkDescriptorPool();
+
+  virtual void createPipelineLayouts();
+
   virtual void createGUI();
   virtual void createGraphicsCamera();
+  virtual void createPipelines();
 
   void requestGpuFeatures(Device* vkPhysicalDevice);
 
@@ -72,19 +77,16 @@ protected:
   vk::DescriptorPool             mVkDescPool;
 
   vk::Fence          mCurrCmdFence;
-  BufferingSemaphore mCurrScSemaphore;
-  uint32_t           mCurrSwapchainIdx;
+  BufferingSemaphore mCurrBufferingSemaphore;
+  uint32_t           mCurrBufferingIdx;
 
   uint32_t                       mLastSubpass;
-  std::unique_ptr<GUI>           mGui;
+  std::unique_ptr<GUI>           mGUI;
   std::unique_ptr<InputCallback> mInputCallback;
 
   //used for camera
   std::unique_ptr<GraphicsCamera> mGraphicsCamera;
-
-  std::vector<Buffer>            mCamUBs;
-  vk::DescriptorSetLayout        mCamDescLayout;
-  std::vector<vk::DescriptorSet> mCamDescSets;
+  std::unique_ptr<UniformBuffer>  mCameraUB;
 
 public:
   Device*        getDevice() { return mDevice.get(); }

@@ -1,64 +1,52 @@
 #pragma once
-
-#include <vulkan/vulkan.hpp>
-#include "Buffer.h"
-#include "Image.h"
-#include "VkBaseRenderer.h"
+#include "RendererBase.h"
+#include "macros.h"
 namespace vkl {
 class InputCallback;
-class Device;
-class RenderContext;
 class Window;
-class GraphicsCamera;
-class GUI : public VkBaseRenderer {
+class Buffer;
+class GUI : public RendererBase {
 public:
+  USING_SMART_PTR(GUI);
   GUI();
   ~GUI();
-  virtual void onWindowResized(int w, int h) override;
 
-  virtual void initialize(Device*            device,
-                          RenderContext*     context,
-                          vk::DescriptorPool descPool) override;
-  virtual void buildCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t idx) override;
-  virtual void onRender() override;
+  void onWindowResized(int w, int h) override;
+
+  void prepare(Device*            device,
+               RenderContext*     context,
+               vk::DescriptorPool descPool,
+               vk::RenderPass     vkRenderPass,
+               std::string        pipelineName) override;
+
   virtual void addInputCallback(InputCallback* cb);
-  virtual void handleInputEvents();
+
+  void onRender();
+
+  void buildCommandBuffer(vk::CommandBuffer cmd, uint32_t currBufferingIdx);
 
 protected:
-  virtual void setName() override;
-  virtual void setShader() override;
-  virtual void createVkDescriptorSetLayout() override;
-  virtual void createVkPipelineLayout() override;
-  virtual void createVkPipeline(vk::RenderPass renderPass) override;
-  virtual void createVkDescriptorSets() override;
-  virtual void updateDescriptorSets() override;
+  void updateBuffer(uint32_t idx);
+  void handleInputCallbacks();
 
-  virtual void createVertexBuffers() override;
-  virtual void createIndexBuffers() override;
-  virtual void createUniformBuffers() override;
-  virtual void createTextures() override;
+  void setName() override;
+  void createVertexBuffer() override;
+  void createIndexBuffers() override;
+  void createTextures() override;
+  void createDescriptorsets() override;
+  void updateDescriptorsets() override;
 
-  void updateImGuiBuffer(uint32_t idx);
+protected:
+  Window* mWindow;
 
-  //void createInputCallback();
+  std::vector<InputCallback*> mInputCallbacks;
 
-public:
-  Window* window = nullptr;
-
-  //handling input events
-  std::vector<InputCallback*> inputCallbacks;
-
-  //used for imgui
-  std::vector<size_t>     prevVBSizes;
-  std::vector<size_t>     prevIBSizes;
-  std::vector<Buffer>     VBs;
-  std::vector<Buffer>     IBs;
-  Image                   fontImage;
-  vk::Sampler             fontSampler      = VK_NULL_HANDLE;
-  vk::DescriptorSet       fontDescSet      = VK_NULL_HANDLE;
-  vk::DescriptorSetLayout texDescSetLayout = VK_NULL_HANDLE;
-  vk::PushConstantRange   pushConstants;
-
-  vk::CommandBuffer guiCmdBuffer = VK_NULL_HANDLE;
+  std::vector<size_t>                  mPrevVBSizes;
+  std::vector<size_t>                  mPrevIBSizes;
+  std::vector<std::unique_ptr<Buffer>> mVBs;
+  std::vector<std::unique_ptr<Buffer>> mIBs;
+  std::unique_ptr<Image>               mFontImage;
+  vk::Sampler                          mFontSampler;
+  vk::DescriptorSet                    mFontDescSet;
 };
 }  //namespace vkl

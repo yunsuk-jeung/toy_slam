@@ -2,10 +2,11 @@
 
 #include <stack>
 #include <Eigen/Dense>
-#include "VkShaderUtil.h"
+#include <vulkan/vulkan.hpp>
+#include "vkltypes.h"
 
 namespace vkl {
-
+class ShaderModule;
 class Device;
 class RenderContext;
 class Buffer;
@@ -51,23 +52,17 @@ protected:
 public:
 
 protected:
-  std::string name{"Basic Renderer"};
-
-  enum class ShaderSourceType {
-    STRING_FILE,
-    STRING,
-    SPV_FILE,
-    SPV,
-  } shaderSrcType;
-
-  std::string vertShaderSource{"Please set vert shader Path"};
-  std::string fragShaderSource{"Please set frag shader Path"};
+  std::string      name{"Basic Renderer"};
+  ShaderSourceType shaderSrcType;
+  std::string      shaderName{"Base"};
+  std::string      vertShaderSource{"Please set vert shader Path"};
+  std::string      fragShaderSource{"Please set frag shader Path"};
 
   Device*        device        = nullptr;
   RenderContext* renderContext = nullptr;
 
-  vk::ShaderModule vertShader = VK_NULL_HANDLE;
-  vk::ShaderModule fragShader = VK_NULL_HANDLE;
+  ShaderModule* vertShader;
+  ShaderModule* fragShader;
 
   uint32_t subpassId;
 

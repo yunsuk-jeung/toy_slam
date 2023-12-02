@@ -28,4 +28,11 @@ enum class DistortionModel {
   EQUI,
 };
 
+enum class ShaderSourceType {
+  STRING_FILE,
+  STRING,
+  SPV_FILE,
+  SPV,
+};
+
 }  //namespace vkl

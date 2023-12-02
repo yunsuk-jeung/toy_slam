@@ -34,14 +34,12 @@ struct CameraUniform {
   Eigen::Matrix4f M;
   Eigen::Matrix4f V;
   Eigen::Matrix4f P;
-  Eigen::Vector4f k;  //distortion
 };
 #else
 struct CameraUniform {
   mat4 M;
   mat4 V;
   mat4 P;
-  vec4 K;
 };
 #endif
 #ifdef __cplusplus

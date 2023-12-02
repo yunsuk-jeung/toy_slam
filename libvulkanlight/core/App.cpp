@@ -14,16 +14,19 @@
 #include "Device.h"
 #include "SwapchainRenderContext.h"
 #include "Queue.h"
+#include "UniformBuffer.h"
+#include "ResourcePool.h"
 
 #include "GUI.h"
 #include "InputCallback.h"
 #include "GraphicsCamera.h"
+#include "Pipeline.h"
 
 #include "VkError.h"
 #include "VkLogger.h"
 #include "VkSettings.h"
+#include "shaders.h"
 #include "Utils.h"
-
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 namespace vkl {
@@ -45,43 +48,39 @@ App::App()
   , mCurrBufferingSemaphore({VK_NULL_HANDLE, VK_NULL_HANDLE})
   , mCurrBufferingIdx{0}
   , mLastSubpass{0}
-  , mGui{nullptr}
+  , mGUI{nullptr}  //, mGui{nullptr}
   , mInputCallback{nullptr}
-  , mGraphicsCamera{nullptr}
-  , mCamUBs{}
-  , mCamDescLayout{VK_NULL_HANDLE}
-  , mCamDescSets{} {
+  , mGraphicsCamera{nullptr} {
   spdlog::set_level(spdlog::level::debug);
 }
 
 App::~App() {
-  mDevice->getVkDevice().waitIdle();
+  mDevice->vk().waitIdle();
 
   mCurrCmdFence           = VK_NULL_HANDLE;
   mCurrBufferingSemaphore = {VK_NULL_HANDLE, VK_NULL_HANDLE};
 
   if (mVkDescPool) {
-    mDevice->getVkDevice().destroyDescriptorPool(mVkDescPool);
+    mDevice->vk().destroyDescriptorPool(mVkDescPool);
     mVkDescPool = VK_NULL_HANDLE;
   }
 
-  if (mCamDescLayout) {
-    mDevice->getVkDevice().destroyDescriptorSetLayout(mCamDescLayout);
-    mCamDescLayout = VK_NULL_HANDLE;
-  }
+  mCameraUB.reset();
 
-  for (auto& camUB : mCamUBs) { camUB.clear(); }
-
-  mGui.reset();
+  mGUI.reset();
+  //mGui.reset();
 
   for (auto& frameBuffer : mVkFramebuffers) {
-    mDevice->getVkDevice().destroyFramebuffer(frameBuffer);
+    mDevice->vk().destroyFramebuffer(frameBuffer);
   }
   mVkFramebuffers.clear();
 
-  if (mVkRenderPass) { mDevice->getVkDevice().destroyRenderPass(mVkRenderPass); }
+  if (mVkRenderPass) { mDevice->vk().destroyRenderPass(mVkRenderPass); }
 
   mRenderContext.reset();
+
+  ResourcePool::clear(mDevice.get());
+
   mDevice.reset();
 
   if (mVkSurface) { mInstance->getVkInstance().destroySurfaceKHR(mVkSurface); }
@@ -90,11 +89,11 @@ App::~App() {
 }
 
 void App::setShaderPath(const std::string& shaderPath) {
-  Utils::setShaderPath(shaderPath);
+  ResourcePool::setShaderPath(shaderPath);
 }
 
 void App::setResourcePath(const std::string& resourcePath) {
-  Utils::setResourcePath(resourcePath);
+  ResourcePool::setResourcePath(resourcePath);
 }
 
 void App::registerWindow(std::unique_ptr<Window>& _window) {
@@ -116,13 +115,9 @@ void App::onWindowResized(int w, int h, int orientation) {
   }
 
   auto& prevExtent = mRenderContext->getContextProps().extent;
-  //Only recreate the swapchain if the dimensions have changed;
-  //handle_surface_changes() is called on VK_SUBOPTIMAL_KHR,
-  //which might not be due to a surface resize
   if (surfaceProps.currentExtent.width != prevExtent.width
       || surfaceProps.currentExtent.height != prevExtent.height) {
-    //Recreate swapchain
-    mDevice->getVkDevice().waitIdle();
+    mDevice->vk().waitIdle();
 
     mWindow->updateExtent(surfaceProps.currentExtent.width,
                           surfaceProps.currentExtent.height);
@@ -131,8 +126,10 @@ void App::onWindowResized(int w, int h, int orientation) {
 
     mRenderContext->createCommandBuffer(vk::CommandBufferLevel::ePrimary);
     //buildCommandBuffers();
-    mDevice->getVkDevice().waitIdle();
+    mDevice->vk().waitIdle();
   }
+
+  mGUI->onWindowResized(w, h);
 
   if (mGraphicsCamera) {
     mGraphicsCamera->onWindowResized(w, h, orientation);
@@ -168,6 +165,9 @@ bool App::prepare() {
   //setup subpass
   createRenderPass();
   createFrameBuffer();
+
+  createPipelineLayouts();
+  createPipelines();
 
   createVkDescriptorPool();
 
@@ -233,7 +233,7 @@ void App::createInstance() {
                                          VkSettings::enabledInstanceExtensions,
                                          VkSettings::enabledLayers,
                                          mApiVersion);
-  if (!mVkSurface) {
+  if (!mInstance) {
     VklLogE("failed to init mVkSurface");
     return;
   }
@@ -432,13 +432,13 @@ void App::createRenderPass() {
                                         subpassDescription,
                                         dependencies);
 
-  mVkRenderPass = mDevice->getVkDevice().createRenderPass(renderPassCI);
+  mVkRenderPass = mDevice->vk().createRenderPass(renderPassCI);
 }
 
 void App::createFrameBuffer() {
   if (!mVkFramebuffers.empty()) {
     for (auto& framebuffer : mVkFramebuffers) {
-      mDevice->getVkDevice().destroyFramebuffer(framebuffer);
+      mDevice->vk().destroyFramebuffer(framebuffer);
     }
     mVkFramebuffers.clear();
   }
@@ -462,7 +462,7 @@ void App::createFrameBuffer() {
 
   for (auto& image : swapchainImages) {
     attachments[0] = image.vkImageView;
-    mVkFramebuffers.push_back(mDevice->getVkDevice().createFramebuffer(framebufferCI));
+    mVkFramebuffers.push_back(mDevice->vk().createFramebuffer(framebufferCI));
   }
 }
 
@@ -483,7 +483,7 @@ void App::createVkDescriptorPool() {
   };
 
   vk::DescriptorPoolCreateInfo poolCI({}, 30 * 11, poolSizes);
-  mVkDescPool = mDevice->getVkDevice().createDescriptorPool(poolCI);
+  mVkDescPool = mDevice->vk().createDescriptorPool(poolCI);
 
   //VkDescriptorPoolCreateInfo pool_info = {};
   //pool_info.sType                      =
@@ -494,18 +494,53 @@ void App::createVkDescriptorPool() {
   //check_vk_result(err);
 }
 
-void App::createGUI() {
-  mGui = std::make_unique<GUI>();
-  mGui->initialize(mDevice.get(), mRenderContext.get(), mVkDescPool);
-  mGui->prepare(mVkRenderPass, mLastSubpass);
+void App::createPipelineLayouts() {
+  ShaderSourceType  type           = ShaderSourceType::SPV;
+  std::string       name           = "imgui";
+  const std::string vertexShader   = std::string((const char*)shader::imguiVertspv,
+                                               sizeof(shader::imguiVertspv));
+  const std::string fragmentShader = std::string((const char*)shader::imguiFragspv,
+                                                 sizeof(shader::imguiFragspv));
 
-  mInputCallback   = std::make_unique<InputCallback>();
+  auto* vert = ResourcePool::loadShader(name,
+                                        mDevice.get(),
+                                        type,
+                                        vk::ShaderStageFlagBits::eVertex,
+                                        vertexShader);
+
+  auto* frag = ResourcePool::loadShader(name,
+                                        mDevice.get(),
+                                        type,
+                                        vk::ShaderStageFlagBits::eFragment,
+                                        fragmentShader);
+
+  ResourcePool::addPipelineLayout(mDevice.get(), vert, frag);
+}
+
+void App::createPipelines() {
+  auto* imguiPipelineLayout = ResourcePool::requestPipelineLayout(
+    "imgui_vert_imgui_frag");
+
+  auto* imguiPipeline = new ImGuiPipeline("imgui",
+                                          mDevice.get(),
+                                          mRenderContext.get(),
+                                          mVkRenderPass,
+                                          imguiPipelineLayout,
+                                          0);
+  imguiPipeline->prepare();
+}
+
+void App::createGUI() {
+  mGUI = GUI::Uni(new GUI());
+  mGUI->prepare(mDevice.get(), mRenderContext.get(), mVkDescPool, mVkRenderPass, "imgui");
+
+  mInputCallback   = InputCallback::Uni(new InputCallback());
   auto keyCallback = [&](int key) {
     if (key == 526) { this->mEndApplication = true; }
   };
   mInputCallback->registerKeyPressed(std::move(keyCallback));
 
-  mGui->addInputCallback(mInputCallback.get());
+  mGUI->addInputCallback(mInputCallback.get());
 }
 
 void App::createGraphicsCamera() {
@@ -520,57 +555,25 @@ void App::createGraphicsCamera() {
                                                            .orientation));
 
   //mGraphicsCamera->init(extent.width, extent.height);
-  mGui->addInputCallback(mGraphicsCamera.get());
+  mGUI->addInputCallback(mGraphicsCamera.get());
 
-  auto count = mRenderContext->getContextImageCount();
-  mCamUBs.resize(count);
+  auto count   = mRenderContext->getContextImageCount();
   auto memSize = sizeof(CameraUniform);
+  mCameraUB    = UniformBuffer::Uni(new UniformBuffer(mDevice.get(), count, memSize));
 
   CameraUniform tmp;
-  for (auto& UB : mCamUBs) {
-    UB = Buffer(mDevice.get(),
-                memSize,
-                vk::BufferUsageFlagBits::eUniformBuffer,
-                vk::MemoryPropertyFlagBits::eHostVisible,
-                vk::MemoryPropertyFlagBits::eHostCoherent);
-    UB.update(&tmp, memSize, 0);
-  }
+  for (int i = 0; i < count; ++i) { mCameraUB->update(i, &tmp, 0); }
 
   vk::DescriptorSetLayoutBinding camBinding{0,
                                             vk::DescriptorType::eUniformBuffer,
                                             1,
                                             vk::ShaderStageFlagBits::eVertex};
 
-  mCamDescLayout = mDevice->getVkDevice().createDescriptorSetLayout({{}, camBinding});
+  mCameraUB->createDescSets(camBinding, mVkDescPool);
 
   std::vector<vk::DescriptorPoolSize> poolSizes = {
     {vk::DescriptorType::eUniformBuffer, 3}
   };
-
-  vk::DescriptorPoolCreateInfo descPoolCI({}, 3, poolSizes);
-
-  //camDescPool = mDevice->getVkDevice().createDescriptorPool(descPoolCI);
-
-  mCamDescSets.resize(count);
-  for (auto& descset : mCamDescSets) {
-    descset = mDevice->getVkDevice()
-                .allocateDescriptorSets({mVkDescPool, mCamDescLayout})
-                .front();
-  }
-
-  for (size_t i = 0; i < count; i++) {
-    vk::DescriptorBufferInfo descBufferInfo(mCamUBs[i].vkBuffer, 0, memSize);
-
-    vk::WriteDescriptorSet writeDescriptorSet(mCamDescSets[i],
-                                              0,
-                                              {},
-                                              vk::DescriptorType::eUniformBuffer,
-                                              {},
-                                              descBufferInfo);
-    mDevice->getVkDevice().updateDescriptorSets(writeDescriptorSet, nullptr);
-  }
-
-  for (size_t i = 0; i < count; i++) { updateCameraUniform(i); }
 }
 
 void App::requestGpuFeatures(Device* vkPhysicalDevice) {
@@ -632,7 +635,7 @@ void App::beginRenderPass(vk::CommandBuffer renderCmdBuffer) {
 void App::updateCameraUniform(int idx) {
   auto& camUniformData = mGraphicsCamera->cam;
   auto  memSize        = sizeof(CameraUniform);
-  mCamUBs[idx].update(&camUniformData, memSize, 0);
+  mCameraUB->update(idx, &camUniformData, memSize);
 }
 
 void App::updateUniform(int idx) {}
@@ -643,7 +646,7 @@ void App::prepareFrame() {
 
   mCurrBufferingSemaphore = mRenderContext->getCurrBufferingSemaphore();
 
-  auto vkDevice = mDevice->getVkDevice();
+  auto vkDevice = mDevice->vk();
 
   auto result = vkDevice.acquireNextImageKHR(vkSwapchain,
                                              0xFFFFFFFFFFFFFFFF,
@@ -654,7 +657,7 @@ void App::prepareFrame() {
   mCurrCmdFence     = mRenderContext->getCurrCmdFence();
 
   if (vkDevice.getFenceStatus(mCurrCmdFence) == vk::Result::eNotReady) {
-    vkDevice.waitForFences({mCurrCmdFence}, VK_TRUE, UINT64_MAX);
+    auto result = vkDevice.waitForFences({mCurrCmdFence}, VK_TRUE, UINT64_MAX);
   }
   vkDevice.resetFences({mCurrCmdFence});
 }
@@ -677,7 +680,7 @@ void App::presentFrame() {
   vk::PresentInfoKHR presentInfo(mCurrBufferingSemaphore.rendered,
                                  vkSwapchain,
                                  mCurrBufferingIdx);
-  vkQueue.presentKHR(presentInfo);
+  auto               result = vkQueue.presentKHR(presentInfo);
 }
 
 }  //namespace vkl

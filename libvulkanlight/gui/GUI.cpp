@@ -1,29 +1,26 @@
-#include <iostream>
+#pragma once
 #include <imgui.h>
-#include "GUI.h"
+#include "Utils.h"
 #include "Device.h"
+#include "Window.h"
 #include "RenderContext.h"
 #include "Buffer.h"
+#include "ResourcePool.h"
 #include "InputCallback.h"
-
-#include "window/Window.h"
-#include "Utils.h"
-#include "VkShaderUtil.h"
-#include "VkLogger.h"
-#include "VkError.h"
+#include "GUI.h"
 
 namespace vkl {
-
-GUI::GUI() {
-  setName();
-  setShader();
-}
+GUI::GUI()
+  : RendererBase()
+  , mWindow{nullptr}
+  , mPrevVBSizes{}
+  , mPrevIBSizes{}
+  , mVBs{}
+  , mIBs{}
+  , mFontImage{nullptr} {}
 
 GUI::~GUI() {
-  window->endGUI();
-  ImGui::DestroyContext();
-
-  device->getVkDevice().destroySampler(fontSampler);
+  mDevice->vk().destroySampler(mFontSampler);
 }
 
 void GUI::onWindowResized(int w, int h) {
@@ -32,14 +29,12 @@ void GUI::onWindowResized(int w, int h) {
   io.DisplaySize.y = static_cast<float>(h);
 }
 
-void GUI::initialize(Device*            _device,
-                     RenderContext*     context,
-                     vk::DescriptorPool descPool) {
-  VkBaseRenderer::initialize(_device, context, descPool);
-
-  guiCmdBuffer = renderContext->getOneTimeCommandBuffer();
-
-  window = renderContext->getWindow();
+void GUI::prepare(Device*            device,
+                  RenderContext*     context,
+                  vk::DescriptorPool descPool,
+                  vk::RenderPass     vkRenderPass,
+                  std::string        pipelineName) {
+  mWindow = context->getWindow();
   ImGui::CreateContext();
 
   ImGuiIO& io = ImGui::GetIO();
@@ -49,7 +44,7 @@ void GUI::initialize(Device*            _device,
   style.WindowRounding              = 1.0f;
   style.Colors[ImGuiCol_WindowBg].w = 0.4f;
 
-  auto const& extent         = renderContext->getContextProps().extent;
+  auto const& extent         = context->getContextProps().extent;
   io.DisplaySize.x           = static_cast<float>(extent.width);
   io.DisplaySize.y           = static_cast<float>(extent.height);
   io.FontGlobalScale         = 1.0f;
@@ -57,7 +52,26 @@ void GUI::initialize(Device*            _device,
 
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
-  window->prepareGUI();
+  mWindow->prepareGUI();
+
+  RendererBase::prepare(device, context, descPool, vkRenderPass, pipelineName);
+}
+
+void GUI::addInputCallback(InputCallback* cb) {
+  mInputCallbacks.push_back(cb);
+}
+
+void GUI::onRender() {
+  mWindow->newGUIFrame();
+  ImGui::NewFrame();
+  handleInputCallbacks();
+
+  ImGuiIO& io = ImGui::GetIO();
+  ImGui::Begin("status");
+  ImGui::Text("fps: %f", io.Framerate);
+
+  ImGui::End();
+  ImGui::Render();
 }
 
 void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
@@ -67,20 +81,20 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
   int fbHeight = (int)(dd->DisplaySize.y * dd->FramebufferScale.y);
   if (fbWidth <= 0 || fbHeight <= 0) return;
 
-  updateImGuiBuffer(idx);
+  updateBuffer(idx);
 
-  cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, vkPipeline);
+  cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, mVkPipeline);
   //Bind Vertex And Index Buffer:
 
-  auto& VBO = VBs[idx];
-  auto& IB  = IBs[idx];
+  auto& VB = mVBs[idx];
+  auto& IB = mIBs[idx];
 
   auto indexType = sizeof(ImDrawIdx) == 2 ? vk::IndexType::eUint16
                                           : vk::IndexType::eUint32;
 
   if (dd->TotalVtxCount > 0) {
-    cmd.bindVertexBuffers(0, {VBO.vkBuffer}, {0});
-    cmd.bindIndexBuffer(IB.vkBuffer, 0, indexType);
+    cmd.bindVertexBuffers(0, {VB->vk()}, {0});
+    cmd.bindIndexBuffer(IB->vk(), 0, indexType);
   }
 
   std::vector<float> scale(2);
@@ -91,8 +105,8 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
   trans[0] = -1.0f - dd->DisplayPos.x * scale[0];
   trans[1] = -1.0f - dd->DisplayPos.y * scale[1];
 
-  cmd.pushConstants<float>(vkPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, scale);
-  cmd.pushConstants<float>(vkPipelineLayout, vk::ShaderStageFlagBits::eVertex, 8, trans);
+  cmd.pushConstants<float>(mVkPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, scale);
+  cmd.pushConstants<float>(mVkPipelineLayout, vk::ShaderStageFlagBits::eVertex, 8, trans);
 
   ImVec2 clipOff   = dd->DisplayPos;
   ImVec2 clipScale = dd->FramebufferScale;
@@ -132,11 +146,11 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
       if (sizeof(ImTextureID) < sizeof(ImU64)) {
         //We don't support texture switches if ImTextureID hasn't been redefined to be
         //64-bit. Do a flaky check that other textures haven't been used.
-        IM_ASSERT(pcmd->TextureId == fontDescSet);
-        desc_set = fontDescSet;
+        IM_ASSERT(pcmd->TextureId == mFontDescSet);
+        desc_set = mFontDescSet;
       }
       cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                             vkPipelineLayout,
+                             mVkPipelineLayout,
                              0,
                              {desc_set},
                              {});
@@ -158,46 +172,61 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
   cmd.setScissor(0, {scissor});
 }
 
-void GUI::onRender() {
-  window->newGUIFrame();
-  ImGui::NewFrame();
-  handleInputEvents();
+void GUI::updateBuffer(uint32_t idx) {
+  ImDrawData* dd        = ImGui::GetDrawData();
+  int         fb_width  = (int)(dd->DisplaySize.x * dd->FramebufferScale.x);
+  int         fb_height = (int)(dd->DisplaySize.y * dd->FramebufferScale.y);
+  if (fb_width <= 0 || fb_height <= 0) return;
 
-  ImGuiIO& io = ImGui::GetIO();
-  ImGui::Begin("test");
-  ImGui::Text("fps: %f", io.Framerate);
+  size_t VBSize     = dd->TotalVtxCount * sizeof(ImDrawVert);
+  size_t IBSize     = dd->TotalIdxCount * sizeof(ImDrawIdx);
+  auto&  prevVBSize = mPrevVBSizes[idx];
+  auto&  prevIBSize = mPrevIBSizes[idx];
 
-  //ImGui::Button("WTF");
-  //ImTextureID my_tex_id = io.Fonts->TexID;
-  //float       my_tex_w  = (float)io.Fonts->TexWidth;
-  //float       my_tex_h  = (float)io.Fonts->TexHeight;
-  //{
-  //  static bool use_text_color_for_tint = false;
-  //  //ImGui::Checkbox("Use Text Color for Tint", &use_text_color_for_tint);
-  //  //ImGui::Text("%.0fx%.0f", my_tex_w, my_tex_h);
-  //  ImVec2 pos      = ImGui::GetCursorScreenPos();
-  //  ImVec2 uv_min   = ImVec2(0.0f, 0.0f);  //Top-left
-  //  ImVec2 uv_max   = ImVec2(1.0f, 1.0f);  //Lower-right
-  //  ImVec4 tint_col = use_text_color_for_tint ? ImGui::GetStyleColorVec4(ImGuiCol_Text)
-  //                                            : ImVec4(1.0f, 1.0f, 1.0f, 1.0f);  //No
+  if (VBSize > 0) {
+    auto& VB = mVBs[idx];
+    auto& IB = mIBs[idx];
 
-  //ImVec4 border_col = ImGui::GetStyleColorVec4(ImGuiCol_Border);
-  //ImGui::Image(my_tex_id,
-  //             ImVec2(my_tex_w, my_tex_h),
-  //             uv_min,
-  //             uv_max,
-  //             tint_col,
-  //             border_col);
-  //}
-  ImGui::End();
-  ImGui::Render();
+    if (VBSize > prevVBSize) {
+      VB = Buffer::Uni(new Buffer(mDevice,
+                                  VBSize,
+                                  vk::BufferUsageFlagBits::eVertexBuffer,
+                                  vk::MemoryPropertyFlagBits::eHostVisible,
+                                  vk::MemoryPropertyFlagBits::eHostCoherent));
+    }
+    if (IBSize > prevIBSize) {
+      IB = Buffer::Uni(new Buffer(mDevice,
+                                  IBSize,
+                                  vk::BufferUsageFlagBits::eIndexBuffer,
+                                  vk::MemoryPropertyFlagBits::eHostVisible,
+                                  vk::MemoryPropertyFlagBits::eHostCoherent));
+    }
+    uint8_t* pVBO = VB->map();
+    uint8_t* pIBO = IB->map();
+
+    for (int n = 0; n < dd->CmdListsCount; n++) {
+      const ImDrawList* cmd_list = dd->CmdLists[n];
+      memcpy(pVBO,
+             cmd_list->VtxBuffer.Data,
+             cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+      memcpy(pIBO,
+             cmd_list->IdxBuffer.Data,
+             cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+      pVBO += cmd_list->VtxBuffer.Size;
+      pIBO += cmd_list->IdxBuffer.Size;
+    }
+
+    VB->flush();
+    IB->flush();
+    VB->unmap();
+    IB->unmap();
+
+    prevVBSize = VBSize;
+    prevIBSize = IBSize;
+  }
 }
 
-void GUI::addInputCallback(InputCallback* cb) {
-  inputCallbacks.push_back(cb);
-}
-
-void GUI::handleInputEvents() {
+void GUI::handleInputCallbacks() {
   ImGuiIO& io = ImGui::GetIO();
 
   if (!io.WantCaptureKeyboard) {
@@ -218,7 +247,7 @@ void GUI::handleInputEvents() {
       if (ImGui::IsKeyReleased(key)) { ImVec2 pos = ImGui::GetCursorScreenPos(); }
 
       if (ImGui::IsKeyPressed(key)) {
-        for (auto& cb : inputCallbacks) { (*cb).onKeyPressed(key); }
+        for (auto& cb : mInputCallbacks) { (*cb).onKeyPressed(key); }
       }
     }
   }
@@ -227,292 +256,44 @@ void GUI::handleInputEvents() {
     auto mpos = io.MousePos;
     for (int i = 0; i < 3; i++) {
       if (ImGui::IsMouseClicked(i)) {
-        for (auto& cb : inputCallbacks) { (*cb).onMouseClick(i, mpos.x, mpos.y); }
+        for (auto& cb : mInputCallbacks) { (*cb).onMouseClick(i, mpos.x, mpos.y); }
       }
       if (ImGui::IsMouseDragging(i)) {
-        for (auto& cb : inputCallbacks) {
+        for (auto& cb : mInputCallbacks) {
           //(*cb).onMouseDrag(i, io.MousePos.x, io.MousePos.y);
           (*cb).onMouseDrag(i, mpos.x, mpos.y);
         }
       }
 
       if (io.MouseWheel) {
-        for (auto& cb : inputCallbacks) { (*cb).onMouseWheel(io.MouseWheel); }
+        for (auto& cb : mInputCallbacks) { (*cb).onMouseWheel(io.MouseWheel); }
       }
     }  //0 left //1 right //2 wheel
   };
 }
 
 void GUI::setName() {
-  name = "VkTriangleWithTexture Renderer";
+  mName = "GUI";
 }
 
-void GUI::setShader() {
-  //glsl_shader.vert, compiled with:
-  //# glslangValidator -V -x -o glsl_shader.vert.u32 glsl_shader.vert
-  /*
-  #version 450 core
-  layout(location = 0) in vec2 aPos;
-  layout(location = 1) in vec2 aUV;
-  layout(location = 2) in vec4 aColor;
-  layout(push_constant) uniform uPushConstant { vec2 uScale; vec2 uTranslate; } pc;
+void GUI::createVertexBuffer() {
+  auto size = mRenderContext->getContextImageCount();
+  mVBs.resize(size);
 
-  out gl_PerVertex { vec4 gl_Position; };
-  layout(location = 0) out struct { vec4 Color; vec2 UV; } Out;
+  for (auto& VB : mVBs) { VB = Buffer::Uni(new Buffer()); }
 
-  void main()
-  {
-      Out.Color = aColor;
-      Out.UV = aUV;
-      gl_Position = vec4(aPos * pc.uScale + pc.uTranslate, 0, 1);
-  }
-  */
-  uint32_t vertspv[] =
-    {0x07230203, 0x00010000, 0x00080001, 0x0000002e, 0x00000000, 0x00020011, 0x00000001,
-     0x0006000b, 0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e,
-     0x00000000, 0x00000001, 0x000a000f, 0x00000000, 0x00000004, 0x6e69616d, 0x00000000,
-     0x0000000b, 0x0000000f, 0x00000015, 0x0000001b, 0x0000001c, 0x00030003, 0x00000002,
-     0x000001c2, 0x00040005, 0x00000004, 0x6e69616d, 0x00000000, 0x00030005, 0x00000009,
-     0x00000000, 0x00050006, 0x00000009, 0x00000000, 0x6f6c6f43, 0x00000072, 0x00040006,
-     0x00000009, 0x00000001, 0x00005655, 0x00030005, 0x0000000b, 0x0074754f, 0x00040005,
-     0x0000000f, 0x6c6f4361, 0x0000726f, 0x00030005, 0x00000015, 0x00565561, 0x00060005,
-     0x00000019, 0x505f6c67, 0x65567265, 0x78657472, 0x00000000, 0x00060006, 0x00000019,
-     0x00000000, 0x505f6c67, 0x7469736f, 0x006e6f69, 0x00030005, 0x0000001b, 0x00000000,
-     0x00040005, 0x0000001c, 0x736f5061, 0x00000000, 0x00060005, 0x0000001e, 0x73755075,
-     0x6e6f4368, 0x6e617473, 0x00000074, 0x00050006, 0x0000001e, 0x00000000, 0x61635375,
-     0x0000656c, 0x00060006, 0x0000001e, 0x00000001, 0x61725475, 0x616c736e, 0x00006574,
-     0x00030005, 0x00000020, 0x00006370, 0x00040047, 0x0000000b, 0x0000001e, 0x00000000,
-     0x00040047, 0x0000000f, 0x0000001e, 0x00000002, 0x00040047, 0x00000015, 0x0000001e,
-     0x00000001, 0x00050048, 0x00000019, 0x00000000, 0x0000000b, 0x00000000, 0x00030047,
-     0x00000019, 0x00000002, 0x00040047, 0x0000001c, 0x0000001e, 0x00000000, 0x00050048,
-     0x0000001e, 0x00000000, 0x00000023, 0x00000000, 0x00050048, 0x0000001e, 0x00000001,
-     0x00000023, 0x00000008, 0x00030047, 0x0000001e, 0x00000002, 0x00020013, 0x00000002,
-     0x00030021, 0x00000003, 0x00000002, 0x00030016, 0x00000006, 0x00000020, 0x00040017,
-     0x00000007, 0x00000006, 0x00000004, 0x00040017, 0x00000008, 0x00000006, 0x00000002,
-     0x0004001e, 0x00000009, 0x00000007, 0x00000008, 0x00040020, 0x0000000a, 0x00000003,
-     0x00000009, 0x0004003b, 0x0000000a, 0x0000000b, 0x00000003, 0x00040015, 0x0000000c,
-     0x00000020, 0x00000001, 0x0004002b, 0x0000000c, 0x0000000d, 0x00000000, 0x00040020,
-     0x0000000e, 0x00000001, 0x00000007, 0x0004003b, 0x0000000e, 0x0000000f, 0x00000001,
-     0x00040020, 0x00000011, 0x00000003, 0x00000007, 0x0004002b, 0x0000000c, 0x00000013,
-     0x00000001, 0x00040020, 0x00000014, 0x00000001, 0x00000008, 0x0004003b, 0x00000014,
-     0x00000015, 0x00000001, 0x00040020, 0x00000017, 0x00000003, 0x00000008, 0x0003001e,
-     0x00000019, 0x00000007, 0x00040020, 0x0000001a, 0x00000003, 0x00000019, 0x0004003b,
-     0x0000001a, 0x0000001b, 0x00000003, 0x0004003b, 0x00000014, 0x0000001c, 0x00000001,
-     0x0004001e, 0x0000001e, 0x00000008, 0x00000008, 0x00040020, 0x0000001f, 0x00000009,
-     0x0000001e, 0x0004003b, 0x0000001f, 0x00000020, 0x00000009, 0x00040020, 0x00000021,
-     0x00000009, 0x00000008, 0x0004002b, 0x00000006, 0x00000028, 0x00000000, 0x0004002b,
-     0x00000006, 0x00000029, 0x3f800000, 0x00050036, 0x00000002, 0x00000004, 0x00000000,
-     0x00000003, 0x000200f8, 0x00000005, 0x0004003d, 0x00000007, 0x00000010, 0x0000000f,
-     0x00050041, 0x00000011, 0x00000012, 0x0000000b, 0x0000000d, 0x0003003e, 0x00000012,
-     0x00000010, 0x0004003d, 0x00000008, 0x00000016, 0x00000015, 0x00050041, 0x00000017,
-     0x00000018, 0x0000000b, 0x00000013, 0x0003003e, 0x00000018, 0x00000016, 0x0004003d,
-     0x00000008, 0x0000001d, 0x0000001c, 0x00050041, 0x00000021, 0x00000022, 0x00000020,
-     0x0000000d, 0x0004003d, 0x00000008, 0x00000023, 0x00000022, 0x00050085, 0x00000008,
-     0x00000024, 0x0000001d, 0x00000023, 0x00050041, 0x00000021, 0x00000025, 0x00000020,
-     0x00000013, 0x0004003d, 0x00000008, 0x00000026, 0x00000025, 0x00050081, 0x00000008,
-     0x00000027, 0x00000024, 0x00000026, 0x00050051, 0x00000006, 0x0000002a, 0x00000027,
-     0x00000000, 0x00050051, 0x00000006, 0x0000002b, 0x00000027, 0x00000001, 0x00070050,
-     0x00000007, 0x0000002c, 0x0000002a, 0x0000002b, 0x00000028, 0x00000029, 0x00050041,
-     0x00000011, 0x0000002d, 0x0000001b, 0x0000000d, 0x0003003e, 0x0000002d, 0x0000002c,
-     0x000100fd, 0x00010038};
-
-  //glsl_shader.frag, compiled with:
-  //# glslangValidator -V -x -o glsl_shader.frag.u32 glsl_shader.frag
-  /*
-  #version 450 core
-  layout(location = 0) out vec4 fColor;
-  layout(set=0, binding=0) uniform sampler2D sTexture;
-  layout(location = 0) in struct { vec4 Color; vec2 UV; } In;
-  void main()
-  {
-      fColor = In.Color * texture(sTexture, In.UV.st);
-  }
-  */
-  uint32_t fragspv[] =
-    {0x07230203, 0x00010000, 0x00080001, 0x0000001e, 0x00000000, 0x00020011, 0x00000001,
-     0x0006000b, 0x00000001, 0x4c534c47, 0x6474732e, 0x3035342e, 0x00000000, 0x0003000e,
-     0x00000000, 0x00000001, 0x0007000f, 0x00000004, 0x00000004, 0x6e69616d, 0x00000000,
-     0x00000009, 0x0000000d, 0x00030010, 0x00000004, 0x00000007, 0x00030003, 0x00000002,
-     0x000001c2, 0x00040005, 0x00000004, 0x6e69616d, 0x00000000, 0x00040005, 0x00000009,
-     0x6c6f4366, 0x0000726f, 0x00030005, 0x0000000b, 0x00000000, 0x00050006, 0x0000000b,
-     0x00000000, 0x6f6c6f43, 0x00000072, 0x00040006, 0x0000000b, 0x00000001, 0x00005655,
-     0x00030005, 0x0000000d, 0x00006e49, 0x00050005, 0x00000016, 0x78655473, 0x65727574,
-     0x00000000, 0x00040047, 0x00000009, 0x0000001e, 0x00000000, 0x00040047, 0x0000000d,
-     0x0000001e, 0x00000000, 0x00040047, 0x00000016, 0x00000022, 0x00000000, 0x00040047,
-     0x00000016, 0x00000021, 0x00000000, 0x00020013, 0x00000002, 0x00030021, 0x00000003,
-     0x00000002, 0x00030016, 0x00000006, 0x00000020, 0x00040017, 0x00000007, 0x00000006,
-     0x00000004, 0x00040020, 0x00000008, 0x00000003, 0x00000007, 0x0004003b, 0x00000008,
-     0x00000009, 0x00000003, 0x00040017, 0x0000000a, 0x00000006, 0x00000002, 0x0004001e,
-     0x0000000b, 0x00000007, 0x0000000a, 0x00040020, 0x0000000c, 0x00000001, 0x0000000b,
-     0x0004003b, 0x0000000c, 0x0000000d, 0x00000001, 0x00040015, 0x0000000e, 0x00000020,
-     0x00000001, 0x0004002b, 0x0000000e, 0x0000000f, 0x00000000, 0x00040020, 0x00000010,
-     0x00000001, 0x00000007, 0x00090019, 0x00000013, 0x00000006, 0x00000001, 0x00000000,
-     0x00000000, 0x00000000, 0x00000001, 0x00000000, 0x0003001b, 0x00000014, 0x00000013,
-     0x00040020, 0x00000015, 0x00000000, 0x00000014, 0x0004003b, 0x00000015, 0x00000016,
-     0x00000000, 0x0004002b, 0x0000000e, 0x00000018, 0x00000001, 0x00040020, 0x00000019,
-     0x00000001, 0x0000000a, 0x00050036, 0x00000002, 0x00000004, 0x00000000, 0x00000003,
-     0x000200f8, 0x00000005, 0x00050041, 0x00000010, 0x00000011, 0x0000000d, 0x0000000f,
-     0x0004003d, 0x00000007, 0x00000012, 0x00000011, 0x0004003d, 0x00000014, 0x00000017,
-     0x00000016, 0x00050041, 0x00000019, 0x0000001a, 0x0000000d, 0x00000018, 0x0004003d,
-     0x0000000a, 0x0000001b, 0x0000001a, 0x00050057, 0x00000007, 0x0000001c, 0x00000017,
-     0x0000001b, 0x00050085, 0x00000007, 0x0000001d, 0x00000012, 0x0000001c, 0x0003003e,
-     0x00000009, 0x0000001d, 0x000100fd, 0x00010038};
-
-  shaderSrcType    = ShaderSourceType::SPV;
-  vertShaderSource = std::string((const char*)vertspv, sizeof(vertspv));
-  fragShaderSource = std::string((const char*)fragspv, sizeof(fragspv));
-
-  uint32_t sample = vertspv[0];
-}
-
-void GUI::createVkDescriptorSetLayout() {
-  std::array<vk::DescriptorSetLayoutBinding, 1> bindings = {
-    {{0,
-      vk::DescriptorType::eCombinedImageSampler,
-      1,
-      vk::ShaderStageFlagBits::eFragment}}};
-
-  texDescSetLayout = device->getVkDevice().createDescriptorSetLayout({{}, bindings});
-  createdDescriptorSetLayouts.push(texDescSetLayout);
-}
-
-void GUI::createVkDescriptorSets() {
-  fontDescSet = device->getVkDevice()
-                  .allocateDescriptorSets({vkDescriptorPool, texDescSetLayout})
-                  .front();
-
-  ImGuiIO& io = ImGui::GetIO();
-  io.Fonts->SetTexID((ImTextureID)(VkDescriptorSet(fontDescSet)));
-}
-
-void GUI::updateDescriptorSets() {
-  vk::DescriptorImageInfo fontDescImageInfo(fontSampler,
-                                            fontImage.vkImageView,
-                                            vk::ImageLayout::eShaderReadOnlyOptimal);
-
-  vk::WriteDescriptorSet fontWriteDescSet(fontDescSet,
-                                          0,
-                                          {},
-                                          vk::DescriptorType::eCombinedImageSampler,
-                                          fontDescImageInfo);
-
-  device->getVkDevice().updateDescriptorSets(fontWriteDescSet, {});
-
-  auto count = renderContext->getContextImageCount();
-}
-
-void GUI::createVkPipelineLayout() {
-  vk::PushConstantRange pushConst;
-  pushConst.stageFlags = vk::ShaderStageFlagBits::eVertex;
-  pushConst.offset     = 0;
-  pushConst.size       = sizeof(float) * 4;
-
-  vk::PipelineLayoutCreateInfo pipelineLayoutCI({}, texDescSetLayout, pushConst);
-
-  vkPipelineLayout = device->getVkDevice().createPipelineLayout(pipelineLayoutCI);
-}
-
-void GUI::createVkPipeline(vk::RenderPass renderPass) {
-  if (vkPipeline) { device->getVkDevice().destroyPipeline(vkPipeline); }
-
-  std::vector<vk::PipelineShaderStageCreateInfo> shaderStageCIs{
-    {{},   vk::ShaderStageFlagBits::eVertex, vertShader, "main"},
-    {{}, vk::ShaderStageFlagBits::eFragment, fragShader, "main"}
-  };
-
-  std::vector<vk::VertexInputBindingDescription> vertBindingDescription{
-    {0, sizeof(ImDrawVert), vk::VertexInputRate::eVertex}
-  };
-
-  std::vector<vk::VertexInputAttributeDescription> attributeDescription{
-    {0, 0,  vk::Format::eR32G32Sfloat, IM_OFFSETOF(ImDrawVert, pos)},
-    {1, 0,  vk::Format::eR32G32Sfloat, IM_OFFSETOF(ImDrawVert,  uv)},
-    {2, 0, vk::Format::eR8G8B8A8Unorm, IM_OFFSETOF(ImDrawVert, col)}
-  };
-
-  vk::PipelineVertexInputStateCreateInfo inputStateCI({},
-                                                      vertBindingDescription,
-                                                      attributeDescription);
-
-  vk::PipelineInputAssemblyStateCreateInfo
-    inputAssemCI({}, vk::PrimitiveTopology::eTriangleList, false);
-
-  vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
-
-  vk::PipelineRasterizationStateCreateInfo rasterizationState;
-  rasterizationState.polygonMode = vk::PolygonMode::eFill;
-  rasterizationState.cullMode    = vk::CullModeFlagBits::eNone;
-  rasterizationState.frontFace   = vk::FrontFace::eClockwise;
-  rasterizationState.lineWidth   = 1.0f;
-
-  vk::PipelineMultisampleStateCreateInfo multisample_state({},
-                                                           vk::SampleCountFlagBits::e1);
-  vk::PipelineColorBlendAttachmentState  blendAttachmentState;
-  blendAttachmentState.blendEnable         = true;
-  blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
-  blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
-  blendAttachmentState.colorBlendOp        = vk::BlendOp::eAdd;
-  blendAttachmentState.srcAlphaBlendFactor = vk::BlendFactor::eOne;
-  blendAttachmentState.dstAlphaBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
-  blendAttachmentState.alphaBlendOp        = vk::BlendOp::eAdd;
-  blendAttachmentState.colorWriteMask      = vk::ColorComponentFlagBits::eR
-                                        | vk::ColorComponentFlagBits::eG
-                                        | vk::ColorComponentFlagBits::eB
-                                        | vk::ColorComponentFlagBits::eA;
-
-  vk::PipelineDepthStencilStateCreateInfo depthStencilState;
-  depthStencilState.depthCompareOp   = vk::CompareOp::eAlways;
-  depthStencilState.depthTestEnable  = true;
-  depthStencilState.depthWriteEnable = true;
-  depthStencilState.back.compareOp   = vk::CompareOp::eAlways;
-  depthStencilState.front            = depthStencilState.back;
-
-  vk::PipelineColorBlendStateCreateInfo colorBlendState({}, {}, {}, blendAttachmentState);
-
-  std::array<vk::DynamicState, 2> dynamicStateEnables = {vk::DynamicState::eViewport,
-                                                         vk::DynamicState::eScissor};
-
-  vk::PipelineDynamicStateCreateInfo dynamicState({}, dynamicStateEnables);
-
-  vk::GraphicsPipelineCreateInfo pipelineCI({},
-                                            shaderStageCIs,
-                                            &inputStateCI,
-                                            &inputAssemCI,
-                                            {},
-                                            &viewport_state,
-                                            &rasterizationState,
-                                            &multisample_state,
-                                            &depthStencilState,
-                                            &colorBlendState,
-                                            &dynamicState,
-                                            vkPipelineLayout,
-                                            renderPass,
-                                            subpassId);
-
-  vk::Result result;
-  std::tie(result,
-           vkPipeline) = device->getVkDevice().createGraphicsPipeline(VK_NULL_HANDLE,
-                                                                      pipelineCI);
-  VK_CHECK_ERROR(static_cast<VkResult>(result), "createpipeline");
-}
-
-void GUI::createVertexBuffers() {
-  auto size = renderContext->getContextImageCount();
-  VBs.resize(size);
-  prevVBSizes.resize(size, 0);
-  prevIBSizes.resize(size, 0);
+  mPrevVBSizes.resize(size, 0);
+  mPrevIBSizes.resize(size, 0);
 }
 
 void GUI::createIndexBuffers() {
-  auto size = renderContext->getContextImageCount();
-  IBs.resize(size);
+  auto size = mRenderContext->getContextImageCount();
+  mIBs.resize(size);
+  for (auto& IB : mIBs) { IB = Buffer::Uni(new Buffer()); }
 }
 
-void GUI::createUniformBuffers() {}
-
 void GUI::createTextures() {
-  ImGuiIO& io = ImGui::GetIO();
-  //io.Fonts->AddFontFromFileTTF("./Fira.ttf", 18.0f);
+  ImGuiIO&     io = ImGui::GetIO();
   ImFontConfig fontCf;
   fontCf.SizePixels = 30.0f;
   io.Fonts->AddFontDefault(&fontCf);
@@ -533,26 +314,26 @@ void GUI::createTextures() {
   auto fontImgViewCI = Utils::createVkImageViewCI(vk::ImageViewType::e2D,
                                                   vk::ImageAspectFlagBits::eColor);
 
-  fontImage = Image(device,
-                    fontImgCI,
-                    vk::MemoryPropertyFlagBits::eDeviceLocal,
-                    vk::MemoryPropertyFlagBits::eDeviceLocal,
-                    fontImgViewCI);
+  mFontImage = Image::Uni(new Image(mDevice,
+                                    fontImgCI,
+                                    vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                    vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                    fontImgViewCI));
 
-  auto stagingBuffer = Buffer(device,
+  auto stagingBuffer = Buffer(mDevice,
                               uploadSize,
                               vk::BufferUsageFlagBits::eTransferSrc,
                               vk::MemoryPropertyFlagBits::eHostVisible,
                               vk::MemoryPropertyFlagBits::eHostVisible);
   stagingBuffer.update(pixels, uploadSize, 0);
 
-  auto& renderCommandPool = renderContext->getRenderCommandPool();
+  auto& renderCommandPool = mRenderContext->getRenderCommandPool();
 
   vk::CommandBufferAllocateInfo info(renderCommandPool,
                                      vk::CommandBufferLevel::ePrimary,
                                      1);
 
-  auto  cmdBuffers = device->getVkDevice().allocateCommandBuffers(info);
+  auto  cmdBuffers = mDevice->vk().allocateCommandBuffers(info);
   auto& cmdBuffer  = cmdBuffers.front();
 
   vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
@@ -560,7 +341,7 @@ void GUI::createTextures() {
   cmdBuffer.begin(beginInfo);
 
   cmd::setImageLayout(cmdBuffer,
-                      fontImage.vkImage,
+                      mFontImage->vkImage,
                       vk::ImageLayout::eUndefined,
                       vk::ImageLayout::eTransferDstOptimal,
                       fontImgViewCI.subresourceRange,
@@ -572,13 +353,13 @@ void GUI::createTextures() {
   region.imageSubresource.layerCount = fontImgViewCI.subresourceRange.layerCount;
   region.imageExtent                 = fontImgCI.extent;
 
-  cmdBuffer.copyBufferToImage(stagingBuffer.vkBuffer,
-                              fontImage.vkImage,
+  cmdBuffer.copyBufferToImage(stagingBuffer.vk(),
+                              mFontImage->vkImage,
                               vk::ImageLayout::eTransferDstOptimal,
                               region);
 
   cmd::setImageLayout(cmdBuffer,
-                      fontImage.vkImage,
+                      mFontImage->vkImage,
                       vk::ImageLayout::eTransferDstOptimal,
                       vk::ImageLayout::eShaderReadOnlyOptimal,
                       fontImgViewCI.subresourceRange,
@@ -588,8 +369,8 @@ void GUI::createTextures() {
   cmdBuffer.end();
 
   vk::SubmitInfo submitInfo({}, {}, cmdBuffers, {});
-  renderContext->getQueue()->getVkQueue().submit(submitInfo);
-  device->getVkDevice().waitIdle();
+  mRenderContext->getQueue()->getVkQueue().submit(submitInfo);
+  mDevice->vk().waitIdle();
 
   vk::SamplerCreateInfo samplerCI;
   samplerCI.maxAnisotropy = 1.0f;
@@ -603,72 +384,30 @@ void GUI::createTextures() {
   samplerCI.maxLod        = 1000;
   samplerCI.maxAnisotropy = 1.0f;
 
-  fontSampler = device->getVkDevice().createSampler(samplerCI);
+  mFontSampler = mDevice->vk().createSampler(samplerCI);
 }
 
-void GUI::updateImGuiBuffer(uint32_t idx) {
-  ImDrawData* dd        = ImGui::GetDrawData();
-  int         fb_width  = (int)(dd->DisplaySize.x * dd->FramebufferScale.x);
-  int         fb_height = (int)(dd->DisplaySize.y * dd->FramebufferScale.y);
-  if (fb_width <= 0 || fb_height <= 0) return;
+void GUI::createDescriptorsets() {
+  auto l = ResourcePool::requestDescriptorSetLayout("imgui_frag_sTexture");
 
-  size_t VBSize     = dd->TotalVtxCount * sizeof(ImDrawVert);
-  size_t IBSize     = dd->TotalIdxCount * sizeof(ImDrawIdx);
-  auto&  prevVBSize = prevVBSizes[idx];
-  auto&  prevIBSize = prevIBSizes[idx];
+  mFontDescSet = mDevice->vk().allocateDescriptorSets({mDescPool, l}).front();
 
-  if (VBSize > 0) {
-    auto& VB = VBs[idx];
-    auto& IB = IBs[idx];
-
-    if (VBSize > prevVBSize) {
-      VB = Buffer(device,
-                  VBSize,
-                  vk::BufferUsageFlagBits::eVertexBuffer,
-                  vk::MemoryPropertyFlagBits::eHostVisible,
-                  vk::MemoryPropertyFlagBits::eHostCoherent);
-    }
-    if (IBSize > prevIBSize) {
-      IB = Buffer(device,
-                  IBSize,
-                  vk::BufferUsageFlagBits::eIndexBuffer,
-                  vk::MemoryPropertyFlagBits::eHostVisible,
-                  vk::MemoryPropertyFlagBits::eHostCoherent);
-    }
-    uint8_t* pVBO = VB.map();
-    uint8_t* pIBO = IB.map();
-
-    for (int n = 0; n < dd->CmdListsCount; n++) {
-      const ImDrawList* cmd_list = dd->CmdLists[n];
-      memcpy(pVBO,
-             cmd_list->VtxBuffer.Data,
-             cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
-      memcpy(pIBO,
-             cmd_list->IdxBuffer.Data,
-             cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-      pVBO += cmd_list->VtxBuffer.Size;
-      pIBO += cmd_list->IdxBuffer.Size;
-    }
-
-    VB.flush();
-    IB.flush();
-
-    VB.unmap();
-    IB.unmap();
-
-    prevVBSize = VBSize;
-    prevIBSize = IBSize;
-  }
+  ImGuiIO& io = ImGui::GetIO();
+  io.Fonts->SetTexID((ImTextureID)(VkDescriptorSet(mFontDescSet)));
 }
 
-//void GUI::createInputCallback() {
-//  inputCallback   = std::make_unique<InputCallback>();
-//  auto mouseClick = [](int type, int x, int y) {
-//    std::cout << type << " " << x << " " << y << std::endl;
-//  };
-//
-//  inputCallback->registerMouseClick(mouseClick);
-//  addInputCallback(inputCallback.get());
-//}
+void GUI::updateDescriptorsets() {
+  vk::DescriptorImageInfo fontDescImageInfo(mFontSampler,
+                                            mFontImage->vkImageView,
+                                            vk::ImageLayout::eShaderReadOnlyOptimal);
+
+  vk::WriteDescriptorSet fontWriteDescSet(mFontDescSet,
+                                          0,
+                                          {},
+                                          vk::DescriptorType::eCombinedImageSampler,
+                                          fontDescImageInfo);
+
+  mDevice->vk().updateDescriptorSets(fontWriteDescSet, {});
+}
 
 }  //namespace vkl

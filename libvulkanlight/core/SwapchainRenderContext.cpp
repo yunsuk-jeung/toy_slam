@@ -37,11 +37,11 @@ vk::Extent2D chooseExtent(vk::Extent2D        request_extent,
   return request_extent;
 }
 
-vk::PresentModeKHR
-choosePresentMode(vk::PresentModeKHR                     request_present_mode,
-                  const std::vector<vk::PresentModeKHR>& available_present_modes,
-                  const std::vector<vk::PresentModeKHR>& present_mode_priority_list,
-                  bool                                   log) {
+vk::PresentModeKHR choosePresentMode(
+  vk::PresentModeKHR                     request_present_mode,
+  const std::vector<vk::PresentModeKHR>& available_present_modes,
+  const std::vector<vk::PresentModeKHR>& present_mode_priority_list,
+  bool                                   log) {
   //Try to find the requested present mode in the available present modes
   auto const present_mode_it = std::find(available_present_modes.begin(),
                                          available_present_modes.end(),
@@ -78,11 +78,11 @@ choosePresentMode(vk::PresentModeKHR                     request_present_mode,
   }
 }
 
-vk::SurfaceFormatKHR
-chooseSurfaceFormat(const vk::SurfaceFormatKHR               requested_surface_format,
-                    const std::vector<vk::SurfaceFormatKHR>& available_surface_formats,
-                    const std::vector<vk::SurfaceFormatKHR>& surface_format_priority_list,
-                    bool                                     log) {
+vk::SurfaceFormatKHR chooseSurfaceFormat(
+  const vk::SurfaceFormatKHR               requested_surface_format,
+  const std::vector<vk::SurfaceFormatKHR>& available_surface_formats,
+  const std::vector<vk::SurfaceFormatKHR>& surface_format_priority_list,
+  bool                                     log) {
   //Try to find the requested surface format in the available surface formats
   auto const surface_format_it = std::find(available_surface_formats.begin(),
                                            available_surface_formats.end(),
@@ -124,10 +124,10 @@ chooseSurfaceFormat(const vk::SurfaceFormatKHR               requested_surface_f
   }
 }
 
-vk::SurfaceTransformFlagBitsKHR
-chooseTransform(vk::SurfaceTransformFlagBitsKHR request_transform,
-                vk::SurfaceTransformFlagsKHR    supported_transform,
-                vk::SurfaceTransformFlagBitsKHR current_transform) {
+vk::SurfaceTransformFlagBitsKHR chooseTransform(
+  vk::SurfaceTransformFlagBitsKHR request_transform,
+  vk::SurfaceTransformFlagsKHR    supported_transform,
+  vk::SurfaceTransformFlagBitsKHR current_transform) {
   if (request_transform & supported_transform) { return request_transform; }
 
   VklLogW("(HPPSwapchain) Surface transform '{}' not supported. Selecting '{}'.",
@@ -136,9 +136,9 @@ chooseTransform(vk::SurfaceTransformFlagBitsKHR request_transform,
   return current_transform;
 }
 
-vk::CompositeAlphaFlagBitsKHR
-chooseCompositeAlpha(vk::CompositeAlphaFlagBitsKHR request_composite_alpha,
-                     vk::CompositeAlphaFlagsKHR    supported_composite_alpha) {
+vk::CompositeAlphaFlagBitsKHR chooseCompositeAlpha(
+  vk::CompositeAlphaFlagBitsKHR request_composite_alpha,
+  vk::CompositeAlphaFlagsKHR    supported_composite_alpha) {
   if (request_composite_alpha & supported_composite_alpha) {
     return request_composite_alpha;
   }
@@ -172,11 +172,11 @@ bool validateFormatFeature(vk::ImageUsageFlagBits image_usage,
          || (supported_features & vk::FormatFeatureFlagBits::eStorageImage);
 }
 
-std::set<vk::ImageUsageFlagBits>
-chooseImageUsage(const std::set<vk::ImageUsageFlagBits>& requested_image_usage_flags,
-                 vk::ImageUsageFlags                     supported_image_usage,
-                 vk::FormatFeatureFlags                  supported_features,
-                 bool                                    log) {
+std::set<vk::ImageUsageFlagBits> chooseImageUsage(
+  const std::set<vk::ImageUsageFlagBits>& requested_image_usage_flags,
+  vk::ImageUsageFlags                     supported_image_usage,
+  vk::FormatFeatureFlags                  supported_features,
+  bool                                    log) {
   std::set<vk::ImageUsageFlagBits> validated_image_usage_flags;
   for (auto flag : requested_image_usage_flags) {
     if ((flag & supported_image_usage)
@@ -224,8 +224,8 @@ chooseImageUsage(const std::set<vk::ImageUsageFlagBits>& requested_image_usage_f
   return validated_image_usage_flags;
 }
 
-vk::ImageUsageFlags
-compositeImageFlags(std::set<vk::ImageUsageFlagBits>& image_usage_flags) {
+vk::ImageUsageFlags compositeImageFlags(
+  std::set<vk::ImageUsageFlagBits>& image_usage_flags) {
   vk::ImageUsageFlags image_usage;
   for (auto flag : image_usage_flags) { image_usage |= flag; }
   return image_usage;
@@ -246,7 +246,7 @@ SwapchainRenderContext::SwapchainRenderContext(Device*            _device,
 }
 
 SwapchainRenderContext::~SwapchainRenderContext() {
-  vk::Device vkDevice = device->getVkDevice();
+  vk::Device vkDevice = device->vk();
   vkDevice.waitIdle();
 
   if (vkSwapchain) {
@@ -273,7 +273,7 @@ void SwapchainRenderContext::resizeSwapChain() {
 }
 
 void SwapchainRenderContext::prepareColor() {
-  auto vkDevice = device->getVkDevice();
+  auto vkDevice = device->vk();
   auto vkImages = vkDevice.getSwapchainImagesKHR(vkSwapchain);
 
   auto imageSize = vkImages.size();
@@ -310,7 +310,7 @@ void SwapchainRenderContext::prepareColor() {
 
 void SwapchainRenderContext::prepareDepthStencil() {
   ctProps.depthFormat = device->getSuitableDepthFormat();
-  auto vkDevice       = device->getVkDevice();
+  auto vkDevice       = device->vk();
 
   vk::ImageCreateInfo vkImageCI;
   vkImageCI.imageType = vk::ImageType::e2D;
@@ -346,7 +346,7 @@ void SwapchainRenderContext::prepareDepthStencil() {
                                      vk::CommandBufferLevel::ePrimary,
                                      1);
 
-  auto  cmdBuffers = device->getVkDevice().allocateCommandBuffers(info);
+  auto  cmdBuffers = device->vk().allocateCommandBuffers(info);
   auto& cmdBuffer  = cmdBuffers.front();
 
   vk::CommandBufferBeginInfo cmdBeginIfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
@@ -370,8 +370,8 @@ void SwapchainRenderContext::prepareDepthStencil() {
   cmdBuffer.end();
   vk::SubmitInfo submitInfo({}, {}, cmdBuffers, {});
   queue->getVkQueue().submit(submitInfo);
-  device->getVkDevice().waitIdle();
-  device->getVkDevice().freeCommandBuffers(renderCommandPool, cmdBuffers);*/
+  device->vk().waitIdle();
+  device->vk().freeCommandBuffers(renderCommandPool, cmdBuffers);*/
 }
 
 void SwapchainRenderContext::createSwapChain(
@@ -381,7 +381,7 @@ void SwapchainRenderContext::createSwapChain(
   std::set<vk::ImageUsageFlagBits> imageUsageFlags,
   vk::SwapchainKHR                 _oldSwapchain) {
   auto& vkPhysicalDevice = device->getVkPhysicalDevice();
-  auto& vkDevice         = device->getVkDevice();
+  auto& vkDevice         = device->vk();
   auto& vkSurface        = device->getVkSurface();
 
   setSwapChainProperties(_extent, _imageCount, transform, imageUsageFlags, _oldSwapchain);
@@ -416,7 +416,7 @@ void SwapchainRenderContext::createSwapChain(
   vkSwapchain = vkDevice.createSwapchainKHR(createInfo);
 
   if (oldSwapchain) {
-    device->getVkDevice().destroySwapchainKHR(oldSwapchain);
+    device->vk().destroySwapchainKHR(oldSwapchain);
     colorImages.clear();
     depthStencilImages.clear();
   }
@@ -429,7 +429,7 @@ void SwapchainRenderContext::setSwapChainProperties(
   std::set<vk::ImageUsageFlagBits> IUFlags,
   vk::SwapchainKHR                 _oldSC) {
   auto& vkPhysicalDevice = device->getVkPhysicalDevice();
-  auto  vkDevice         = device->getVkDevice();
+  auto  vkDevice         = device->vk();
   auto  vkSurface        = device->getVkSurface();
 
   auto& oldSwapchain   = ctProps.oldSwapchain;

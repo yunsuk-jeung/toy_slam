@@ -2,12 +2,14 @@
 
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
+#include "macros.h"
 
 namespace vkl {
 
 class Device;
 class Image {
 public:
+  USING_SMART_PTR(Image);
   Image()             = default;
   Image(const Image&) = delete;
 
@@ -27,8 +29,7 @@ public:
   Image(Image&& other) noexcept;
 
   Image& operator=(const Image&) = delete;
-
-  Image& operator=(Image&& image) noexcept;
+  Image& operator=(Image&&)      = delete;
 
   uint8_t* map();
   void     unmap();

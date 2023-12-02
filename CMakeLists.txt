@@ -25,7 +25,7 @@ if(BUILD_TEST)
 endif()
 
 add_executable(euroc_vio exec/vio_main.cpp)
-target_link_libraries(euroc_vio PRIVATE toy::toy libs io vulkanLight::vulkanLight)
+target_link_libraries(euroc_vio PRIVATE toy::toy libs io)
 
 if(WIN32)
   set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../lib)

@@ -20,7 +20,6 @@ vkl::Buffer::Buffer(Device*                      _device,
                     const std::vector<uint32_t>& queueIdxs)
   : device(_device)
   , size(_size)
-  , vkBuffer{VK_NULL_HANDLE}
   , memory{VK_NULL_HANDLE}
   , mapped_data{nullptr}
   , vmaAllocation{VK_NULL_HANDLE}
@@ -41,11 +40,12 @@ vkl::Buffer::Buffer(Device*                      _device,
   memoryInfo.flags          = flags;
 
   VmaAllocationInfo allocationInfo{};
-  auto              result = vmaCreateBuffer(device->getMemoryAllocator(),
+
+  auto result = vmaCreateBuffer(device->getMemoryAllocator(),
                                 reinterpret_cast<VkBufferCreateInfo*>(
                                   &buffer_create_info),
                                 &memoryInfo,
-                                reinterpret_cast<VkBuffer*>(&vkBuffer),
+                                reinterpret_cast<VkBuffer*>(&mVkObject),
                                 &vmaAllocation,
                                 &allocationInfo);
 
@@ -61,19 +61,12 @@ vkl::Buffer::Buffer(Device*                      _device,
   //std::cout << "create Buffer : " << ++COUNTER << std::endl;
 }
 
-Buffer::Buffer(Buffer&& other) noexcept {
-  this->swap(other);
-}
-
-Buffer& vkl::Buffer::operator=(Buffer&& buffer) noexcept {
-  this->swap(buffer);
-  //std::cout << "create Buffer : " << ++COUNTER << std::endl;
-
-  return *this;
+Buffer::Buffer(Buffer&& src) noexcept {
+  this->swap(src);
 }
 
 void vkl::Buffer::swap(Buffer& buffer) {
-  auto _vkBuffer      = vkBuffer;
+  auto _mVkObject     = mVkObject;
   auto _memory        = memory;
   auto _size          = size;
   auto _mapped_data   = mapped_data;
@@ -82,7 +75,7 @@ void vkl::Buffer::swap(Buffer& buffer) {
   auto _mapped        = mapped;
   auto _persistent    = persistent;
 
-  vkBuffer      = buffer.vkBuffer;
+  mVkObject     = buffer.mVkObject;
   memory        = buffer.memory;
   size          = buffer.size;
   mapped_data   = buffer.mapped_data;
@@ -91,7 +84,7 @@ void vkl::Buffer::swap(Buffer& buffer) {
   mapped        = buffer.mapped;
   persistent    = buffer.persistent;
 
-  buffer.vkBuffer      = _vkBuffer;
+  buffer.mVkObject     = _mVkObject;
   buffer.memory        = _memory;
   buffer.size          = _size;
   buffer.mapped_data   = _mapped_data;
@@ -102,14 +95,13 @@ void vkl::Buffer::swap(Buffer& buffer) {
 }
 
 void Buffer::clear() {
-  if (vkBuffer && (vmaAllocation != VK_NULL_HANDLE)) {
+  if (mVkObject && (vmaAllocation != VK_NULL_HANDLE)) {
     unmap();
     vmaDestroyBuffer(device->getMemoryAllocator(),
-                     static_cast<VkBuffer>(vkBuffer),
+                     static_cast<VkBuffer>(mVkObject),
                      vmaAllocation);
-    vkBuffer      = VK_NULL_HANDLE;
+    mVkObject     = VK_NULL_HANDLE;
     vmaAllocation = VK_NULL_HANDLE;
-    //std::cout << "delete Buffer : " << --COUNTER << std::endl;
   }
 }
 

@@ -14,8 +14,7 @@ public:
   UniformBuffer(Device* device_, uint32_t bufferCount_, uint64_t _memSize)
     : mDevice{device_}
     , mBufferCount{bufferCount_}
-    , mMemSize{_memSize}
-    , mBinding{0} {
+    , mMemSize{_memSize} {
     mUBs.resize(mBufferCount);
     for (auto& UB : mUBs) {
       UB = Buffer::Uni(new Buffer(mDevice,
@@ -25,14 +24,12 @@ public:
                                   vk::MemoryPropertyFlagBits::eHostCoherent));
     }
   }
-  ~UniformBuffer() {
-    if (mVkDescLayout) { mDevice->vk().destroyDescriptorSetLayout(mVkDescLayout); }
-  }
+  ~UniformBuffer() {}
 
-  void createDescSets(vk::DescriptorSetLayoutBinding descSetBinding,
-                      vk::DescriptorPool             descPool) {
-    mVkDescLayout = mDevice->vk().createDescriptorSetLayout({{}, descSetBinding});
-    mBinding      = descSetBinding.binding;
+  void createDescSets(uint32_t                binding,
+                      vk::DescriptorSetLayout descSetLayout,
+                      vk::DescriptorPool      descPool) {
+    mVkDescLayout = descSetLayout;
     mVkDescPool   = descPool;
 
     mVkDescSets.resize(mBufferCount);
@@ -46,7 +43,7 @@ public:
       vk::DescriptorBufferInfo descBufferInfo(mUBs[i]->vk(), 0, mMemSize);
 
       vk::WriteDescriptorSet writeDescriptorSet(mVkDescSets[i],
-                                                mBinding,
+                                                binding,
                                                 {},
                                                 vk::DescriptorType::eUniformBuffer,
                                                 {},
@@ -65,7 +62,6 @@ protected:
   Device*                        mDevice;
   uint64_t                       mMemSize;
   uint32_t                       mBufferCount;
-  uint32_t                       mBinding;
   std::vector<Buffer::Uni>       mUBs;
   vk::DescriptorSetLayout        mVkDescLayout;
   std::vector<vk::DescriptorSet> mVkDescSets;

@@ -569,11 +569,9 @@ void App::createGraphicsCamera() {
                                             1,
                                             vk::ShaderStageFlagBits::eVertex};
 
-  mCameraUB->createDescSets(camBinding, mVkDescPool);
-
-  std::vector<vk::DescriptorPoolSize> poolSizes = {
-    {vk::DescriptorType::eUniformBuffer, 3}
-  };
+  auto layout = mDevice->vk().createDescriptorSetLayout({{}, camBinding});
+  ResourcePool::addDescriptorSetLayout("gui cam", layout);
+  mCameraUB->createDescSets(0, layout, mVkDescPool);
 }
 
 void App::requestGpuFeatures(Device* vkPhysicalDevice) {

@@ -6,7 +6,7 @@
 #define LOGGER_FORMAT "[%^%l%$] %v"
 #define PROJECT_NAME "VULKAN_LIGHT"
 
-#define __FILENAME__ vkl::LogUtil::extractFileName(__FILE__)
+#define __VKL_FILENAME__ vkl::LogUtil::extractFileName(__FILE__)
 
 namespace vkl {
 
@@ -28,4 +28,4 @@ public:
 #define VklLogI(...) spdlog::info(__VA_ARGS__);
 #define VklLogW(...) spdlog::warn(__VA_ARGS__);
 #define VklLogE(...)                                                                     \
-  spdlog::error("[{}:{}] {}", __FILENAME__, __LINE__, fmt::format(__VA_ARGS__));
+  spdlog::error("[{}:{}] {}", __VKL_FILENAME__, __LINE__, fmt::format(__VA_ARGS__));

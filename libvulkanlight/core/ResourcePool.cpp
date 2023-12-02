@@ -1,5 +1,5 @@
 #pragma once
-#include "VkLogger.h"
+#include "VklLogger.h"
 #include "Device.h"
 #include "ShaderModule.h"
 #include "PipelineLayout.h"

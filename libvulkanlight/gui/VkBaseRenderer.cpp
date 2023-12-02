@@ -1,5 +1,5 @@
 #include <iostream>
-#include "VkLogger.h"
+#include "VklLogger.h"
 #include "Device.h"
 #include "RenderContext.h"
 #include "Utils.h"

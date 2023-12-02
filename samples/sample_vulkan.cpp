@@ -1,5 +1,5 @@
 #include <iostream>
-#include "VkLogger.h"
+#include "VklLogger.h"
 #include "GlfwWindow.h"
 #include "Device.h"
 #include "GUI.h"
@@ -77,7 +77,8 @@ protected:
   void createPipelines() override {
     App::createPipelines();
 
-    auto* basicPipelineLyout   = ResourcePool::requestPipelineLayout("basic_vert_basic_frag");
+    auto* basicPipelineLyout = ResourcePool::requestPipelineLayout(
+      "basic_vert_basic_frag");
 
     auto* basicTrianglePL = new BasicTraianglePipeline("triangle_basic",
                                                        mDevice.get(),

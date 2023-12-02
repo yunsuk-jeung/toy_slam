@@ -2,7 +2,7 @@
 #include "Device.h"
 #include "window/Window.h"
 #include "VkSettings.h"
-#include "VkLogger.h"
+#include "VklLogger.h"
 
 namespace vkl {
 RenderContext::RenderContext(Device*            _device,

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <volk.h>
 #include "Instance.h"
-#include "VkLogger.h"
+#include "VklLogger.h"
 #include "VkSettings.h"
 
 namespace vkl {

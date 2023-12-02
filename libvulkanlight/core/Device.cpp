@@ -7,7 +7,7 @@
 #include "Queue.h"
 
 #include "VkSettings.h"
-#include "VkLogger.h"
+#include "VklLogger.h"
 #include "VkError.h"
 
 namespace vkl {

@@ -1,5 +1,5 @@
 #include <map>
-#include "VkLogger.h"
+#include "VklLogger.h"
 #include "ResourcePool.h"
 #include "ShaderModule.h"
 #include "PipelineLayout.h"
@@ -93,7 +93,6 @@ std::vector<vk::DescriptorSetLayout> PipelineLayout::prepareDescSetLayouts() {
 PipelineLayout::PipelineLayout(Device* device, std::vector<ShaderModule*>& shaderModules)
   : mDevice{device}
   , mName{""} {
-
   for (auto& shader : shaderModules) { mName += shader->getName() + "_"; }
   mName.pop_back();
 

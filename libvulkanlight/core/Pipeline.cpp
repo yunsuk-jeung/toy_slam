@@ -1,6 +1,6 @@
 #include <imgui.h>
 #include "VkError.h"
-#include "VkLogger.h"
+#include "VklLogger.h"
 #include "Device.h"
 #include "RenderContext.h"
 #include "ResourcePool.h"
@@ -23,7 +23,7 @@ Pipeline::Pipeline(Device*         device,
 
 Pipeline::~Pipeline() {}
 
-void Pipeline::addResource(){
+void Pipeline::addResource() {
   VklLogD("created pipeline: {}", mName);
   ResourcePool::addPipeline(mName, this);
 }
@@ -123,9 +123,8 @@ void BasicTraianglePipeline::prepare() {
   std::tie(result, mVkObject) = mDevice->vk().createGraphicsPipeline(VK_NULL_HANDLE,
                                                                      pipelineCI);
   VK_CHECK_ERROR(static_cast<VkResult>(result), "createpipeline");
-  
-  addResource();
 
+  addResource();
 }
 
 ImGuiPipeline::ImGuiPipeline(const std::string& name,

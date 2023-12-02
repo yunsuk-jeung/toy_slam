@@ -2,7 +2,7 @@
 #include <glslang/Public/ResourceLimits.h>
 
 #include "VkShaderUtil.h"
-#include "VkLogger.h"
+#include "VklLogger.h"
 #include "VkError.h"
 #include "ResourcePool.h"
 

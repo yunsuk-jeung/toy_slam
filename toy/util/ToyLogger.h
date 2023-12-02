@@ -16,7 +16,7 @@
 #define LOGGER_FORMAT "[%^%l%$] %v"
 #define PROJECT_NAME "TOY"
 
-#define __FILENAME__ LogUtil::extractFileName(__FILE__)
+#define __TOY_FILENAME__ LogUtil::extractFileName(__FILE__)
 #ifdef _WIN32
 
 namespace toy {
@@ -58,7 +58,7 @@ public:
 #define ToyLogI(...) spdlog::info(__VA_ARGS__);
 #define ToyLogW(...) spdlog::warn(__VA_ARGS__);
 #define ToyLogE(...)                                                                     \
-  spdlog::error("[{}:{}] {}", __FILENAME__, __LINE__, fmt::format(__VA_ARGS__));
+  spdlog::error("[{}:{}] {}", __TOY_FILENAME__, __LINE__, fmt::format(__VA_ARGS__));
 #define ToyLogD(...) spdlog::debug(__VA_ARGS__);
 
 #elif __ANDROID__
@@ -82,7 +82,7 @@ public:
   template <typename... Args>
   static void logE(const char* fmt, Args... args) {
     android_logger->error("[{}:{}] {}",
-                          __FILENAME__,
+                          __TOY_FILENAME__,
                           __LINE__,
                           fmt::format(fmt, args...));
   }

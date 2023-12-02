@@ -23,7 +23,7 @@
 #include "Pipeline.h"
 
 #include "VkError.h"
-#include "VkLogger.h"
+#include "VklLogger.h"
 #include "VkSettings.h"
 #include "shaders.h"
 #include "Utils.h"

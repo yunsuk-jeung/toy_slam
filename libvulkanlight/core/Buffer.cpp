@@ -3,7 +3,7 @@
 #include "Device.h"
 
 #include "VkError.h"
-#include "VkLogger.h"
+#include "VklLogger.h"
 
 namespace vkl {
 //static int COUNTER = 0;

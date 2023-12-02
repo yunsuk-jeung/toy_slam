@@ -1,11 +1,11 @@
 #include <limits>
-#include "VkLogger.h"
+#include "VklLogger.h"
 #include "SPIRVReflection.h"
 namespace vkl {
 namespace {
 template <ShaderResourceType T>
 inline void read_shader_resource(const spirv_cross::Compiler& compiler,
-                                 vk::ShaderStageFlagBits        stage,
+                                 vk::ShaderStageFlagBits      stage,
                                  std::vector<ShaderResource>& resources,
                                  const ShaderVariant&         variant) {
   LOGE("Not implemented! Read shader resources of type.");
@@ -140,7 +140,7 @@ inline void read_resource_size(const spirv_cross::Compiler&     compiler,
 template <>
 inline void read_shader_resource<ShaderResourceType::Input>(
   const spirv_cross::Compiler& compiler,
-  vk::ShaderStageFlagBits        stage,
+  vk::ShaderStageFlagBits      stage,
   std::vector<ShaderResource>& resources,
   const ShaderVariant&         variant) {
   auto input_resources = compiler.get_shader_resources().stage_inputs;
@@ -197,7 +197,7 @@ inline void read_shader_resource<ShaderResourceType::InputAttachment>(
 template <>
 inline void read_shader_resource<ShaderResourceType::Output>(
   const spirv_cross::Compiler& compiler,
-  vk::ShaderStageFlagBits        stage,
+  vk::ShaderStageFlagBits      stage,
   std::vector<ShaderResource>& resources,
   const ShaderVariant&         variant) {
   auto output_resources = compiler.get_shader_resources().stage_outputs;
@@ -222,7 +222,7 @@ inline void read_shader_resource<ShaderResourceType::Output>(
 template <>
 inline void read_shader_resource<ShaderResourceType::Image>(
   const spirv_cross::Compiler& compiler,
-  vk::ShaderStageFlagBits        stage,
+  vk::ShaderStageFlagBits      stage,
   std::vector<ShaderResource>& resources,
   const ShaderVariant&         variant) {
   auto image_resources = compiler.get_shader_resources().separate_images;
@@ -250,7 +250,7 @@ inline void read_shader_resource<ShaderResourceType::Image>(
 template <>
 inline void read_shader_resource<ShaderResourceType::ImageSampler>(
   const spirv_cross::Compiler& compiler,
-  vk::ShaderStageFlagBits        stage,
+  vk::ShaderStageFlagBits      stage,
   std::vector<ShaderResource>& resources,
   const ShaderVariant&         variant) {
   auto image_resources = compiler.get_shader_resources().sampled_images;
@@ -278,7 +278,7 @@ inline void read_shader_resource<ShaderResourceType::ImageSampler>(
 template <>
 inline void read_shader_resource<ShaderResourceType::ImageStorage>(
   const spirv_cross::Compiler& compiler,
-  vk::ShaderStageFlagBits        stage,
+  vk::ShaderStageFlagBits      stage,
   std::vector<ShaderResource>& resources,
   const ShaderVariant&         variant) {
   auto storage_resources = compiler.get_shader_resources().storage_images;
@@ -314,7 +314,7 @@ inline void read_shader_resource<ShaderResourceType::ImageStorage>(
 template <>
 inline void read_shader_resource<ShaderResourceType::Sampler>(
   const spirv_cross::Compiler& compiler,
-  vk::ShaderStageFlagBits        stage,
+  vk::ShaderStageFlagBits      stage,
   std::vector<ShaderResource>& resources,
   const ShaderVariant&         variant) {
   auto sampler_resources = compiler.get_shader_resources().separate_samplers;
@@ -342,7 +342,7 @@ inline void read_shader_resource<ShaderResourceType::Sampler>(
 template <>
 inline void read_shader_resource<ShaderResourceType::BufferUniform>(
   const spirv_cross::Compiler& compiler,
-  vk::ShaderStageFlagBits        stage,
+  vk::ShaderStageFlagBits      stage,
   std::vector<ShaderResource>& resources,
   const ShaderVariant&         variant) {
   auto uniform_resources = compiler.get_shader_resources().uniform_buffers;
@@ -371,7 +371,7 @@ inline void read_shader_resource<ShaderResourceType::BufferUniform>(
 template <>
 inline void read_shader_resource<ShaderResourceType::BufferStorage>(
   const spirv_cross::Compiler& compiler,
-  vk::ShaderStageFlagBits        stage,
+  vk::ShaderStageFlagBits      stage,
   std::vector<ShaderResource>& resources,
   const ShaderVariant&         variant) {
   auto storage_resources = compiler.get_shader_resources().storage_buffers;

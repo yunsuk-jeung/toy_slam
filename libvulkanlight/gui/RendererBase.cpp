@@ -32,19 +32,24 @@ void RendererBase::prepare(Device*            device,
   mRenderContext = context;
   mDescPool      = descPool;
   mVkRenderPass  = renderPass;
-  mVkPipeline    = ResourcePool::requestPipeline(pipelineName)->vk();
+
+  auto* pipeline    = ResourcePool::requestPipeline(pipelineName);
+  mVkPipeline       = pipeline->vk();
+  mVkPipelineLayout = pipeline->getPipelineLayout()->vk();
 
   createVertexBuffer();
   createIndexBuffers();
   createUniformBuffers();
   createTextures();
   createDescriptorsets();
+  updateDescriptorsets();
 }
-
 
 void RendererBase::createVertexBuffer() {}
 void RendererBase::createIndexBuffers() {}
 void RendererBase::createUniformBuffers() {}
 void RendererBase::createTextures() {}
 void RendererBase::createDescriptorsets() {}
+void RendererBase::updateDescriptorsets() {}
+
 }  //namespace vkl

@@ -2,6 +2,7 @@
 #include "RendererBase.h"
 #include "macros.h"
 namespace vkl {
+class InputCallback;
 class Window;
 class Buffer;
 class GUI : public RendererBase {
@@ -18,17 +19,27 @@ public:
                vk::RenderPass     vkRenderPass,
                std::string        pipelineName) override;
 
+  virtual void addInputCallback(InputCallback* cb);
+
   void onRender();
 
+  void buildCommandBuffer(vk::CommandBuffer cmd, uint32_t currBufferingIdx);
+
 protected:
+  void updateBuffer(uint32_t idx);
+  void handleInputCallbacks();
+
   void setName() override;
   void createVertexBuffer() override;
   void createIndexBuffers() override;
   void createTextures() override;
   void createDescriptorsets() override;
+  void updateDescriptorsets() override;
 
 protected:
   Window* mWindow;
+
+  std::vector<InputCallback*> mInputCallbacks;
 
   std::vector<size_t>                  mPrevVBSizes;
   std::vector<size_t>                  mPrevIBSizes;

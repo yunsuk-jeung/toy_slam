@@ -2,7 +2,7 @@
 #include "VkLogger.h"
 #include "GlfwWindow.h"
 #include "Device.h"
-#include "GUI2.h"
+#include "GUI.h"
 #include "VkShaderUtil.h"
 #include "App.h"
 #include "BasicRenderer.h"
@@ -79,7 +79,7 @@ protected:
 
     auto* basicPipelineLyout   = ResourcePool::requestPipelineLayout("basic_vert_basic_frag");
 
-    auto* basicTrianglePL = new BasicTraianglePipeline("triangle",
+    auto* basicTrianglePL = new BasicTraianglePipeline("triangle_basic",
                                                        mDevice.get(),
                                                        mRenderContext.get(),
                                                        mVkRenderPass,
@@ -90,7 +90,7 @@ protected:
   void onRender() override {
     mWindow->pollEvents();
 
-    if (mGui) { mGui->onRender(); }
+    if (mGUI) { mGUI->onRender(); }
 
     updateUniform(mCurrBufferingIdx);
 
@@ -103,7 +103,7 @@ protected:
     auto cmd = beginCommandBuffer();
     beginRenderPass(cmd);
 
-    if (mGui) mGui->buildCommandBuffer(cmd, mCurrBufferingIdx);
+    if (mGUI) mGUI->buildCommandBuffer(cmd, mCurrBufferingIdx);
 
     cmd.endRenderPass();
     cmd.end();

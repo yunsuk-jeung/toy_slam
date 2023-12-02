@@ -6,6 +6,7 @@
 #include "RenderContext.h"
 #include "Buffer.h"
 #include "ResourcePool.h"
+#include "InputCallback.h"
 #include "GUI.h"
 
 namespace vkl {
@@ -18,7 +19,9 @@ GUI::GUI()
   , mIBs{}
   , mFontImage{nullptr} {}
 
-GUI::~GUI() {}
+GUI::~GUI() {
+  mDevice->vk().destroySampler(mFontSampler);
+}
 
 void GUI::onWindowResized(int w, int h) {
   auto& io         = ImGui::GetIO();
@@ -54,10 +57,14 @@ void GUI::prepare(Device*            device,
   RendererBase::prepare(device, context, descPool, vkRenderPass, pipelineName);
 }
 
+void GUI::addInputCallback(InputCallback* cb) {
+  mInputCallbacks.push_back(cb);
+}
+
 void GUI::onRender() {
   mWindow->newGUIFrame();
   ImGui::NewFrame();
-  //handleInputEvents();
+  handleInputCallbacks();
 
   ImGuiIO& io = ImGui::GetIO();
   ImGui::Begin("status");
@@ -65,6 +72,204 @@ void GUI::onRender() {
 
   ImGui::End();
   ImGui::Render();
+}
+
+void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
+  ImDrawData* dd = ImGui::GetDrawData();
+  //idx            = 0;
+  int fbWidth  = (int)(dd->DisplaySize.x * dd->FramebufferScale.x);
+  int fbHeight = (int)(dd->DisplaySize.y * dd->FramebufferScale.y);
+  if (fbWidth <= 0 || fbHeight <= 0) return;
+
+  updateBuffer(idx);
+
+  cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, mVkPipeline);
+  //Bind Vertex And Index Buffer:
+
+  auto& VB = mVBs[idx];
+  auto& IB = mIBs[idx];
+
+  auto indexType = sizeof(ImDrawIdx) == 2 ? vk::IndexType::eUint16
+                                          : vk::IndexType::eUint32;
+
+  if (dd->TotalVtxCount > 0) {
+    cmd.bindVertexBuffers(0, {VB->vk()}, {0});
+    cmd.bindIndexBuffer(IB->vk(), 0, indexType);
+  }
+
+  std::vector<float> scale(2);
+  scale[0] = 2.0f / dd->DisplaySize.x;
+  scale[1] = 2.0f / dd->DisplaySize.y;
+
+  std::vector<float> trans(2);
+  trans[0] = -1.0f - dd->DisplayPos.x * scale[0];
+  trans[1] = -1.0f - dd->DisplayPos.y * scale[1];
+
+  cmd.pushConstants<float>(mVkPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, scale);
+  cmd.pushConstants<float>(mVkPipelineLayout, vk::ShaderStageFlagBits::eVertex, 8, trans);
+
+  ImVec2 clipOff   = dd->DisplayPos;
+  ImVec2 clipScale = dd->FramebufferScale;
+
+  //Render command lists
+  //(Because we merged all buffers into a single one, we maintain our own offset into
+  //them)
+  int global_vtx_offset = 0;
+  int global_idx_offset = 0;
+  for (int n = 0; n < dd->CmdListsCount; n++) {
+    const ImDrawList* cmd_list = dd->CmdLists[n];
+    for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
+      const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+      //Project scissor/clipping rectangles into framebuffer space
+      ImVec2 clip_min((pcmd->ClipRect.x - clipOff.x) * clipScale.x,
+                      (pcmd->ClipRect.y - clipOff.y) * clipScale.y);
+      ImVec2 clip_max((pcmd->ClipRect.z - clipOff.x) * clipScale.x,
+                      (pcmd->ClipRect.w - clipOff.y) * clipScale.y);
+
+      //Clamp to viewport as vkCmdSetScissor() won't accept values that are off bounds
+      if (clip_min.x < 0.0f) { clip_min.x = 0.0f; }
+      if (clip_min.y < 0.0f) { clip_min.y = 0.0f; }
+      if (clip_max.x > fbWidth) { clip_max.x = (float)fbWidth; }
+      if (clip_max.y > fbHeight) { clip_max.y = (float)fbHeight; }
+      if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y) continue;
+
+      //Apply scissor/clipping rectangle
+      VkRect2D scissor;
+      scissor.offset.x      = (int32_t)(clip_min.x);
+      scissor.offset.y      = (int32_t)(clip_min.y);
+      scissor.extent.width  = (uint32_t)(clip_max.x - clip_min.x);
+      scissor.extent.height = (uint32_t)(clip_max.y - clip_min.y);
+      cmd.setScissor(0, {scissor});
+
+      //Bind DescriptorSet with font or user texture
+      vk::DescriptorSet desc_set = {(VkDescriptorSet)pcmd->TextureId};
+      if (sizeof(ImTextureID) < sizeof(ImU64)) {
+        //We don't support texture switches if ImTextureID hasn't been redefined to be
+        //64-bit. Do a flaky check that other textures haven't been used.
+        IM_ASSERT(pcmd->TextureId == mFontDescSet);
+        desc_set = mFontDescSet;
+      }
+      cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                             mVkPipelineLayout,
+                             0,
+                             {desc_set},
+                             {});
+
+      cmd.drawIndexed(pcmd->ElemCount,
+                      1,
+                      pcmd->IdxOffset + global_idx_offset,
+                      pcmd->VtxOffset + global_vtx_offset,
+                      0);
+    }
+    global_idx_offset += cmd_list->IdxBuffer.Size;
+    global_vtx_offset += cmd_list->VtxBuffer.Size;
+  }
+
+  VkRect2D scissor = {
+    {                0,                  0},
+    {(uint32_t)fbWidth, (uint32_t)fbHeight}
+  };
+  cmd.setScissor(0, {scissor});
+}
+
+void GUI::updateBuffer(uint32_t idx) {
+  ImDrawData* dd        = ImGui::GetDrawData();
+  int         fb_width  = (int)(dd->DisplaySize.x * dd->FramebufferScale.x);
+  int         fb_height = (int)(dd->DisplaySize.y * dd->FramebufferScale.y);
+  if (fb_width <= 0 || fb_height <= 0) return;
+
+  size_t VBSize     = dd->TotalVtxCount * sizeof(ImDrawVert);
+  size_t IBSize     = dd->TotalIdxCount * sizeof(ImDrawIdx);
+  auto&  prevVBSize = mPrevVBSizes[idx];
+  auto&  prevIBSize = mPrevIBSizes[idx];
+
+  if (VBSize > 0) {
+    auto& VB = mVBs[idx];
+    auto& IB = mIBs[idx];
+
+    if (VBSize > prevVBSize) {
+      VB = Buffer::Uni(new Buffer(mDevice,
+                                  VBSize,
+                                  vk::BufferUsageFlagBits::eVertexBuffer,
+                                  vk::MemoryPropertyFlagBits::eHostVisible,
+                                  vk::MemoryPropertyFlagBits::eHostCoherent));
+    }
+    if (IBSize > prevIBSize) {
+      IB = Buffer::Uni(new Buffer(mDevice,
+                                  IBSize,
+                                  vk::BufferUsageFlagBits::eIndexBuffer,
+                                  vk::MemoryPropertyFlagBits::eHostVisible,
+                                  vk::MemoryPropertyFlagBits::eHostCoherent));
+    }
+    uint8_t* pVBO = VB->map();
+    uint8_t* pIBO = IB->map();
+
+    for (int n = 0; n < dd->CmdListsCount; n++) {
+      const ImDrawList* cmd_list = dd->CmdLists[n];
+      memcpy(pVBO,
+             cmd_list->VtxBuffer.Data,
+             cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+      memcpy(pIBO,
+             cmd_list->IdxBuffer.Data,
+             cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+      pVBO += cmd_list->VtxBuffer.Size;
+      pIBO += cmd_list->IdxBuffer.Size;
+    }
+
+    VB->flush();
+    IB->flush();
+    VB->unmap();
+    IB->unmap();
+
+    prevVBSize = VBSize;
+    prevIBSize = IBSize;
+  }
+}
+
+void GUI::handleInputCallbacks() {
+  ImGuiIO& io = ImGui::GetIO();
+
+  if (!io.WantCaptureKeyboard) {
+    ImGuiKey key_first = (ImGuiKey)0;
+    ImGuiKey key       = key_first;
+    struct funcs {
+      static bool IsLegacyNativeDupe(ImGuiKey key) {
+        return key < 512 && ImGui::GetIO().KeyMap[key] != -1;
+      }
+    };  //Hide Native<>ImGuiKey duplicates when both exists in the array
+
+    for (; key < ImGuiKey_COUNT; key = (ImGuiKey)(key + 1)) {
+      if (funcs::IsLegacyNativeDupe(key)) continue;
+
+      if (ImGui::IsKeyDown(key)) {
+        //VklLogI("key  is down");
+      }
+      if (ImGui::IsKeyReleased(key)) { ImVec2 pos = ImGui::GetCursorScreenPos(); }
+
+      if (ImGui::IsKeyPressed(key)) {
+        for (auto& cb : mInputCallbacks) { (*cb).onKeyPressed(key); }
+      }
+    }
+  }
+
+  if (!io.WantCaptureMouse) {
+    auto mpos = io.MousePos;
+    for (int i = 0; i < 3; i++) {
+      if (ImGui::IsMouseClicked(i)) {
+        for (auto& cb : mInputCallbacks) { (*cb).onMouseClick(i, mpos.x, mpos.y); }
+      }
+      if (ImGui::IsMouseDragging(i)) {
+        for (auto& cb : mInputCallbacks) {
+          //(*cb).onMouseDrag(i, io.MousePos.x, io.MousePos.y);
+          (*cb).onMouseDrag(i, mpos.x, mpos.y);
+        }
+      }
+
+      if (io.MouseWheel) {
+        for (auto& cb : mInputCallbacks) { (*cb).onMouseWheel(io.MouseWheel); }
+      }
+    }  //0 left //1 right //2 wheel
+  };
 }
 
 void GUI::setName() {
@@ -189,6 +394,20 @@ void GUI::createDescriptorsets() {
 
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->SetTexID((ImTextureID)(VkDescriptorSet(mFontDescSet)));
+}
+
+void GUI::updateDescriptorsets() {
+  vk::DescriptorImageInfo fontDescImageInfo(mFontSampler,
+                                            mFontImage->vkImageView,
+                                            vk::ImageLayout::eShaderReadOnlyOptimal);
+
+  vk::WriteDescriptorSet fontWriteDescSet(mFontDescSet,
+                                          0,
+                                          {},
+                                          vk::DescriptorType::eCombinedImageSampler,
+                                          fontDescImageInfo);
+
+  mDevice->vk().updateDescriptorSets(fontWriteDescSet, {});
 }
 
 }  //namespace vkl

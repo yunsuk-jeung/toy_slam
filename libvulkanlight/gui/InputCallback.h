@@ -1,11 +1,13 @@
 #pragma once
 
 #include <functional>
-#include <memory>
+#include<memory>
+#include "macros.h"
+
 namespace vkl {
 class InputCallback {
 public:
-  using Ptr = std::unique_ptr<InputCallback>;
+  USING_SMART_PTR(InputCallback);
 
   InputCallback();
   virtual ~InputCallback();

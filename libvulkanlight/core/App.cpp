@@ -18,7 +18,6 @@
 #include "ResourcePool.h"
 
 #include "GUI.h"
-#include "GUI2.h"
 #include "InputCallback.h"
 #include "GraphicsCamera.h"
 #include "Pipeline.h"
@@ -49,7 +48,7 @@ App::App()
   , mCurrBufferingSemaphore({VK_NULL_HANDLE, VK_NULL_HANDLE})
   , mCurrBufferingIdx{0}
   , mLastSubpass{0}
-  , mGui{nullptr}
+  , mGUI{nullptr}  //, mGui{nullptr}
   , mInputCallback{nullptr}
   , mGraphicsCamera{nullptr} {
   spdlog::set_level(spdlog::level::debug);
@@ -68,7 +67,8 @@ App::~App() {
 
   mCameraUB.reset();
 
-  mGui.reset();
+  mGUI.reset();
+  //mGui.reset();
 
   for (auto& frameBuffer : mVkFramebuffers) {
     mDevice->vk().destroyFramebuffer(frameBuffer);
@@ -115,12 +115,8 @@ void App::onWindowResized(int w, int h, int orientation) {
   }
 
   auto& prevExtent = mRenderContext->getContextProps().extent;
-  //Only recreate the swapchain if the dimensions have changed;
-  //handle_surface_changes() is called on VK_SUBOPTIMAL_KHR,
-  //which might not be due to a surface resize
   if (surfaceProps.currentExtent.width != prevExtent.width
       || surfaceProps.currentExtent.height != prevExtent.height) {
-    //Recreate swapchain
     mDevice->vk().waitIdle();
 
     mWindow->updateExtent(surfaceProps.currentExtent.width,
@@ -132,6 +128,8 @@ void App::onWindowResized(int w, int h, int orientation) {
     //buildCommandBuffers();
     mDevice->vk().waitIdle();
   }
+
+  mGUI->onWindowResized(w, h);
 
   if (mGraphicsCamera) {
     mGraphicsCamera->onWindowResized(w, h, orientation);
@@ -536,17 +534,13 @@ void App::createGUI() {
   mGUI = GUI::Uni(new GUI());
   mGUI->prepare(mDevice.get(), mRenderContext.get(), mVkDescPool, mVkRenderPass, "imgui");
 
-  mGui = std::make_unique<GUI2>();
-  mGui->initialize(mDevice.get(), mRenderContext.get(), mVkDescPool);
-  mGui->prepare(mVkRenderPass, mLastSubpass);
-
-  mInputCallback   = std::make_unique<InputCallback>();
+  mInputCallback   = InputCallback::Uni(new InputCallback());
   auto keyCallback = [&](int key) {
     if (key == 526) { this->mEndApplication = true; }
   };
   mInputCallback->registerKeyPressed(std::move(keyCallback));
 
-  mGui->addInputCallback(mInputCallback.get());
+  mGUI->addInputCallback(mInputCallback.get());
 }
 
 void App::createGraphicsCamera() {
@@ -561,7 +555,7 @@ void App::createGraphicsCamera() {
                                                            .orientation));
 
   //mGraphicsCamera->init(extent.width, extent.height);
-  mGui->addInputCallback(mGraphicsCamera.get());
+  mGUI->addInputCallback(mGraphicsCamera.get());
 
   auto count   = mRenderContext->getContextImageCount();
   auto memSize = sizeof(CameraUniform);

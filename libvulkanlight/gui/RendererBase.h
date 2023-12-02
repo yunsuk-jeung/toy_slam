@@ -21,7 +21,6 @@ public:
                        vk::RenderPass     vkRenderPass,
                        std::string        pipelineName);
 
-
 protected:
   virtual void setName() = 0;
 
@@ -30,6 +29,7 @@ protected:
   virtual void createUniformBuffers();
   virtual void createTextures();
   virtual void createDescriptorsets();
+  virtual void updateDescriptorsets();
 
 protected:
   std::string        mName;
@@ -37,8 +37,9 @@ protected:
   RenderContext*     mRenderContext;
   vk::DescriptorPool mDescPool;
 
-  vk::RenderPass mVkRenderPass;
-  vk::Pipeline   mVkPipeline;
+  vk::RenderPass     mVkRenderPass;
+  vk::Pipeline       mVkPipeline;
+  vk::PipelineLayout mVkPipelineLayout;
 
   //model matrix
   Eigen::Matrix4f mM;

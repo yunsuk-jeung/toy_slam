@@ -23,6 +23,11 @@ Pipeline::Pipeline(Device*         device,
 
 Pipeline::~Pipeline() {}
 
+void Pipeline::addResource(){
+  VklLogD("created pipeline: {}", mName);
+  ResourcePool::addPipeline(mName, this);
+}
+
 BasicTraianglePipeline::BasicTraianglePipeline(const std::string& name,
                                                Device*            device,
                                                RenderContext*     context,
@@ -118,12 +123,9 @@ void BasicTraianglePipeline::prepare() {
   std::tie(result, mVkObject) = mDevice->vk().createGraphicsPipeline(VK_NULL_HANDLE,
                                                                      pipelineCI);
   VK_CHECK_ERROR(static_cast<VkResult>(result), "createpipeline");
+  
+  addResource();
 
-  std::string name = mName + "_" + basicPipelineLayout->getName();
-
-  VklLogD("created pipeline: {}", name);
-  ResourcePool::addPipeline(name, this);
-  mName = name;
 }
 
 ImGuiPipeline::ImGuiPipeline(const std::string& name,
@@ -221,9 +223,7 @@ void ImGuiPipeline::prepare() {
   std::tie(result, mVkObject) = mDevice->vk().createGraphicsPipeline(VK_NULL_HANDLE,
                                                                      pipelineCI);
   VK_CHECK_ERROR(static_cast<VkResult>(result), "createpipeline");
-
-  VklLogD("created pipeline: {}", mName);
-  ResourcePool::addPipeline(mName, this);
+  addResource();
 }
 
 }  //namespace vkl

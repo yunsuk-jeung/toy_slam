@@ -19,12 +19,18 @@ public:
   virtual void prepare() = 0;
 
 protected:
+  void addResource();
+
+protected:
   std::string     mName;
   Device*         mDevice;
   RenderContext*  mRenderContext;
   vk::RenderPass  mVkRenderPass;
   PipelineLayout* mPipelineLayout;
   uint32_t        mSubpassId;
+
+public:
+  PipelineLayout* getPipelineLayout() { return mPipelineLayout; }
 };
 
 class BasicTraianglePipeline : public Pipeline {

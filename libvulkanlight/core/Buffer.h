@@ -10,8 +10,9 @@ class Device;
 class Buffer : public VkObject<vk::Buffer> {
 public:
   USING_SMART_PTR(Buffer);
+  DELETE_COPY_CONSTRUCTORS(Buffer);
+
   Buffer()              = default;
-  Buffer(const Buffer&) = delete;
   ~Buffer();
 
   explicit Buffer(Device*                      device,
@@ -23,8 +24,6 @@ public:
                   const std::vector<uint32_t>& queueIdxs = {});
 
   explicit Buffer(Buffer&& other) noexcept;
-
-  Buffer& operator=(const Buffer&) = delete;
   Buffer& operator=(Buffer&&)      = delete;
 
   void     swap(Buffer& buffer);

@@ -1,31 +1,38 @@
 #pragma once
+#include <memory>
+#include "Logger.h"
 
-#include <spdlog/fmt/fmt.h>
-#include <spdlog/spdlog.h>
-#include "spdlog/sinks/android_sink.h"
-#define LOGGER_FORMAT "[%^%l%$] %v"
-#define PROJECT_NAME "VULKAN_LIGHT"
-
-#define __VKL_FILENAME__ vkl::LogUtil::extractFileName(__FILE__)
+#define __VKL_FILENAME__ LogUtil::extractFileName(__FILE__)
 
 namespace vkl {
 
-class LogUtil {
+class VklLogger {
 public:
-  static const char* extractFileName(const char* filePath) {
-#ifdef _WIN32
-    const char* lastSlash = strrchr(filePath, '\\');
-#else
-    const char* lastSlash = strrchr(filePath, '/');
-#endif
-    if (lastSlash != nullptr) { return lastSlash + 1; }
-    else { return filePath; }
+  static std::shared_ptr<spdlog::logger> logger;
+  static void                            init();
+
+  template <typename... Args>
+  static void logI(const char* fmt, Args... args) {
+    logger->info(fmt, args...);
   }
+  template <typename... Args>
+  static void logW(const char* fmt, Args... args) {
+    logger->warn(fmt, args...);
+  }
+  template <typename... Args>
+  static void logD(const char* fmt, Args... args) {
+    logger->debug(fmt, args...);
+  }
+
+  template <typename... Args>
+  static void logE(const char* fmt, Args... args) {
+    logger->error("[{}:{}] {}", __VKL_FILENAME__, __LINE__, fmt::format(fmt, args...));
+  }
+
 };
 }  //namespace vkl
 
-#define VklLogD(...) spdlog::debug(__VA_ARGS__);
-#define VklLogI(...) spdlog::info(__VA_ARGS__);
-#define VklLogW(...) spdlog::warn(__VA_ARGS__);
-#define VklLogE(...)                                                                     \
-  spdlog::error("[{}:{}] {}", __VKL_FILENAME__, __LINE__, fmt::format(__VA_ARGS__));
+#define VklLogD(fmt, ...) VklLogger::logI(fmt, ##__VA_ARGS__);
+#define VklLogI(fmt, ...) VklLogger::logW(fmt, ##__VA_ARGS__);
+#define VklLogW(fmt, ...) VklLogger::logE(fmt, ##__VA_ARGS__);
+#define VklLogE(fmt, ...) VklLogger::logD(fmt, ##__VA_ARGS__);

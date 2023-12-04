@@ -51,7 +51,7 @@ App::App()
   , mGUI{nullptr}  //, mGui{nullptr}
   , mInputCallback{nullptr}
   , mGraphicsCamera{nullptr} {
-  spdlog::set_level(spdlog::level::debug);
+  VklLogger::init();
 }
 
 App::~App() {

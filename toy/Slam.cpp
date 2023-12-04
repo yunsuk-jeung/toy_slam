@@ -12,7 +12,9 @@
 namespace toy {
 
 SLAM::SLAM()
-  : mVioCore{nullptr} {};
+  : mVioCore{nullptr} {
+  ToyLogger::init();
+};
 
 SLAM::~SLAM() {
   delete mVioCore;

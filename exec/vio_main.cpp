@@ -10,8 +10,9 @@
 io::Sensor*     sensor           = nullptr;
 io::DataReader* dataReader       = nullptr;
 std::string     dataPath         = "D:/dataset/EUROC/MH_01_easy";
-std::string     sensorConfigFile = "D:/workspaceD/toy_vio/configs/euroc_sensor.json";
-std::string     slamConfigFile   = "D:/workspaceD/toy_vio/configs/VioOnly.json";
+std::string     configPath       = "D:/workspaceD/toy_vio/configs/";
+std::string     sensorConfigFile = "euroc_sensor.json";
+std::string     slamConfigFile   = "VioOnly.json";
 
 void setupSensor() {
   sensor = io::SensorFactory::createSensor(io::SensorFactory::SensorType::SIMULATOR);
@@ -43,6 +44,12 @@ void registerCallbacks() {
 }
 
 int main() {
+  if (!std::filesystem::exists(configPath + sensorConfigFile)) {
+    configPath = "F:/transfer/toy_slam/configs/";
+  }
+  sensorConfigFile = configPath + sensorConfigFile;
+  slamConfigFile   = configPath + slamConfigFile;
+
   setupSensor();
   registerCallbacks();
 
@@ -53,7 +60,6 @@ int main() {
   toy::SLAM::getInstance()->setSensorInfo(&info0, &info1);
   toy::SLAM::getInstance()->prepare(slamConfigFile);
 
-  //sensor->start();
   while (true) {
     ((io::Simulator*)sensor)->spinOnce();
     int key = cv::waitKey();

@@ -5,6 +5,10 @@
 
 namespace vkl {
 
+namespace fs {
+bool fileExists(const std::string& filename);
+}
+
 namespace cmd {
 void setImageLayout(vk::CommandBuffer         cmdBuffer,
                     vk::Image                 vkImage,
@@ -46,7 +50,6 @@ public:
                                                      uint32_t levelCount     = 1,
                                                      uint32_t baseArrayLayer = 0,
                                                      uint32_t layerCount     = 1);
-
 
 protected:
   static std::string shaderPath;

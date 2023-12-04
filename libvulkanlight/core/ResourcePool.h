@@ -14,11 +14,11 @@ class ResourcePool {
 public:
   static void clear(Device* device);
 
-  static void         setShaderPath(std::string path);
-  static std::string& getShaderPath();
+  static void                      addShaderPath(std::string path);
+  static std::vector<std::string>& getShaderPaths();
 
-  static void         setResourcePath(std::string path);
-  static std::string& getResourcePath();
+  static void                      addResourcePath(std::string path);
+  static std::vector<std::string>& getResourcePaths();
 
   static ShaderModule* loadShader(const std::string&      name,
                                   Device*                 device,
@@ -39,8 +39,8 @@ public:
 protected:
 
 protected:
-  static std::string                                               mShaderPath;
-  static std::string                                               mResourcePath;
+  static std::vector<std::string>                                  mShaderPaths;
+  static std::vector<std::string>                                  mResourcePaths;
   static std::unordered_map<size_t, std::unique_ptr<ShaderModule>> mShaderPools;
   static std::unordered_map<size_t, vk::DescriptorSetLayout>       mDescriptorSetLayouts;
   static std::unordered_map<size_t, std::unique_ptr<PipelineLayout>> mPipelineLayouts;

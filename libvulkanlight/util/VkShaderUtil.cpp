@@ -1,6 +1,6 @@
 #include <SPIRV/GlslangToSpv.h>
 #include <glslang/Public/ResourceLimits.h>
-
+#include "Utils.h"
 #include "VkShaderUtil.h"
 #include "VklLogger.h"
 #include "VkError.h"
@@ -332,10 +332,12 @@ std::vector<std::string> VkShaderUtil::replaceInclude(const std::string& src) {
     if (line.find("#include \"") == 0) {
       std::string headerFile = line.substr(10);
       size_t      last_quote = headerFile.find("\"");
-      if (!headerFile.empty() && last_quote != std::string::npos) {
-        headerFile = ResourcePool::getShaderPath() + "/"
-                     + headerFile.substr(0, last_quote);
+
+      for (const std::string& shaderFolderPath : ResourcePool::getShaderPaths()) {
+        headerFile = shaderFolderPath + "/" + headerFile.substr(0, last_quote);
+        if (fs::fileExists(headerFile)) break;
       }
+
       std::string headerSrc    = readFileAsString(headerFile);
       auto        intermediate = replaceInclude(headerSrc);
       for (auto& interLine : intermediate) { outs.push_back(interLine); }

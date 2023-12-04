@@ -1,4 +1,5 @@
 #pragma once
+
 #include "VklLogger.h"
 #include "Device.h"
 #include "ShaderModule.h"
@@ -10,8 +11,8 @@
 #include "SPIRVReflection.h"
 
 namespace vkl {
-std::string                                         ResourcePool::mShaderPath;
-std::string                                         ResourcePool::mResourcePath;
+std::vector<std::string>                            ResourcePool::mShaderPaths;
+std::vector<std::string>                            ResourcePool::mResourcePaths;
 std::unordered_map<size_t, ShaderModule::Uni>       ResourcePool::mShaderPools;
 std::unordered_map<size_t, vk::DescriptorSetLayout> ResourcePool::mDescriptorSetLayouts;
 std::unordered_map<size_t, PipelineLayout::Uni>     ResourcePool::mPipelineLayouts;
@@ -29,20 +30,20 @@ void ResourcePool::clear(Device* device) {
   }
 }
 
-void ResourcePool::setShaderPath(std::string path) {
-  mShaderPath = path;
+void ResourcePool::addShaderPath(std::string path) {
+  mShaderPaths.push_back(path);
 }
 
-std::string& ResourcePool::getShaderPath() {
-  return mShaderPath;
+std::vector<std::string>& ResourcePool::getShaderPaths() {
+  return mShaderPaths;
 }
 
-void ResourcePool::setResourcePath(std::string path) {
-  mResourcePath = path;
+void ResourcePool::addResourcePath(std::string path) {
+  mResourcePaths.push_back(path);
 }
 
-std::string& ResourcePool::getResourcePath() {
-  return mResourcePath;
+std::vector<std::string>& ResourcePool::getResourcePaths() {
+  return mResourcePaths;
 }
 
 ShaderModule* ResourcePool::loadShader(const std::string&      name,
@@ -70,9 +71,13 @@ ShaderModule* ResourcePool::loadShader(const std::string&      name,
   std::vector<uint32_t> spirv;
   switch (srcType) {
   case ShaderSourceType::STRING_FILE: {
-    const std::string& shaderFolderPath = mShaderPath;
-    std::string        shaderFile       = shaderFolderPath + "/" + shaderSrc;
-    out->vk() = VkShaderUtil::loadShader(device->vk(), shaderFile, spirv);
+    for (const std::string& shaderFolderPath : ResourcePool::getShaderPaths()) {
+      std::string shaderFile = shaderFolderPath + "/" + shaderSrc;
+      if (!fs::fileExists(shaderFile)) continue;
+      out->vk() = VkShaderUtil::loadShader(device->vk(), shaderFile, spirv);
+    }
+    break;
+
     break;
   }
   case ShaderSourceType::STRING: {

@@ -132,11 +132,11 @@ int main() {
   std::unique_ptr<vkl::Window> glfwWindow(new vkl::GlfwWindow(winInfo, &app));
 
   app.registerWindow(glfwWindow);
-  app.setShaderPath("F:/transfer/toy_slam/libvulkanlight/shaders");
-  app.setResourcePath("F:/transfer/toy_slam/libvulkanlight/shaders");
+  app.addShaderPath("F:/transfer/toy_slam/libvulkanlight/shaders");
+  app.addResourcePath("F:/transfer/toy_slam/libvulkanlight/shaders");
 
-  app.setShaderPath("D:/workspaceD/toy_vio/libvulkanlight/shaders");
-  app.setResourcePath("D:/workspaceD/toy_vio/libvulkanlight/shaders");
+  app.addShaderPath("D:/workspaceD/toy_vio/libvulkanlight/shaders");
+  app.addResourcePath("D:/workspaceD/toy_vio/libvulkanlight/shaders");
 
   app.prepare();
 

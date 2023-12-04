@@ -88,12 +88,12 @@ App::~App() {
   mInstance.reset();
 }
 
-void App::setShaderPath(const std::string& shaderPath) {
-  ResourcePool::setShaderPath(shaderPath);
+void App::addShaderPath(const std::string& shaderPath) {
+  ResourcePool::addShaderPath(shaderPath);
 }
 
-void App::setResourcePath(const std::string& resourcePath) {
-  ResourcePool::setResourcePath(resourcePath);
+void App::addResourcePath(const std::string& resourcePath) {
+  ResourcePool::addResourcePath(resourcePath);
 }
 
 void App::registerWindow(std::unique_ptr<Window>& _window) {

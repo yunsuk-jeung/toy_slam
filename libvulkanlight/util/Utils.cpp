@@ -1,6 +1,13 @@
 #include "Utils.h"
+#include <filesystem>
 
 namespace vkl {
+namespace fs {
+bool fileExists(const std::string& filename) {
+  return std::filesystem::exists(filename);
+}
+}  //namespace fs
+
 namespace cmd {
 void setImageLayout(vk::CommandBuffer         cmdBuffer,
                     vk::Image                 vkImage,
@@ -172,6 +179,5 @@ vk::ImageViewCreateInfo Utils::createVkImageViewCI(vk::ImageViewType    type,
 
   return imageViewCI;
 }
-
 
 }  //namespace vkl

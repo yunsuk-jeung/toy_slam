@@ -59,7 +59,7 @@ ShaderModule* ResourcePool::loadShader(const std::string&      name,
 
   bool createNew = false;
   if (mShaderPools.find(key) == mShaderPools.end()) {
-    mShaderPools.insert({key, ShaderModule::Uni(new ShaderModule(device, stage))});
+    mShaderPools.insert({key, std::make_unique<ShaderModule>(device, stage)});
     createNew = true;
   }
 
@@ -146,8 +146,7 @@ void ResourcePool::addPipelineLayout(Device*       device,
     VklLogE("you are adding existing pipeline: {}", name);
     throw std::runtime_error("existing pipeline");
   }
-  mPipelineLayouts.insert(
-    {key, PipelineLayout::Uni(new PipelineLayout(device, shaders))});
+  mPipelineLayouts.insert({key, std::make_unique<PipelineLayout>(device, shaders)});
 }
 
 PipelineLayout* ResourcePool::requestPipelineLayout(const std::string& name) {

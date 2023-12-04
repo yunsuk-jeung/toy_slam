@@ -15,8 +15,13 @@ BufferingBuffer::BufferingBuffer(uint32_t                     bufferCount,
   mPrevSize.resize(mBufferCount, size);
   mBuffers.resize(mBufferCount);
   for (auto& buffer : mBuffers) {
-    buffer = Buffer::Uni(
-      new Buffer(mDevice, size, bufferUsage, required, prefered, flags, queueIdxs));
+    buffer = std::make_unique<Buffer>(mDevice,
+                                      size,
+                                      bufferUsage,
+                                      required,
+                                      prefered,
+                                      flags,
+                                      queueIdxs);
   }
 }
 }  //namespace vkl

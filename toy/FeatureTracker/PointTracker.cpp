@@ -9,10 +9,9 @@
 
 namespace toy {
 PointTracker::PointTracker(std::string type)
-  : mType{type} {
-  if (mType == "Fast.OpticalflowLK") {
-    mFeature2D = cv::FastFeatureDetector::create();
-  }
+  : mFeatureId{0}
+  , mType{type} {
+  if (mType == "Fast.OpticalflowLK") { mFeature2D = cv::FastFeatureDetector::create(); }
 }
 
 PointTracker::~PointTracker() {}
@@ -120,7 +119,7 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
   auto& keyPoints0  = prev->getFeature(0)->getKeypoints();
   auto& ids0        = keyPoints0.mIds;
   auto& levels0     = keyPoints0.mLevels;
-  auto& uvs0        = keyPoints0.mUvs;
+  auto& uvs0        = keyPoints0.mUVs;
   auto& trackCount0 = keyPoints0.mTrackCounts;
   auto& undists0    = keyPoints0.mUndists;
 
@@ -170,9 +169,10 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
   //#####################################################################
   auto& ids1        = keyPoints1.mIds;
   auto& levels1     = keyPoints1.mLevels;
-  auto& uvs1        = keyPoints1.mUvs;
+  auto& uvs1        = keyPoints1.mUVs;
   auto& trackCount1 = keyPoints1.mTrackCounts;
   auto& undists1    = keyPoints1.mUndists;
+  auto& featureType = keyPoints1.mFeatureType;
 
   for (size_t i = 0; i < trackSize; ++i) {
     if (statusO[i] == 0 || statusE[i] == 0) continue;
@@ -181,6 +181,7 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
     uvs1.push_back(uvs[i]);
     trackCount1.push_back(++trackCount0[i]);
     undists1.push_back(undists[i]);
+    featureType.push_back(0);
   }
 
   //#####################################################################
@@ -208,7 +209,7 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
   auto& keyPoints0  = frame->getFeature(0)->getKeypoints();
   auto& ids0        = keyPoints0.mIds;
   auto& levels0     = keyPoints0.mLevels;
-  auto& uvs0        = keyPoints0.mUvs;
+  auto& uvs0        = keyPoints0.mUVs;
   auto& trackCount0 = keyPoints0.mTrackCounts;
   auto& undists0    = keyPoints0.mUndists;
 
@@ -216,7 +217,7 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
   auto& keyPoints1  = frame->getFeature(1)->getKeypoints();
   auto& ids1        = keyPoints1.mIds;
   auto& levels1     = keyPoints1.mLevels;
-  auto& uvs1        = keyPoints1.mUvs;
+  auto& uvs1        = keyPoints1.mUVs;
   auto& trackCount1 = keyPoints1.mTrackCounts;
   auto& undists1    = keyPoints1.mUndists;
 
@@ -255,9 +256,19 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
   }
   //#####################################################################
 
-  //std::vector<uchar> statusE;
-  cv::Mat I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
-  cv::findEssentialMat(undists0, undists1, I, cv::RANSAC, 0.99, 1.0 / 640, status);
+  std::vector<uchar> statusE;
+  cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
+  cv::findEssentialMat(undists0, undists1, I, cv::RANSAC, 0.99, 1.0 / 640, statusE);
+
+  auto trackSize = uvs0.size();
+
+  for (int i = 0; i < trackSize; ++i) {
+    if (status[i] == 0 || statusE[i] == 0) {
+      ids1.push_back(0);
+      continue;
+    }
+    ids1.push_back(1);  //stereo
+  }
 
   //Sophus::SE3d    Sbc0    = Sophus::SE3d::exp(frame->getLbc(0));
   //Sophus::SE3d    Sbc1    = Sophus::SE3d::exp(frame->getLbc(1));
@@ -305,7 +316,7 @@ void PointTracker::convertCVKeyPointsToFeature(Camera*                    cam,
 
   auto& ids        = newKpts.mIds;
   auto& levels     = newKpts.mLevels;
-  auto& points     = newKpts.mUvs;
+  auto& points     = newKpts.mUVs;
   auto& trackCount = newKpts.mTrackCounts;
   auto& undists    = newKpts.mUndists;
 
@@ -328,7 +339,7 @@ void PointTracker::convertCVKeyPointsToFeature(Camera*                    cam,
 cv::Mat PointTracker::createMask(const cv::Mat& origin, db::Feature* feature) {
   cv::Mat mask = cv::Mat(origin.rows, origin.cols, origin.type(), cv::Scalar(255));
 
-  const auto& uvs = feature->getKeypoints().mUvs;
+  const auto& uvs = feature->getKeypoints().mUVs;
 
   const int rowGridCount = Config::Vio::rowGridCount;
   const int colGridCount = Config::Vio::colGridCount;

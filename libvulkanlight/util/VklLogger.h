@@ -2,8 +2,6 @@
 #include <memory>
 #include "Logger.h"
 
-#define __VKL_FILENAME__ LogUtil::extractFileName(__FILE__)
-
 namespace vkl {
 
 class VklLogger {
@@ -25,14 +23,15 @@ public:
   }
 
   template <typename... Args>
-  static void logE(const char* fmt, Args... args) {
-    logger->error("[{}:{}] {}", __VKL_FILENAME__, __LINE__, fmt::format(fmt, args...));
+  static void logE(const char* file, int line, const char* fmt, Args... args) {
+    logger->error("[{}:{}] {}", file, line, fmt::format(fmt, args...));
   }
-
 };
 }  //namespace vkl
 
-#define VklLogD(fmt, ...) VklLogger::logI(fmt, ##__VA_ARGS__);
-#define VklLogI(fmt, ...) VklLogger::logW(fmt, ##__VA_ARGS__);
-#define VklLogW(fmt, ...) VklLogger::logE(fmt, ##__VA_ARGS__);
-#define VklLogE(fmt, ...) VklLogger::logD(fmt, ##__VA_ARGS__);
+#define VklLogD(fmt, ...) VklLogger::logD(fmt, ##__VA_ARGS__);
+#define VklLogI(fmt, ...) VklLogger::logI(fmt, ##__VA_ARGS__);
+#define VklLogW(fmt, ...) VklLogger::logW(fmt, ##__VA_ARGS__);
+
+#define VklLogE(fmt, ...)                                                                \
+  VklLogger::logE(LogUtil::extractFileName(__FILE__), __LINE__, fmt, ##__VA_ARGS__);

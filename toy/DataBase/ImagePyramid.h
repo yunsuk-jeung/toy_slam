@@ -9,7 +9,6 @@ namespace toy {
 namespace db {
 class ImagePyramid {
 public:
-  ;
   USING_SMART_PTR(ImagePyramid);
 
   ImagePyramid() = default;

@@ -1,8 +1,9 @@
-#include "Frame.h"
+#include "ToyLogger.h"
 #include "Camera.h"
 #include "Feature.h"
 #include "ImagePyramid.h"
-#include "ToyLogger.h"
+#include "MapPoint.h"
+#include "Frame.h"
 
 namespace toy {
 namespace db {
@@ -11,7 +12,7 @@ Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   : mId{globalId++}
   , mImagePyramids{std::move(set->mImagePyramid0), std::move(set->mImagePyramid1)}
   , mCameras{nullptr, nullptr}
-  , mFeatures{Feature::Uni(new Feature()), Feature::Uni(new Feature())}
+  , mFeatures{std::make_unique<Feature>(), std::make_unique<Feature>()}
   , mLbcs{Eigen::Vector6d(), Eigen::Vector6d()} {}
 
 Frame::Frame(Frame* src) {
@@ -40,8 +41,7 @@ Frame::~Frame() {
 }
 
 Frame::Ptr Frame::clonePtr() {
-  Frame::Ptr out(new Frame(this));
-  return out;
+  return std::make_shared<Frame>(this);
 }
 
 void Frame::setCameras(Camera* cam0, Camera* cam1) {
@@ -69,6 +69,11 @@ void Frame::setLbc(float* pfbc0, float* pfbc1) {
   Sophus::SO3d SObc1 = Sophus::SO3d(Qbc1);
   mLbcs[1].head(3)   = SObc1.log();
   mLbcs[1].tail(3)   = Tbc1;
+}
+
+void Frame::addMapPointFactor(std::shared_ptr<db::MapPoint> mp,
+                              ReprojectionFactor            factor) {
+  mMapPointFactorMap.insert({mp, factor});
 }
 
 }  //namespace db

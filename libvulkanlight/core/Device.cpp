@@ -165,7 +165,7 @@ void Device::checkVkMemoryStatus() {
   //VklLogE("Total device allocationCount: {} bytes.",
   //stats.total.statistics.allocationCount); VklLogE("Total device blockBytes     : {}
   //bytes.", stats.total.statistics.blockBytes);
-  VklLogW("Total device allocationBytes: {} bytes.",
+  VklLogE("Total device allocationBytes: {} bytes.",
           stats.total.statistics.allocationBytes);
   //VklLogW("----------------------------------------");
 }

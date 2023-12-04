@@ -35,8 +35,8 @@ protected:
   static cv::Mat createMask(const cv::Mat& origin, db::Feature* feature);
 
 protected:
-  int                    mFeatureId = -1;
-  std::string            mType      = "";
+  int                    mFeatureId;
+  std::string            mType;
   cv::Ptr<cv::Feature2D> mFeature2D;
 };
 }  //namespace toy

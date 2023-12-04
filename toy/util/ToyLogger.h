@@ -6,8 +6,6 @@
 #include <sophus/se3.hpp>
 #include "Logger.h"
 
-#define __TOY_FILENAME__ LogUtil::extractFileName(__FILE__)
-
 namespace toy {
 
 class ToyLogger {
@@ -27,10 +25,9 @@ public:
   static void logD(const char* fmt, Args... args) {
     logger->debug(fmt, args...);
   }
-
   template <typename... Args>
-  static void logE(const char* fmt, Args... args) {
-    logger->error("[{}:{}] {}", __TOY_FILENAME__, __LINE__, fmt::format(fmt, args...));
+  static void logE(const char* file, int line, const char* fmt, Args... args) {
+    logger->error("[{}:{}] {}", file, line, fmt::format(fmt, args...));
   }
 
   static std::string SE3String(const Sophus::SE3d& se3, int precision = 4) {
@@ -57,5 +54,6 @@ public:
 
 #define ToyLogI(fmt, ...) ToyLogger::logI(fmt, ##__VA_ARGS__);
 #define ToyLogW(fmt, ...) ToyLogger::logW(fmt, ##__VA_ARGS__);
-#define ToyLogE(fmt, ...) ToyLogger::logE(fmt, ##__VA_ARGS__);
 #define ToyLogD(fmt, ...) ToyLogger::logD(fmt, ##__VA_ARGS__);
+#define ToyLogE(fmt, ...)                                                                \
+  ToyLogger::logE(LogUtil::extractFileName(__FILE__), __LINE__, fmt, ##__VA_ARGS__);

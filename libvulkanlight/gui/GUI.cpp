@@ -280,7 +280,7 @@ void GUI::createVertexBuffer() {
   auto size = mRenderContext->getContextImageCount();
   mVBs.resize(size);
 
-  for (auto& VB : mVBs) { VB = Buffer::Uni(new Buffer()); }
+  for (auto& VB : mVBs) { VB = std::make_unique<Buffer>(); }
 
   mPrevVBSizes.resize(size, 0);
   mPrevIBSizes.resize(size, 0);
@@ -289,7 +289,7 @@ void GUI::createVertexBuffer() {
 void GUI::createIndexBuffers() {
   auto size = mRenderContext->getContextImageCount();
   mIBs.resize(size);
-  for (auto& IB : mIBs) { IB = Buffer::Uni(new Buffer()); }
+  for (auto& IB : mIBs) { IB = std::make_unique<Buffer>(); }
 }
 
 void GUI::createTextures() {

@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <Eigen/Dense>
 #include "macros.h"
+#include "Factor.h"
 
 namespace toy {
 namespace db {
@@ -14,17 +15,30 @@ public:
   DELETE_COPY_CONSTRUCTORS(MapPoint);
   DELETE_MOVE_CONSTRUCTORS(MapPoint);
 
-  MapPoint();
+  MapPoint() = delete;
+  MapPoint(int id);
+
+  void addFrameFactor(std::shared_ptr<db::Frame> frame, ReprojectionFactor factor);
 
 protected:
-
-protected:
-  int                                               mId;
-  std::unordered_map<int, std::weak_ptr<db::Frame>> mFrames;
 
 public:
-  static int globalId;
-  const int  Id() { return mId; }
+  enum class Status {
+    INITIALING,
+    TRACKING,
+    DELETING,
+  };
+
+protected:
+  using FrameFactorPair = std::pair<std::weak_ptr<db::Frame>, ReprojectionFactor>;
+
+  int                          mId;
+  Status                       mStatus;
+  std::vector<FrameFactorPair> mFrameFactors;
+
+public:
+  const int     Id() const { return mId; }
+  const Status& Status() const { return mStatus; }
 };
 
 }  //namespace db

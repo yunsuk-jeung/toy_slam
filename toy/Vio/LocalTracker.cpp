@@ -1,4 +1,6 @@
 #include "ToyLogger.h"
+#include "MapPoint.h"
+#include "Frame.h"
 #include "LocalMap.h"
 #include "LocalTracker.h"
 
@@ -40,8 +42,13 @@ void LocalTracker::process() {
 }
 
 bool LocalTracker::initialize(db::Frame::Ptr currFrame) {
-  
   mLocalMap->addFrame(currFrame);
+  auto& mapPointFactorMap = currFrame->getMapPointFactorMap();
+
+  for (auto& [mpWeak, factor] : mapPointFactorMap) {
+    auto mp = mpWeak.lock();
+    if (mp->Status() != db::MapPoint::Status::INITIALING) continue;
+  }
 
   return true;
 }

@@ -17,11 +17,11 @@ public:
     , mMemSize{_memSize} {
     mUBs.resize(mBufferCount);
     for (auto& UB : mUBs) {
-      UB = Buffer::Uni(new Buffer(mDevice,
-                                  mMemSize,
-                                  vk::BufferUsageFlagBits::eUniformBuffer,
-                                  vk::MemoryPropertyFlagBits::eHostVisible,
-                                  vk::MemoryPropertyFlagBits::eHostCoherent));
+      UB = std::make_unique<Buffer>(mDevice,
+                                    mMemSize,
+                                    vk::BufferUsageFlagBits::eUniformBuffer,
+                                    vk::MemoryPropertyFlagBits::eHostVisible,
+                                    vk::MemoryPropertyFlagBits::eHostCoherent);
     }
   }
   ~UniformBuffer() {}

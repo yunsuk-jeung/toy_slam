@@ -125,7 +125,6 @@ void App::onWindowResized(int w, int h, int orientation) {
     createFrameBuffer();
 
     mRenderContext->createCommandBuffer(vk::CommandBufferLevel::ePrimary);
-    //buildCommandBuffers();
     mDevice->vk().waitIdle();
   }
 
@@ -531,10 +530,11 @@ void App::createPipelines() {
 }
 
 void App::createGUI() {
-  mGUI = GUI::Uni(new GUI());
+  //mGUI = GUI::Uni(new GUI());
+  mGUI = std::make_unique<GUI>();
   mGUI->prepare(mDevice.get(), mRenderContext.get(), mVkDescPool, mVkRenderPass, "imgui");
 
-  mInputCallback   = InputCallback::Uni(new InputCallback());
+  mInputCallback   = std::make_unique<InputCallback>();
   auto keyCallback = [&](int key) {
     if (key == 526) { this->mEndApplication = true; }
   };
@@ -559,7 +559,8 @@ void App::createGraphicsCamera() {
 
   auto count   = mRenderContext->getContextImageCount();
   auto memSize = sizeof(CameraUniform);
-  mCameraUB    = UniformBuffer::Uni(new UniformBuffer(mDevice.get(), count, memSize));
+  mCameraUB    = std::make_unique<UniformBuffer>(mDevice.get(), count, memSize);
+  //mCameraUB    = UniformBuffer::Uni(new UniformBuffer(mDevice.get(), count, memSize));
 
   CameraUniform tmp;
   for (int i = 0; i < count; ++i) { mCameraUB->update(i, &tmp, 0); }

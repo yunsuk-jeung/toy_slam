@@ -3,6 +3,7 @@
 #include "Thread.h"
 
 namespace toy {
+class VioSolver;
 namespace db {
 class LocalMap;
 class Frame;
@@ -27,8 +28,9 @@ private:
 
 private:
   enum class Status { NONE = -1, INITIALIZING = 0, TRACKING = 1 };
-  Status        mStatus;
-  db::LocalMap* mLocalMap;
+  Status                        mStatus;
+  std::unique_ptr<db::LocalMap> mLocalMap;
+  std::unique_ptr<VioSolver>    mVioSolver;
 };
 
 }  //namespace toy

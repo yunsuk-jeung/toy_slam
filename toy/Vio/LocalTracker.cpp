@@ -5,6 +5,7 @@
 #include "LocalMap.h"
 #include "LocalTracker.h"
 #include "BasicSolver.h"
+#include "VioSolver.h"
 
 namespace toy {
 LocalTracker::LocalTracker()
@@ -12,13 +13,14 @@ LocalTracker::LocalTracker()
   , mLocalMap{nullptr} {}
 
 LocalTracker::~LocalTracker() {
-  delete mLocalMap;
-  mLocalMap = nullptr;
+  mLocalMap.release();
+  mVioSolver.release();
 }
 
 void LocalTracker::prepare() {
-  mLocalMap = new db::LocalMap();
-  mStatus   = Status::INITIALIZING;
+  mLocalMap  = std::make_unique<db::LocalMap>();
+  mVioSolver = VioSolverFactory::createVioSolver();
+  mStatus    = Status::INITIALIZING;
 }
 
 void LocalTracker::process() {
@@ -42,6 +44,7 @@ void LocalTracker::process() {
   case Status::TRACKING: {
     int createMPCount = initializeMapPoints(currFrame);
     if (createMPCount > 0) ToyLogD("new mps : {}", createMPCount);
+
     break;
   }
   }
@@ -60,6 +63,7 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
   for (auto& [mpWeak, factor] : mapPointFactorMap) {
     auto mpPtr = mpWeak.lock();
     if (mpPtr->status() != db::MapPoint::Status::INITIALING) continue;
+
     switch (factor.getType()) {
     case db::ReprojectionFactor::Type::MONO: {
       break;

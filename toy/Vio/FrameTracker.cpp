@@ -29,7 +29,6 @@ void FrameTracker::prepare() {
   mFeatureTracker = new FeatureTracker(Config::Vio::pointTracker,
                                        Config::Vio::lineTracker);
 
-  //mVioSolver = VioSolverFactory::createVioSolver();
   mStatus = Status::INITIALIZING;
 }
 

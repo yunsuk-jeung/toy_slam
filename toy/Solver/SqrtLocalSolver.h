@@ -7,7 +7,6 @@ public:
   virtual ~SqrtLocalSolver() {}
 
   virtual bool process() {
-    std::cout << "##########" << std::endl;
     return true;
   }
 

@@ -1,9 +1,11 @@
 #pragma once
 #include <memory>
+#include "macros.h"
 
 namespace toy {
 class VioSolver {
 public:
+  USING_SMART_PTR(VioSolver);
   VioSolver() {}
   virtual ~VioSolver() {}
 
@@ -12,7 +14,7 @@ public:
 
 class VioSolverFactory {
 public:
-  static VioSolver* createVioSolver();
+  static VioSolver::Uni createVioSolver();
 };
 
 }  //namespace toy

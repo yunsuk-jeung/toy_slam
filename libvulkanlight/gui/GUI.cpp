@@ -79,7 +79,8 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
   //idx            = 0;
   int fbWidth  = (int)(dd->DisplaySize.x * dd->FramebufferScale.x);
   int fbHeight = (int)(dd->DisplaySize.y * dd->FramebufferScale.y);
-  if (fbWidth <= 0 || fbHeight <= 0) return;
+  if (fbWidth <= 0 || fbHeight <= 0)
+    return;
 
   updateBuffer(idx);
 
@@ -127,11 +128,20 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
                       (pcmd->ClipRect.w - clipOff.y) * clipScale.y);
 
       //Clamp to viewport as vkCmdSetScissor() won't accept values that are off bounds
-      if (clip_min.x < 0.0f) { clip_min.x = 0.0f; }
-      if (clip_min.y < 0.0f) { clip_min.y = 0.0f; }
-      if (clip_max.x > fbWidth) { clip_max.x = (float)fbWidth; }
-      if (clip_max.y > fbHeight) { clip_max.y = (float)fbHeight; }
-      if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y) continue;
+      if (clip_min.x < 0.0f) {
+        clip_min.x = 0.0f;
+      }
+      if (clip_min.y < 0.0f) {
+        clip_min.y = 0.0f;
+      }
+      if (clip_max.x > fbWidth) {
+        clip_max.x = (float)fbWidth;
+      }
+      if (clip_max.y > fbHeight) {
+        clip_max.y = (float)fbHeight;
+      }
+      if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y)
+        continue;
 
       //Apply scissor/clipping rectangle
       VkRect2D scissor;
@@ -176,7 +186,8 @@ void GUI::updateBuffer(uint32_t idx) {
   ImDrawData* dd        = ImGui::GetDrawData();
   int         fb_width  = (int)(dd->DisplaySize.x * dd->FramebufferScale.x);
   int         fb_height = (int)(dd->DisplaySize.y * dd->FramebufferScale.y);
-  if (fb_width <= 0 || fb_height <= 0) return;
+  if (fb_width <= 0 || fb_height <= 0)
+    return;
 
   size_t VBSize     = dd->TotalVtxCount * sizeof(ImDrawVert);
   size_t IBSize     = dd->TotalIdxCount * sizeof(ImDrawIdx);
@@ -239,12 +250,15 @@ void GUI::handleInputCallbacks() {
     };  //Hide Native<>ImGuiKey duplicates when both exists in the array
 
     for (; key < ImGuiKey_COUNT; key = (ImGuiKey)(key + 1)) {
-      if (funcs::IsLegacyNativeDupe(key)) continue;
+      if (funcs::IsLegacyNativeDupe(key))
+        continue;
 
       if (ImGui::IsKeyDown(key)) {
         //VklLogI("key  is down");
       }
-      if (ImGui::IsKeyReleased(key)) { ImVec2 pos = ImGui::GetCursorScreenPos(); }
+      if (ImGui::IsKeyReleased(key)) {
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+      }
 
       if (ImGui::IsKeyPressed(key)) {
         for (auto& cb : mInputCallbacks) { (*cb).onKeyPressed(key); }

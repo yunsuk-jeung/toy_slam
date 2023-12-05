@@ -61,7 +61,9 @@ bool VkSettings::addLayer(const char*                             requiredLayerN
 }
 bool VkSettings::isAvailableDeviceExtension(const char* requiredExtName) {
   for (auto& extIt : availableDeviceExtensions) {
-    if (strcmp(extIt.extensionName, requiredExtName) == 0) { return true; }
+    if (strcmp(extIt.extensionName, requiredExtName) == 0) {
+      return true;
+    }
   }
   return false;
 }
@@ -84,7 +86,9 @@ bool VkSettings::addDeviceExtension(
 
 bool VkSettings::isInInstanceExtension(const char* queryName) {
   for (auto& extIt : enabledInstanceExtensions) {
-    if (strcmp(extIt, queryName) == 0) { return true; }
+    if (strcmp(extIt, queryName) == 0) {
+      return true;
+    }
   }
   return false;
 }
@@ -97,7 +101,9 @@ vk::Format VkSettings::getSuitableDepthFormat(vk::PhysicalDevice device) {
 
 bool VkSettings::isInDeviceExtension(const char* queryName) {
   for (auto& extIt : enabledDeviceExtensions) {
-    if (strcmp(extIt, queryName) == 0) { return true; }
+    if (strcmp(extIt, queryName) == 0) {
+      return true;
+    }
   }
   return false;
 }

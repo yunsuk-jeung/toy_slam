@@ -48,7 +48,8 @@ protected:
   virtual void loadAsync() = 0;
   virtual void stop() {
     mLoading = false;
-    if (mLoadThread.joinable()) mLoadThread.join();
+    if (mLoadThread.joinable())
+      mLoadThread.join();
   }
 
 protected:

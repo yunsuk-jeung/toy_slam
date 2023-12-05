@@ -34,12 +34,15 @@ void FrameTracker::prepare() {
 
 void FrameTracker::process() {
   db::Frame::Ptr currFrame = getLatestFrame();
-  if (!currFrame) return;
+  if (!currFrame)
+    return;
 
   bool OK{false};
   OK = mFeatureTracker->process(mPrevFrame.get(), currFrame.get());
 
-  if (!OK) { ToyLogD("Do something like reject frame .. ") };
+  if (!OK) {
+    ToyLogD("Do something like reject frame .. ")
+  };
 
   switch (mStatus) {
   case Status::NONE: {
@@ -50,7 +53,9 @@ void FrameTracker::process() {
     break;
   }
   case Status::TRACKING: {
-    if (Config::Vio::frameTrackerSolvePose) { trackPose(); }
+    if (Config::Vio::frameTrackerSolvePose) {
+      trackPose();
+    }
     //db::MemoryPointerPool::release(mPrevFrame);
     break;
   }
@@ -64,7 +69,8 @@ void FrameTracker::process() {
 
 db::Frame::Ptr FrameTracker::getLatestFrame() {
   db::ImagePyramidSet::Ptr set = getLatestInput();
-  if (!set) return nullptr;
+  if (!set)
+    return nullptr;
 
   Camera* cam0 = CameraFactory::createCamera(&Config::Vio::camInfo0);
   Camera* cam1 = CameraFactory::createCamera(&Config::Vio::camInfo1);

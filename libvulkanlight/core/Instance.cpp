@@ -39,14 +39,18 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
                                                      const char* layer_prefix,
                                                      const char* message,
                                                      void* /*user_data*/) {
-  if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) { VklLogE("{}: {}", layer_prefix, message); }
+  if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
+    VklLogE("{}: {}", layer_prefix, message);
+  }
   else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
     VklLogW("{}: {}", layer_prefix, message);
   }
   else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
     VklLogW("{}: {}", layer_prefix, message);
   }
-  else { VklLogI("{}: {}", layer_prefix, message); }
+  else {
+    VklLogI("{}: {}", layer_prefix, message);
+  }
   return VK_FALSE;
 }
 #endif

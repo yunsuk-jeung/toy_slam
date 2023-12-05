@@ -71,7 +71,8 @@ void VkError::vkAssert(VkResult    code,
             file,
             line);
 
-    if (abort) exit(code);
+    if (abort)
+      exit(code);
   }
 }
 void VkError::vkAssert2(vk::Result  code_,
@@ -79,7 +80,6 @@ void VkError::vkAssert2(vk::Result  code_,
                         const char* file,
                         int         line,
                         bool        abort) {
-
   auto code = static_cast<VkResult>(code_);
   vkAssert(code, message, file, line, abort);
 }

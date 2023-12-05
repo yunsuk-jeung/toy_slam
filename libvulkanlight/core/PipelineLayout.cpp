@@ -26,12 +26,20 @@ inline vk::DescriptorType find_descriptor_type(ShaderResourceType resource_type,
     return vk::DescriptorType::eSampler;
     break;
   case ShaderResourceType::BufferUniform:
-    if (dynamic) { return vk::DescriptorType::eUniformBufferDynamic; }
-    else { return vk::DescriptorType::eUniformBuffer; }
+    if (dynamic) {
+      return vk::DescriptorType::eUniformBufferDynamic;
+    }
+    else {
+      return vk::DescriptorType::eUniformBuffer;
+    }
     break;
   case ShaderResourceType::BufferStorage:
-    if (dynamic) { return vk::DescriptorType::eStorageBufferDynamic; }
-    else { return vk::DescriptorType::eStorageBuffer; }
+    if (dynamic) {
+      return vk::DescriptorType::eStorageBufferDynamic;
+    }
+    else {
+      return vk::DescriptorType::eStorageBuffer;
+    }
     break;
   default:
     throw std::runtime_error("No conversion possible for the shader resource type.");
@@ -104,7 +112,8 @@ PipelineLayout::PipelineLayout(Device* device, std::vector<ShaderModule*>& shade
   for (auto& shader : mShaderModules) {
     auto& shaderResources = shader->getShaderResources();
     for (auto& resource : shaderResources) {
-      if (resource.type != ShaderResourceType::PushConstant) continue;
+      if (resource.type != ShaderResourceType::PushConstant)
+        continue;
       pushConstRanges.push_back({resource.stages, resource.offset, resource.size});
     }
   }

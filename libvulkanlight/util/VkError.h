@@ -7,12 +7,11 @@
 #define VK_CHECK_ERROR(ans, message)                                                     \
   { VkError::vkAssert((ans), message, __FILE__, __LINE__); };
 
-#define VK_CHECK_ERROR2(ans, message)                                                     \
+#define VK_CHECK_ERROR2(ans, message)                                                    \
   { VkError::vkAssert2((ans), message, __FILE__, __LINE__); };
 
 class VkError {
 public:
-
   static void vkAssert(VkResult    result,
                        const char* message,
                        const char* file,

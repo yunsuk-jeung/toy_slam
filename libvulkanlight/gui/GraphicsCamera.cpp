@@ -53,7 +53,8 @@ void GraphicsCamera::onWindowResized(int w, int h, int newOrientation) {
   inverseAspect = (float)h / (float)w;
   orientation   = newOrientation;
 
-  if (projMatMethod == FOV) setFov(hfov);
+  if (projMatMethod == FOV)
+    setFov(hfov);
 }
 
 void GraphicsCamera::setFov(float _hfov) {
@@ -244,13 +245,15 @@ void GraphicsCamera::onMouseDrag(int btn, int px, int py) {
 void GraphicsCamera::onMouseWheel(int scroll) {
   if (scroll > 0)  //zoom in
   {
-    if (distance < 0.05f) return;
+    if (distance < 0.05f)
+      return;
 
     distance *= 0.9f;
   }
   else  //zoom out.
   {
-    if ((f * 0.4) < distance) return;
+    if ((f * 0.4) < distance)
+      return;
     distance *= 1.1f;
   }
 

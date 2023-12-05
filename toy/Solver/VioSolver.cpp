@@ -7,7 +7,7 @@
 namespace toy {
 VioSolver::Uni VioSolverFactory::createVioSolver() {
   if (Config::Vio::solverType == "SqrtLocalSolver") {
-    return std::make_unique<SqrtLocalSolver>(); 
+    return std::make_unique<SqrtLocalSolver>();
   }
 
   ToyLogE("Check your json for vio solver");

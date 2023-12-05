@@ -25,7 +25,9 @@ void SLAM::setSensorInfo(CameraInfo* cam0, CameraInfo* cam1, ImuInfo* imu) {
   Config::Vio::camInfo0 = *cam0;
   Config::Vio::camInfo1 = *cam1;
 
-  if (imu) { Config::Vio::imuInfo = *imu; }
+  if (imu) {
+    Config::Vio::imuInfo = *imu;
+  }
 }
 
 void SLAM::prepare(const std::string& configFile) {
@@ -42,7 +44,8 @@ void SLAM::setNewImage(ImageData& imageData0, ImageData& imageData1) {
                                                                        imagePyramid1);
   mVioCore->insert(set);
 
-  if (Config::sync) mVioCore->processSync();
+  if (Config::sync)
+    mVioCore->processSync();
 }
 
 void SLAM::setAcc(const uint64_t& ns, float* acc) {}

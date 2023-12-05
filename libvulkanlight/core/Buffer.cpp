@@ -56,7 +56,9 @@ vkl::Buffer::Buffer(Device*                      _device,
 
   memory = static_cast<vk::DeviceMemory>(allocationInfo.deviceMemory);
 
-  if (persistent) { mapped_data = static_cast<uint8_t*>(allocationInfo.pMappedData); }
+  if (persistent) {
+    mapped_data = static_cast<uint8_t*>(allocationInfo.pMappedData);
+  }
 
   //std::cout << "create Buffer : " << ++COUNTER << std::endl;
 }

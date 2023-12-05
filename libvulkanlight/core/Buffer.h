@@ -12,7 +12,7 @@ public:
   USING_SMART_PTR(Buffer);
   DELETE_COPY_CONSTRUCTORS(Buffer);
 
-  Buffer()              = default;
+  Buffer() = default;
   ~Buffer();
 
   explicit Buffer(Device*                      device,
@@ -24,7 +24,7 @@ public:
                   const std::vector<uint32_t>& queueIdxs = {});
 
   explicit Buffer(Buffer&& other) noexcept;
-  Buffer& operator=(Buffer&&)      = delete;
+  Buffer& operator=(Buffer&&) = delete;
 
   void     swap(Buffer& buffer);
   void     clear();

@@ -15,9 +15,9 @@
 namespace vkl {
 class VkSettings {
 public:
-  static bool
-  addInstanceExtension(const char*                                 requiredExtName,
-                       const std::vector<vk::ExtensionProperties>& available_exts);
+  static bool addInstanceExtension(
+    const char*                                 requiredExtName,
+    const std::vector<vk::ExtensionProperties>& available_exts);
 
   static bool addLayer(const char*                             requiredLayerName,
                        const std::vector<vk::LayerProperties>& availableLayers);
@@ -25,9 +25,9 @@ public:
   static bool isAvailableDeviceExtension(const char* requiredExtName);
   static bool addDeviceExtension(const char* requiredExtName);
 
-  static bool
-  addDeviceExtension(const char*                                 requiredExtName,
-                     const std::vector<vk::ExtensionProperties>& available_exts);
+  static bool addDeviceExtension(
+    const char*                                 requiredExtName,
+    const std::vector<vk::ExtensionProperties>& available_exts);
 
   static bool       isInInstanceExtension(const char* queryName);
   static vk::Format getSuitableDepthFormat(vk::PhysicalDevice device);

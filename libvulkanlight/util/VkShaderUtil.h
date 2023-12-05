@@ -64,7 +64,8 @@ protected:
     //Discard popped include directories, and
     //initialize when at parse-time first level.
     directoryStack.resize(depth + externalLocalDirectoryCount);
-    if (depth == 1) directoryStack.back() = getDirectory(includerName);
+    if (depth == 1)
+      directoryStack.back() = getDirectory(includerName);
 
     //Find a directory that works, using a reverse search of the include stack.
     for (auto it = directoryStack.rbegin(); it != directoryStack.rend(); ++it) {

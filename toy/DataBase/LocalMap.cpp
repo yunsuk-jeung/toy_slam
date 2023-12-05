@@ -59,7 +59,8 @@ void LocalMap::addFrame(std::shared_ptr<Frame> frame) {
 }
 
 Frame::Ptr LocalMap::getLatestFrame() {
-  if (mFrames.empty()) return nullptr;
+  if (mFrames.empty())
+    return nullptr;
   return mFrames.rbegin()->second;
 }
 

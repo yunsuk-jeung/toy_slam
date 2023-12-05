@@ -192,7 +192,8 @@ void EurocReader::loadAsync() {
 
   auto loadFunc = [&]() {
     while (mLoading) {
-      if (mImageInfos0.empty() || mImageInfos1.empty()) break;
+      if (mImageInfos0.empty() || mImageInfos1.empty())
+        break;
 
       auto&    info0  = mImageInfos0.front();
       uint64_t ns0    = info0.first;

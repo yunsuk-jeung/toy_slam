@@ -4,7 +4,7 @@
 
 namespace vkl {
 std::shared_ptr<spdlog::logger> VklLogger::logger;
-void VklLogger::init() {
+void                            VklLogger::init() {
   auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("log/vkllog.txt",
                                                                        true);
   auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();

@@ -75,7 +75,9 @@ App::~App() {
   }
   mVkFramebuffers.clear();
 
-  if (mVkRenderPass) { mDevice->vk().destroyRenderPass(mVkRenderPass); }
+  if (mVkRenderPass) {
+    mDevice->vk().destroyRenderPass(mVkRenderPass);
+  }
 
   mRenderContext.reset();
 
@@ -83,7 +85,9 @@ App::~App() {
 
   mDevice.reset();
 
-  if (mVkSurface) { mInstance->getVkInstance().destroySurfaceKHR(mVkSurface); }
+  if (mVkSurface) {
+    mInstance->getVkInstance().destroySurfaceKHR(mVkSurface);
+  }
 
   mInstance.reset();
 }
@@ -351,7 +355,8 @@ void App::createRenderContext() {
                                                             mWindow.get(),
                                                             present_mode);
 
-  if (!mRenderContext) throw std::runtime_error("cannot create render context");
+  if (!mRenderContext)
+    throw std::runtime_error("cannot create render context");
 }
 
 void App::createCommandPool() {
@@ -536,7 +541,9 @@ void App::createGUI() {
 
   mInputCallback   = std::make_unique<InputCallback>();
   auto keyCallback = [&](int key) {
-    if (key == 526) { this->mEndApplication = true; }
+    if (key == 526) {
+      this->mEndApplication = true;
+    }
   };
   mInputCallback->registerKeyPressed(std::move(keyCallback));
 
@@ -641,7 +648,8 @@ void App::updateUniform(int idx) {}
 
 void App::prepareFrame() {
   auto vkSwapchain = mRenderContext->getVkSwapchain();
-  if (!vkSwapchain) return;
+  if (!vkSwapchain)
+    return;
 
   mCurrBufferingSemaphore = mRenderContext->getCurrBufferingSemaphore();
 

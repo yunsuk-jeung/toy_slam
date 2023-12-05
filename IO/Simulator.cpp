@@ -68,7 +68,8 @@ void Simulator::start() {
 
 void Simulator::stop() {
   mWorking = false;
-  if (mThread.joinable()) mThread.join();
+  if (mThread.joinable())
+    mThread.join();
 }
 
 void Simulator::spinOnce() {

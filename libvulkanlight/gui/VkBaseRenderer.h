@@ -16,8 +16,9 @@ public:
   virtual ~VkBaseRenderer();
   virtual void onWindowResized(int w, int h);
 
-  virtual void
-  initialize(Device* device, RenderContext* context, vk::DescriptorPool descPool);
+  virtual void initialize(Device*            device,
+                          RenderContext*     context,
+                          vk::DescriptorPool descPool);
   virtual void prepare(vk::RenderPass renderPass, uint32_t subpassId = 0);
   virtual void buildCommandBuffer(vk::CommandBuffer cmdBuffer, uint32_t idx);
   virtual void updateUniforms(uint32_t idx = 0);

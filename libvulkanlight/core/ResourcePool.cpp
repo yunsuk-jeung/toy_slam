@@ -64,7 +64,8 @@ ShaderModule* ResourcePool::loadShader(const std::string&      name,
   }
 
   ShaderModule* out = mShaderPools[key].get();
-  if (!createNew) return out;
+  if (!createNew)
+    return out;
 
   out->setName(hash);
 
@@ -73,7 +74,8 @@ ShaderModule* ResourcePool::loadShader(const std::string&      name,
   case ShaderSourceType::STRING_FILE: {
     for (const std::string& shaderFolderPath : ResourcePool::getShaderPaths()) {
       std::string shaderFile = shaderFolderPath + "/" + shaderSrc;
-      if (!fs::fileExists(shaderFile)) continue;
+      if (!fs::fileExists(shaderFile))
+        continue;
       out->vk() = VkShaderUtil::loadShader(device->vk(), shaderFile, spirv);
     }
     break;

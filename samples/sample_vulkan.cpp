@@ -33,7 +33,9 @@ public:
   }
 
   bool prepare() override {
-    if (!App::prepare()) { return false; }
+    if (!App::prepare()) {
+      return false;
+    }
 
     std::string basicPipeline = "triangle_basic";
     mBasicRenderer.prepare(mDevice.get(),
@@ -91,7 +93,9 @@ protected:
   void onRender() override {
     mWindow->pollEvents();
 
-    if (mGUI) { mGUI->onRender(); }
+    if (mGUI) {
+      mGUI->onRender();
+    }
 
     updateUniform(mCurrBufferingIdx);
 
@@ -104,7 +108,8 @@ protected:
     auto cmd = beginCommandBuffer();
     beginRenderPass(cmd);
 
-    if (mGUI) mGUI->buildCommandBuffer(cmd, mCurrBufferingIdx);
+    if (mGUI)
+      mGUI->buildCommandBuffer(cmd, mCurrBufferingIdx);
 
     cmd.endRenderPass();
     cmd.end();

@@ -46,7 +46,9 @@ struct CameraUniform {
 struct SampleMaterial {
   float r{1.0f}, g{1.0f}, b{1.0f};
   SampleMaterial(float _r = 1.0f, float _g = 1.0f, float _b = 1.0f)
-      : r(_r), g(_g), b(_b) {}
+    : r(_r)
+    , g(_g)
+    , b(_b) {}
 };
 #else
 struct SampleMaterial {

@@ -29,7 +29,9 @@ void ShaderVariant::add_define(const std::string& def) {
 
   //The "=" needs to turn into a space
   size_t pos_equal = tmp_def.find_first_of("=");
-  if (pos_equal != std::string::npos) { tmp_def[pos_equal] = ' '; }
+  if (pos_equal != std::string::npos) {
+    tmp_def[pos_equal] = ' ';
+  }
 
   preamble.append("#define " + tmp_def + "\n");
 
@@ -49,7 +51,9 @@ void ShaderVariant::add_runtime_array_size(const std::string& runtime_array_name
   if (runtime_array_sizes.find(runtime_array_name) == runtime_array_sizes.end()) {
     runtime_array_sizes.insert({runtime_array_name, size});
   }
-  else { runtime_array_sizes[runtime_array_name] = size; }
+  else {
+    runtime_array_sizes[runtime_array_name] = size;
+  }
 }
 
 void ShaderVariant::set_runtime_array_sizes(
@@ -231,20 +235,48 @@ bool GLSLCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
 }
 namespace {
 vk::ShaderStageFlagBits find_shader_stage(const std::string& ext) {
-  if (ext == "vert") { return vk::ShaderStageFlagBits::eVertex; }
-  else if (ext == "frag") { return vk::ShaderStageFlagBits::eFragment; }
-  else if (ext == "comp") { return vk::ShaderStageFlagBits::eCompute; }
-  else if (ext == "geom") { return vk::ShaderStageFlagBits::eGeometry; }
-  else if (ext == "tesc") { return vk::ShaderStageFlagBits::eTessellationControl; }
-  else if (ext == "tese") { return vk::ShaderStageFlagBits::eTessellationEvaluation; }
-  else if (ext == "rgen") { return vk::ShaderStageFlagBits::eRaygenKHR; }
-  else if (ext == "rahit") { return vk::ShaderStageFlagBits::eAnyHitKHR; }
-  else if (ext == "rchit") { return vk::ShaderStageFlagBits::eClosestHitKHR; }
-  else if (ext == "rmiss") { return vk::ShaderStageFlagBits::eMissKHR; }
-  else if (ext == "rint") { return vk::ShaderStageFlagBits::eIntersectionKHR; }
-  else if (ext == "rcall") { return vk::ShaderStageFlagBits::eCallableKHR; }
-  else if (ext == "mesh") { return vk::ShaderStageFlagBits::eMeshEXT; }
-  else if (ext == "task") { return vk::ShaderStageFlagBits::eTaskEXT; }
+  if (ext == "vert") {
+    return vk::ShaderStageFlagBits::eVertex;
+  }
+  else if (ext == "frag") {
+    return vk::ShaderStageFlagBits::eFragment;
+  }
+  else if (ext == "comp") {
+    return vk::ShaderStageFlagBits::eCompute;
+  }
+  else if (ext == "geom") {
+    return vk::ShaderStageFlagBits::eGeometry;
+  }
+  else if (ext == "tesc") {
+    return vk::ShaderStageFlagBits::eTessellationControl;
+  }
+  else if (ext == "tese") {
+    return vk::ShaderStageFlagBits::eTessellationEvaluation;
+  }
+  else if (ext == "rgen") {
+    return vk::ShaderStageFlagBits::eRaygenKHR;
+  }
+  else if (ext == "rahit") {
+    return vk::ShaderStageFlagBits::eAnyHitKHR;
+  }
+  else if (ext == "rchit") {
+    return vk::ShaderStageFlagBits::eClosestHitKHR;
+  }
+  else if (ext == "rmiss") {
+    return vk::ShaderStageFlagBits::eMissKHR;
+  }
+  else if (ext == "rint") {
+    return vk::ShaderStageFlagBits::eIntersectionKHR;
+  }
+  else if (ext == "rcall") {
+    return vk::ShaderStageFlagBits::eCallableKHR;
+  }
+  else if (ext == "mesh") {
+    return vk::ShaderStageFlagBits::eMeshEXT;
+  }
+  else if (ext == "task") {
+    return vk::ShaderStageFlagBits::eTaskEXT;
+  }
 
   throw std::runtime_error("File extension `" + ext
                            + "` does not have a vulkan shader stage.");
@@ -335,14 +367,17 @@ std::vector<std::string> VkShaderUtil::replaceInclude(const std::string& src) {
 
       for (const std::string& shaderFolderPath : ResourcePool::getShaderPaths()) {
         headerFile = shaderFolderPath + "/" + headerFile.substr(0, last_quote);
-        if (fs::fileExists(headerFile)) break;
+        if (fs::fileExists(headerFile))
+          break;
       }
 
       std::string headerSrc    = readFileAsString(headerFile);
       auto        intermediate = replaceInclude(headerSrc);
       for (auto& interLine : intermediate) { outs.push_back(interLine); }
     }
-    else { outs.push_back(line); }
+    else {
+      outs.push_back(line);
+    }
   }
 
   return outs;
@@ -352,7 +387,9 @@ std::string VkShaderUtil::readFileAsString(const std::string& fileName) {
   std::ifstream file;
   file.open(fileName, std::ios::in | std::ios::binary);
 
-  if (!file.is_open()) { throw std::runtime_error("Failed to open file: " + fileName); }
+  if (!file.is_open()) {
+    throw std::runtime_error("Failed to open file: " + fileName);
+  }
 
   return std::string((std::istreambuf_iterator<char>(file)),
                      (std::istreambuf_iterator<char>()));

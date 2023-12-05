@@ -42,13 +42,17 @@ VkSurfaceKHR GlfwWindow::createSurface(Instance* instance) {
 };
 
 VkSurfaceKHR GlfwWindow::createSurface(VkInstance instance, VkPhysicalDevice device) {
-  if (instance == VK_NULL_HANDLE || !window) { return VK_NULL_HANDLE; }
+  if (instance == VK_NULL_HANDLE || !window) {
+    return VK_NULL_HANDLE;
+  }
 
   VkSurfaceKHR surface;
 
   VkResult errCode = glfwCreateWindowSurface(instance, window, NULL, &surface);
 
-  if (errCode != VK_SUCCESS) { return nullptr; }
+  if (errCode != VK_SUCCESS) {
+    return nullptr;
+  }
 
   return surface;
 }
@@ -66,7 +70,8 @@ void GlfwWindow::pollEvents() {
 void GlfwWindow::createWindow() {
   glfwSetErrorCallback(glfw_error_callback);
 
-  if (!glfwInit()) return;
+  if (!glfwInit())
+    return;
 
   //Create window with Vulkan context
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

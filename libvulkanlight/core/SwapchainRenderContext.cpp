@@ -15,7 +15,9 @@ vk::Extent2D chooseExtent(vk::Extent2D        request_extent,
                           const vk::Extent2D& min_image_extent,
                           const vk::Extent2D& max_image_extent,
                           const vk::Extent2D& current_extent) {
-  if (current_extent.width == 0xFFFFFFFF) { return request_extent; }
+  if (current_extent.width == 0xFFFFFFFF) {
+    return request_extent;
+  }
 
   if (request_extent.width < 1 || request_extent.height < 1) {
     VklLogW("(HPPSwapchain) Image extent ({}, {}) not supported. Selecting ({}, "
@@ -128,7 +130,9 @@ vk::SurfaceTransformFlagBitsKHR chooseTransform(
   vk::SurfaceTransformFlagBitsKHR request_transform,
   vk::SurfaceTransformFlagsKHR    supported_transform,
   vk::SurfaceTransformFlagBitsKHR current_transform) {
-  if (request_transform & supported_transform) { return request_transform; }
+  if (request_transform & supported_transform) {
+    return request_transform;
+  }
 
   VklLogW("(HPPSwapchain) Surface transform '{}' not supported. Selecting '{}'.",
           vk::to_string(request_transform),
@@ -218,7 +222,8 @@ std::set<vk::ImageUsageFlagBits> chooseImageUsage(
     for (vk::ImageUsageFlagBits image_usage : validated_image_usage_flags) {
       usage_list += to_string(image_usage) + " ";
     }
-    if (log) VklLogI("(HPPSwapchain) Image usage flags: {}", usage_list);
+    if (log)
+      VklLogI("(HPPSwapchain) Image usage flags: {}", usage_list);
   }
 
   return validated_image_usage_flags;
@@ -241,7 +246,9 @@ SwapchainRenderContext::SwapchainRenderContext(Device*            _device,
     if (VkSettings::surfaceCapabilities.currentExtent.width == 0xFFFFFFFF) {
       createSwapChain(ctProps.extent);
     }
-    else { createSwapChain(); }
+    else {
+      createSwapChain();
+    }
   }
 }
 
@@ -278,7 +285,9 @@ void SwapchainRenderContext::prepareColor() {
 
   auto imageSize = vkImages.size();
 
-  if (imageSize != ctProps.imageCount) { ctProps.imageCount = imageSize; }
+  if (imageSize != ctProps.imageCount) {
+    ctProps.imageCount = imageSize;
+  }
   colorImages.reserve(imageSize);
 
   vk::ImageViewCreateInfo imageViewCI{};
@@ -453,7 +462,8 @@ void SwapchainRenderContext::setSwapChainProperties(
   auto& availableSurfaceFormats = VkSettings::availableSurfaceFormats;
 
   bool log = false;
-  if (!_oldSC) log = true;
+  if (!_oldSC)
+    log = true;
 
   if (log) {
     VklLogI("Surface supports the following surface formats:");

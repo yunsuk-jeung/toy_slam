@@ -20,14 +20,15 @@ protected:
   IPtr getLatestInput() {
     IPtr out;
     while (mInQueue.try_pop(out)) {
-      if (!mInQueue.empty()) continue;
+      if (!mInQueue.empty())
+        continue;
       return out;
     }
     return nullptr;
   }
 
 protected:
-  tbb::concurrent_queue<IPtr>   mInQueue;
+  tbb::concurrent_queue<IPtr>  mInQueue;
   tbb::concurrent_queue<OPtr>* mOutQueue;
 };
 

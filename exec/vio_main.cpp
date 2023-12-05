@@ -63,7 +63,8 @@ int main() {
   while (true) {
     ((io::Simulator*)sensor)->spinOnce();
     int key = cv::waitKey();
-    if (key == 27) break;
+    if (key == 27)
+      break;
   }
 
   sensor->stop();

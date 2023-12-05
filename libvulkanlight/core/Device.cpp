@@ -47,9 +47,13 @@ void Device::initLogicalDevice() {
         queuePriorities[queueFamIdx].resize(queueFamilyProp.queueCount, 0.5f);
         queuePriorities[queueFamIdx][0] = 1.0f;
       }
-      else { queuePriorities[queueFamIdx].resize(queueFamilyProp.queueCount, 0.5f); }
+      else {
+        queuePriorities[queueFamIdx].resize(queueFamilyProp.queueCount, 0.5f);
+      }
     }
-    else { queuePriorities[queueFamIdx].resize(queueFamilyProp.queueCount, 0.5f); }
+    else {
+      queuePriorities[queueFamIdx].resize(queueFamilyProp.queueCount, 0.5f);
+    }
 
     vk::DeviceQueueCreateInfo& queueCreateInfo = queueCreateInfos[queueFamIdx];
 
@@ -146,9 +150,11 @@ vk::Format Device::getSuitableDepthFormat() {
 uint32_t Device::findMemoryTypeIndex(const vk::MemoryRequirements& requirements,
                                      vk::MemoryPropertyFlags       properties) {
   for (auto i = 0; i != memoryProps.memoryTypeCount; ++i) {
-    if (!(requirements.memoryTypeBits & (1 << i))) continue;
+    if (!(requirements.memoryTypeBits & (1 << i)))
+      continue;
 
-    if ((memoryProps.memoryTypes[i].propertyFlags & properties) != properties) continue;
+    if ((memoryProps.memoryTypes[i].propertyFlags & properties) != properties)
+      continue;
 
     return i;
   }
@@ -251,7 +257,9 @@ uint32_t Device::getQueueFamilyIndex(vk::QueueFlagBits queueFlags) {
   //For other queue types or if no separate compute queue is present, return the
   //first one to support the requested flags
   for (uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProps.size()); i++) {
-    if ((queueFamilyProps[i].queueFlags & queueFlags) == queueFlags) { return i; }
+    if ((queueFamilyProps[i].queueFlags & queueFlags) == queueFlags) {
+      return i;
+    }
   }
 
   VklLogW("Cannot find queue Family for {}", static_cast<int>(queueFlags));
@@ -273,7 +281,9 @@ Queue& Device::getQueueByFlags(vk::QueueFlags requiredFlags, uint32_t queueidx) 
 
         return queues[queueFamIdx][queueidx];
       }
-      else { VklLogD("Using Queue : {} - {}", queueFamIdx, queue_count - 1); }
+      else {
+        VklLogD("Using Queue : {} - {}", queueFamIdx, queue_count - 1);
+      }
       return queues[queueFamIdx][queue_count - 1];
     }
   }

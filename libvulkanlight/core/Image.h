@@ -10,7 +10,7 @@ class Device;
 class Image {
 public:
   USING_SMART_PTR(Image);
-  Image()             = default;
+  Image() = default;
 
   //use to create image and allocate memroy at the same time
   //explicit Image(Device* _device, vk::ImageCreateInfo imageCI, VmaMemoryUsage memUsage);
@@ -28,7 +28,7 @@ public:
   DELETE_COPY_CONSTRUCTORS(Image);
 
   Image(Image&& other) noexcept;
-  Image& operator=(Image&&)      = delete;
+  Image& operator=(Image&&) = delete;
 
   uint8_t* map();
   void     unmap();

@@ -25,7 +25,8 @@ public:
     auto& min = Config::Solver::basicMinDepth;
     auto& max = Config::Solver::basicMaxDepth;
 
-    if (out.z() < min || out.z() > max) return false;
+    if (out.z() < min || out.z() > max)
+      return false;
 
     return true;
   }

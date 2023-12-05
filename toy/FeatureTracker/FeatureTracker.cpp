@@ -10,7 +10,8 @@ FeatureTracker::FeatureTracker(std::string pointTracker, std::string lineTracker
   : mLineTracker{nullptr} {
   mPointTracker = new PointTracker(pointTracker);
 
-  if (lineTracker == "none") return;
+  if (lineTracker == "none")
+    return;
 
   mLineTracker = new LineTracker(lineTracker);
 }

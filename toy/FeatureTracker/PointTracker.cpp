@@ -11,7 +11,9 @@ namespace toy {
 PointTracker::PointTracker(std::string type)
   : mFeatureId{0}
   , mType{type} {
-  if (mType == "Fast.OpticalflowLK") { mFeature2D = cv::FastFeatureDetector::create(); }
+  if (mType == "Fast.OpticalflowLK") {
+    mFeature2D = cv::FastFeatureDetector::create();
+  }
 }
 
 PointTracker::~PointTracker() {}
@@ -19,12 +21,15 @@ PointTracker::~PointTracker() {}
 size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
   size_t trackedPtSize = track(prevFrame, currFrame);
 
-  if (trackedPtSize > 80) return trackedPtSize;
+  if (trackedPtSize > 80)
+    return trackedPtSize;
 
   auto newKptSize = extract(currFrame);
 
-  if (trackedPtSize + newKptSize == 0) return 0;
-  if (currFrame->getImagePyramid(1)->type() != 1) return trackedPtSize;
+  if (trackedPtSize + newKptSize == 0)
+    return 0;
+  if (currFrame->getImagePyramid(1)->type() != 1)
+    return trackedPtSize;
 
   db::Feature* feature0 = currFrame->getFeature(0);
   db::Feature* feature1 = currFrame->getFeature(1);
@@ -59,7 +64,9 @@ size_t PointTracker::extract(db::Frame* frame) {
 
   for (size_t i = 0; i < subSize; ++i) {
     auto& kpts = keyPointsPerSubImage[i];
-    if (kpts.empty()) { continue; }
+    if (kpts.empty()) {
+      continue;
+    }
     std::nth_element(kpts.begin(),
                      kpts.begin(),
                      kpts.end(),
@@ -102,7 +109,8 @@ void PointTracker::devideImage(cv::Mat&                  src,
     for (int c = 0; c < colGridCount; ++c) {
       auto offset = cv::Point2i({startCol + gridCols * c}, {startRow + gridRows * r});
 
-      if (mask.at<uchar>(startRow + gridRows * r, startCol + gridCols * c) == 0) continue;
+      if (mask.at<uchar>(startRow + gridRows * r, startCol + gridCols * c) == 0)
+        continue;
 
       cv::Rect roi(offset.x, offset.y, gridCols, gridRows);
       cv::Mat  crop = src(roi);
@@ -113,7 +121,8 @@ void PointTracker::devideImage(cv::Mat&                  src,
 }
 
 size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
-  if (prev == nullptr) return size_t(0);
+  if (prev == nullptr)
+    return size_t(0);
 
   auto& pyramid0    = prev->getImagePyramid(0)->getPyramids();
   auto& keyPoints0  = prev->getFeature(0)->getKeypoints();
@@ -123,7 +132,8 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
   auto& trackCount0 = keyPoints0.mTrackCounts;
   auto& undists0    = keyPoints0.mUndists;
 
-  if (ids0.empty()) return size_t(0);
+  if (ids0.empty())
+    return size_t(0);
 
   auto& pyramid1 = curr->getImagePyramid(0)->getPyramids();
 
@@ -177,7 +187,8 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
   auto& featureType = keyPoints1.mFeatureType;
 
   for (size_t i = 0; i < trackSize; ++i) {
-    if (statusO[i] == 0 || statusE[i] == 0) continue;
+    if (statusO[i] == 0 || statusE[i] == 0)
+      continue;
     ids1.push_back(ids0[i]);
     levels1.push_back(levels0[i]);
     uvs1.push_back(uvs[i]);

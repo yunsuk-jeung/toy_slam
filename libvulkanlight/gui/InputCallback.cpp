@@ -11,25 +11,31 @@ InputCallback::InputCallback()
 InputCallback::~InputCallback() {}
 
 void InputCallback::onMouseClick(int i, int x, int y) {
-  if (MouseClick) (*MouseClick)(i, x, y);
+  if (MouseClick)
+    (*MouseClick)(i, x, y);
 }
 
 void InputCallback::onMouseDrag(int i, int x, int y) {
-  if (MouseDrag) (*MouseDrag)(i, x, y);
+  if (MouseDrag)
+    (*MouseDrag)(i, x, y);
 }
 void InputCallback::onMouseWheel(int scroll) {
-  if (MouseWheel) (*MouseWheel)(scroll);
+  if (MouseWheel)
+    (*MouseWheel)(scroll);
 }
 void InputCallback::onKeyPressed(int key) {
-  if (KeyPressed) (*KeyPressed)(key);
+  if (KeyPressed)
+    (*KeyPressed)(key);
 }
 
 void InputCallback::onKeyDown(int key) {
-  if (KeyDown) (*KeyDown)(key);
+  if (KeyDown)
+    (*KeyDown)(key);
 }
 
 void InputCallback::onKeyRelease(int key) {
-  if (KeyRelease) (*KeyRelease)(key);
+  if (KeyRelease)
+    (*KeyRelease)(key);
 }
 
 void InputCallback::registerMouseClick(MouseCB&& cb) {

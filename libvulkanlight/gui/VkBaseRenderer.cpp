@@ -19,7 +19,8 @@ VkBaseRenderer::VkBaseRenderer()
   , TRS{Eigen::Matrix4f::Identity()} {}
 
 VkBaseRenderer::~VkBaseRenderer() {
-  if (!device) return;
+  if (!device)
+    return;
 
   vk::Device vkDevice = device->vk();
 
@@ -52,7 +53,9 @@ void VkBaseRenderer::initialize(Device*            _device,
   renderContext    = context;
   vkDescriptorPool = descPool;
 
-  if (shaderName == "Base") { VklLogE("please set shaderName"); }
+  if (shaderName == "Base") {
+    VklLogE("please set shaderName");
+  }
 
   vertShader = ResourcePool::loadShader(shaderName,
                                         device,

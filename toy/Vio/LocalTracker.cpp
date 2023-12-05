@@ -25,7 +25,8 @@ void LocalTracker::prepare() {
 
 void LocalTracker::process() {
   db::Frame::Ptr currFrame = getLatestInput();
-  if (!currFrame) return;
+  if (!currFrame)
+    return;
 
   mLocalMap->addFrame(currFrame);
 
@@ -37,13 +38,18 @@ void LocalTracker::process() {
   case Status::INITIALIZING: {
     int  createMPCount = initializeMapPoints(currFrame);
     bool OK            = createMPCount > Config::Vio::initializeMapPointCount;
-    if (OK) { mStatus = Status::TRACKING; }
-    else { mLocalMap->reset(); }
+    if (OK) {
+      mStatus = Status::TRACKING;
+    }
+    else {
+      mLocalMap->reset();
+    }
     break;
   }
   case Status::TRACKING: {
     int createMPCount = initializeMapPoints(currFrame);
-    if (createMPCount > 0) ToyLogD("new mps : {}", createMPCount);
+    if (createMPCount > 0)
+      ToyLogD("new mps : {}", createMPCount);
 
     break;
   }
@@ -62,7 +68,8 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
 
   for (auto& [mpWeak, factor] : mapPointFactorMap) {
     auto mpPtr = mpWeak.lock();
-    if (mpPtr->status() != db::MapPoint::Status::INITIALING) continue;
+    if (mpPtr->status() != db::MapPoint::Status::INITIALING)
+      continue;
 
     switch (factor.getType()) {
     case db::ReprojectionFactor::Type::MONO: {

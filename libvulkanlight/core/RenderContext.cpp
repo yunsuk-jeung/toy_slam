@@ -22,7 +22,9 @@ RenderContext::~RenderContext() {
   vk::Device vkDevice = device->vk();
   vkDevice.waitIdle();
 
-  if (renderCommandPool) { vkDevice.destroyCommandPool(renderCommandPool); }
+  if (renderCommandPool) {
+    vkDevice.destroyCommandPool(renderCommandPool);
+  }
 
   for (auto& fence : cmdFences) { vkDevice.destroyFence(fence); }
 
@@ -82,13 +84,15 @@ vk::Queue& RenderContext::getVkQueue() {
 
 vk::Fence RenderContext::getCurrCmdFence() {
   int curr = cmdFenceIdx++;
-  if (cmdFenceIdx >= ctProps.imageCount) cmdFenceIdx = 0;
+  if (cmdFenceIdx >= ctProps.imageCount)
+    cmdFenceIdx = 0;
   return cmdFences[curr];
 }
 
 BufferingSemaphore RenderContext::getCurrBufferingSemaphore() {
   int curr = bfSemaphoreIdx++;
-  if (bfSemaphoreIdx >= ctProps.imageCount) bfSemaphoreIdx = 0;
+  if (bfSemaphoreIdx >= ctProps.imageCount)
+    bfSemaphoreIdx = 0;
   return bfSemaphores[curr];
 }
 

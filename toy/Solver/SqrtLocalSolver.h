@@ -6,9 +6,7 @@ public:
   SqrtLocalSolver() {}
   virtual ~SqrtLocalSolver() {}
 
-  virtual bool process() {
-    return true;
-  }
+  virtual bool process() { return true; }
 
 protected:
 };

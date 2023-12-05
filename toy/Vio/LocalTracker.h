@@ -6,7 +6,7 @@ namespace toy {
 namespace db {
 class LocalMap;
 class Frame;
-}
+}  //namespace db
 
 class FeatureTracker;
 class FrameSolver;
@@ -23,7 +23,7 @@ private:
   using Thread<db::Frame, void>::getLatestInput;
   using Thread<db::Frame, void>::mInQueue;
 
-  bool initialize(std::shared_ptr<db::Frame>);
+  int initializeMapPoints(std::shared_ptr<db::Frame> currFrame);
 
 private:
   enum class Status { NONE = -1, INITIALIZING = 0, TRACKING = 1 };

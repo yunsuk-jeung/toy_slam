@@ -40,7 +40,6 @@ void Config::parseConfig(const std::string& configFile) {
 
   nlohmann::json json;
   file >> json;
-
   file.close();
 
   sync        = json["sync"];

@@ -27,11 +27,16 @@ void LocalMap::addFrame(std::shared_ptr<Frame> frame) {
 
   for (size_t i = 0; i < size0; ++i) {
     int id = keyPoints0.mIds[i];
-    if (mMapPoints.find(keyPoints0.mIds[i]) != mMapPoints.end()) continue;
 
-    MapPoint::Ptr mp = std::make_shared<MapPoint>(id);
+    MapPoint::Ptr mp;
+    auto          it = mMapPoints.find(id);
+
+    if (it == mMapPoints.end())
+      mp = std::make_shared<MapPoint>(id);
+    else
+      mp = it->second;
+
     mMapPoints.insert({mp->id(), mp});
-
     auto& uv0     = keyPoints0.mUVs[i];
     auto& undist0 = keyPoints0.mUndists[i];
 
@@ -40,10 +45,12 @@ void LocalMap::addFrame(std::shared_ptr<Frame> frame) {
                                      {uv0.x, uv0.y},
                                      {undist0.x, undist0.y, 1.0});
 
-    if (keyPoints1.mIds[i] == 1) {
-      auto& uv1     = keyPoints1.mUVs[i];
-      auto& undist1 = keyPoints1.mUndists[i];
-      factor.addStereo({uv1.x, uv1.y}, {undist1.x, undist1.y, 1.0});
+    if (size1 > 0) {
+      if (keyPoints1.mIds[i] == 1) {
+        auto& uv1     = keyPoints1.mUVs[i];
+        auto& undist1 = keyPoints1.mUndists[i];
+        factor.addStereo({uv1.x, uv1.y}, {undist1.x, undist1.y, 1.0});
+      }
     }
 
     frame->addMapPointFactor(mp, factor);

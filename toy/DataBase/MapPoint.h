@@ -40,6 +40,7 @@ protected:
 public:
   const int     id() const { return mId; }
   const Status& status() const { return mStatus; }
+  void          setState(Status status) { mStatus = status; }
 
   const double    invDepth() const { return mInvDepth; }
   void            setInvDepth(double invD) { mInvDepth = invD; }

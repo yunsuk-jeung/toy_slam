@@ -22,9 +22,10 @@ void LocalTracker::prepare() {
 }
 
 void LocalTracker::process() {
-  ToyLogD("localTracker queue size : {}", mInQueue.unsafe_size());
-
   db::Frame::Ptr currFrame = getLatestInput();
+  if (!currFrame) return;
+
+  mLocalMap->addFrame(currFrame);
 
   switch (mStatus) {
   case Status::NONE: {
@@ -32,19 +33,21 @@ void LocalTracker::process() {
     break;
   }
   case Status::INITIALIZING: {
-    bool OK = initialize(currFrame);
+    int  createMPCount = initializeMapPoints(currFrame);
+    bool OK            = createMPCount > Config::Vio::initializeMapPointCount;
     if (OK) { mStatus = Status::TRACKING; }
     else { mLocalMap->reset(); }
     break;
   }
   case Status::TRACKING: {
+    int createMPCount = initializeMapPoints(currFrame);
+    if (createMPCount > 0) ToyLogD("new mps : {}", createMPCount);
     break;
   }
   }
 }
 
-bool LocalTracker::initialize(db::Frame::Ptr currFrame) {
-  mLocalMap->addFrame(currFrame);
+int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
   auto& mapPointFactorMap = currFrame->getMapPointFactorMap();
 
   auto            Swc0  = currFrame->getSwc(0);
@@ -67,6 +70,7 @@ bool LocalTracker::initialize(db::Frame::Ptr currFrame) {
       }
       double invD = 1.0 / Pc0x.z();
       mpPtr->setInvDepth(invD);
+      mpPtr->setState(db::MapPoint::Status::TRACKING);
       ++successCount;
       break;
     }
@@ -75,9 +79,6 @@ bool LocalTracker::initialize(db::Frame::Ptr currFrame) {
     }
     }
   }
-  if (successCount < Config::Vio::initializeMapPointCount) return false;
-
-  return true;
+  return successCount;
 }
-
 }  //namespace toy

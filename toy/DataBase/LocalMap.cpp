@@ -18,7 +18,7 @@ void LocalMap::reset() {
 }
 
 void LocalMap::addFrame(std::shared_ptr<Frame> frame) {
-  mFrames.insert({frame->Id(), frame});
+  mFrames.insert({frame->id(), frame});
   auto& keyPoints0 = frame->getFeature(0)->getKeypoints();
   auto& keyPoints1 = frame->getFeature(1)->getKeypoints();
 
@@ -30,18 +30,15 @@ void LocalMap::addFrame(std::shared_ptr<Frame> frame) {
     if (mMapPoints.find(keyPoints0.mIds[i]) != mMapPoints.end()) continue;
 
     MapPoint::Ptr mp = std::make_shared<MapPoint>(id);
-    mMapPoints.insert({mp->Id(), mp});
+    mMapPoints.insert({mp->id(), mp});
 
     auto& uv0     = keyPoints0.mUVs[i];
     auto& undist0 = keyPoints0.mUndists[i];
 
     auto factor = ReprojectionFactor(frame.get(),
-                                         mp.get(),
-                                         {uv0.x, uv0.y},
-                                         {undist0.x, undist0.y, 1.0});
-
-    if (size1 == 0) continue;
-    if (keyPoints1.mIds[i] == 0) continue;
+                                     mp.get(),
+                                     {uv0.x, uv0.y},
+                                     {undist0.x, undist0.y, 1.0});
 
     if (keyPoints1.mIds[i] == 1) {
       auto& uv1     = keyPoints1.mUVs[i];

@@ -35,10 +35,16 @@ protected:
   int                          mId;
   Status                       mStatus;
   std::vector<FrameFactorPair> mFrameFactors;
+  double                       mInvDepth;
 
 public:
-  const int     Id() const { return mId; }
-  const Status& Status() const { return mStatus; }
+  const int     id() const { return mId; }
+  const Status& status() const { return mStatus; }
+
+  const double    invDepth() const { return mInvDepth; }
+  void            setInvDepth(double invD) { mInvDepth = invD; }
+  double&         getInvDepth() { return mInvDepth; }
+  Eigen::Vector3d getPwx();
 };
 
 }  //namespace db

@@ -72,7 +72,7 @@ db::Frame::Ptr FrameTracker::getLatestFrame() {
 
   db::Frame::Ptr currFrame(new db::Frame(set));
   currFrame->setCameras(cam0, cam1);
-  currFrame->setLbc(Config::Vio::camInfo0.Mbc.data(), Config::Vio::camInfo1.Mbc.data());
+  currFrame->setSbc(Config::Vio::camInfo0.Mbc.data(), Config::Vio::camInfo1.Mbc.data());
 
   return currFrame;
 }

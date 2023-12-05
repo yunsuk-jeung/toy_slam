@@ -258,7 +258,7 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
 
   std::vector<uchar> statusE;
   cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
-  cv::findEssentialMat(undists0, undists1, I, cv::RANSAC, 0.99, 1.0 / 640, statusE);
+  cv::findEssentialMat(undists0, undists1, I, cv::RANSAC, 0.99, 0.005, statusE);
 
   auto trackSize = uvs0.size();
 
@@ -294,7 +294,7 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
 
   //#####################################################################
   for (int i = 0; i < uvs0.size(); i++) {
-    if (status[i] == 0) {
+    if (status[i] == 0 || statusE[i] == 0) {
       cv::line(image1, uvs0[i], uvs1[i], {255.0, 0.0, 0.0}, 1);
       cv::circle(image1, uvs1[i], 2, {255.0, 0.0, 0.0}, -1);
     }

@@ -25,7 +25,7 @@ public:
                      Eigen::Vector3d unidst0,
                      Eigen::Vector2d uv1     = Eigen::Vector2d(0.0, -1.0),
                      Eigen::Vector3d undist1 = Eigen::Vector3d(0.0, 0.0, -1.0))
-    : mType{0}
+    : mType{Type::MONO}
     , mFrame{frame}
     , mMapPoint{mapPoint}
     , mUV0{uv0}
@@ -34,13 +34,16 @@ public:
     , mUndist1{undist1} {}
 
   void addStereo(Eigen::Vector2d uv1, Eigen::Vector3d undist1) {
-    mType    = 1;
+    mType    = Type::STEREO;
     mUV1     = uv1;
     mUndist1 = undist1;
   }
 
+public:
+  enum class Type { MONO = 0, STEREO = 1, DEPTH = 2 };
+
 protected:
-  int             mType;
+  Type            mType;
   Frame*          mFrame;
   MapPoint*       mMapPoint;
   Eigen::Vector2d mUV0;
@@ -49,7 +52,11 @@ protected:
   Eigen::Vector3d mUndist1;
 
 public:
-  const int getType() const { return mType; }
+  const Type       getType() const { return mType; }
+  Eigen::Vector2d& uv0() { return mUV0; }
+  Eigen::Vector3d& undist0() { return mUndist0; }
+  Eigen::Vector2d& uv1() { return mUV1; }
+  Eigen::Vector3d& undist1() { return mUndist1; }
 };
 
 }  //namespace db

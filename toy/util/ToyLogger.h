@@ -49,6 +49,26 @@ public:
     ss << "\n translation_so3 : " << se3.log().transpose().format(CleanVec);
     return ss.str();
   }
+  template <typename Type, int Row>
+  static std::string eigenVec(const Eigen::Matrix<Type, Row, 1>& vec, int precision = 4) {
+    Eigen::IOFormat CleanVec(precision, 0, ", ", "\n", "[", "]");
+
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(precision);  //Set the precision
+    ss << vec.transpose().format(CleanVec);
+    return ss.str();
+  }
+
+  template <typename Type, int Row, int Col>
+  static std::string eigenMat(const Eigen::Matrix<Type, Row, Col>& mat,
+                              int                                  precision = 4) {
+    Eigen::IOFormat CleanMat(precision, 0, ", ", "\n", "[", "]");
+
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(precision);  //Set the precision
+    ss << "\n " << mat.transpose().format(CleanMat);
+    return ss.str();
+  }
 };
 }  //namespace toy
 

@@ -12,8 +12,7 @@ Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   : mId{globalId++}
   , mImagePyramids{std::move(set->mImagePyramid0), std::move(set->mImagePyramid1)}
   , mCameras{nullptr, nullptr}
-  , mFeatures{std::make_unique<Feature>(), std::make_unique<Feature>()}
-  , mLbcs{Eigen::Vector6d(), Eigen::Vector6d()} {}
+  , mFeatures{std::make_unique<Feature>(), std::make_unique<Feature>()} {}
 
 Frame::Frame(Frame* src) {
   this->mId = src->mId;
@@ -32,6 +31,9 @@ Frame::Frame(Frame* src) {
   auto* feature1     = src->mFeatures[1]->clone();
   this->mFeatures[0] = std::unique_ptr<Feature>(feature0);
   this->mFeatures[1] = std::unique_ptr<Feature>(feature1);
+
+  this->mSwb  = src->mSwb;
+  this->mSbcs = src->mSbcs;
 }
 
 Frame::~Frame() {
@@ -49,7 +51,29 @@ void Frame::setCameras(Camera* cam0, Camera* cam1) {
   mCameras[1] = std::unique_ptr<Camera>(cam1);
 }
 
-void Frame::setLbc(float* pfbc0, float* pfbc1) {
+//void Frame::setLbc(float* pfbc0, float* pfbc1) {
+//  Eigen::Matrix4f Mbc0(pfbc0);
+//  Eigen::Matrix4f Mbc1(pfbc1);
+
+//Eigen::Matrix3d Rbc0 = Mbc0.block<3, 3>(0, 0).cast<double>();
+//Eigen::Vector3d Tbc0 = Mbc0.block<3, 1>(0, 3).cast<double>();
+
+//Eigen::Matrix3d Rbc1 = Mbc1.block<3, 3>(0, 0).cast<double>();
+//Eigen::Vector3d Tbc1 = Mbc1.block<3, 1>(0, 3).cast<double>();
+
+//Eigen::Quaterniond Qbc0(Rbc0);
+//Eigen::Quaterniond Qbc1(Rbc1);
+
+//Sophus::SO3d SObc0 = Sophus::SO3d(Qbc0);
+//mLbcs[0].head(3)   = SObc0.log();
+//mLbcs[0].tail(3)   = Tbc0;
+
+//Sophus::SO3d SObc1 = Sophus::SO3d(Qbc1);
+//mLbcs[1].head(3)   = SObc1.log();
+//mLbcs[1].tail(3)   = Tbc1;
+//}
+
+void Frame::setSbc(float* pfbc0, float* pfbc1) {
   Eigen::Matrix4f Mbc0(pfbc0);
   Eigen::Matrix4f Mbc1(pfbc1);
 
@@ -62,13 +86,8 @@ void Frame::setLbc(float* pfbc0, float* pfbc1) {
   Eigen::Quaterniond Qbc0(Rbc0);
   Eigen::Quaterniond Qbc1(Rbc1);
 
-  Sophus::SO3d SObc0 = Sophus::SO3d(Qbc0);
-  mLbcs[0].head(3)   = SObc0.log();
-  mLbcs[0].tail(3)   = Tbc0;
-
-  Sophus::SO3d SObc1 = Sophus::SO3d(Qbc1);
-  mLbcs[1].head(3)   = SObc1.log();
-  mLbcs[1].tail(3)   = Tbc1;
+  mSbcs[0] = Sophus::SE3d(Qbc0, Tbc0);
+  mSbcs[1] = Sophus::SE3d(Qbc1, Tbc1);
 }
 
 void Frame::addMapPointFactor(std::shared_ptr<db::MapPoint> mp,

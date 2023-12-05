@@ -31,7 +31,8 @@ public:
   Frame::Ptr clonePtr();
 
   void setCameras(Camera* cam0, Camera* cam1);
-  void setLbc(float*, float*);
+  //void setLbc(float*, float*);
+  void setSbc(float*, float*);
 
   void addMapPointFactor(std::shared_ptr<db::MapPoint> mp, ReprojectionFactor factor);
 
@@ -50,19 +51,22 @@ protected:
 
   MapPointFactorMap mMapPointFactorMap;
 
-  //L : lie
-  Eigen::Vector6d                mLwb;
-  std::array<Eigen::Vector6d, 2> mLbcs;
+  ////L : lie
+  //Eigen::Vector6d                mLwb;
+  //std::array<Eigen::Vector6d, 2> mLbcs;
+  //Eigen::Vector6d&   getLbc(int i) { return mLbcs[i]; }
+
+  //S : se3
+  Sophus::SE3d                mSwb;
+  std::array<Sophus::SE3d, 2> mSbcs;
 
 public:
-  const int        Id() const { return mId; }
-  ImagePyramid*    getImagePyramid(int i) { return mImagePyramids[i].get(); }
-  Camera*          getCamera(int i) { return mCameras[i].get(); }
-  Feature*         getFeature(int i) { return mFeatures[i].get(); }
-  Eigen::Vector6d& getLbc(int i) { return mLbcs[i]; }
-  MapPointFactorMap& getMapPointFactorMap() {
-    return mMapPointFactorMap;
-  }
+  const int          id() const { return mId; }
+  ImagePyramid*      getImagePyramid(int i) { return mImagePyramids[i].get(); }
+  Camera*            getCamera(int i) { return mCameras[i].get(); }
+  Feature*           getFeature(int i) { return mFeatures[i].get(); }
+  Sophus::SE3d       getSwc(int i) { return mSwb * mSbcs[i]; }
+  MapPointFactorMap& getMapPointFactorMap() { return mMapPointFactorMap; }
 };
 
 }  //namespace db

@@ -13,17 +13,25 @@ public:
     static CameraInfo camInfo1;
     static ImuInfo    imuInfo;
 
-    static int pyramidLevel;
-    static int patchSize;
-    static int rowGridCount;
-    static int colGridCount;
-
+    static int         pyramidLevel;
+    static int         patchSize;
+    static int         rowGridCount;
+    static int         colGridCount;
     static std::string pointTracker;
+    static double      epipolarThreashold;
+
     static std::string lineTracker;
     static bool        frameTrackerSolvePose;
+
     static std::string solverType;
+    static int         initializeMapPointCount;
 
     static int mapFrameSize;
+  };
+
+  struct Solver {
+    static double basicMinDepth;
+    static double basicMaxDepth;
   };
 };
 }  //namespace toy

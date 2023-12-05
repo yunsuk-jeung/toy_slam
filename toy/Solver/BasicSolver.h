@@ -1,6 +1,7 @@
 #pragma once
 #include <Eigen/Dense>
 #include <sophus/se3.hpp>
+#include "config.h"
 
 namespace toy {
 class BasicSolver {
@@ -21,7 +22,10 @@ public:
     homoPoint = A.jacobiSvd(Eigen::ComputeFullV).matrixV().rightCols<1>();
     out       = homoPoint.head(3) / homoPoint.w();
 
-    if (out.z() < 0.05 || out.z() > 140) return false;
+    auto& min = Config::Solver::basicMinDepth;
+    auto& max = Config::Solver::basicMaxDepth;
+
+    if (out.z() < min || out.z() > max) return false;
 
     return true;
   }

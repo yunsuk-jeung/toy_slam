@@ -146,7 +146,9 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
 
   std::vector<uchar> statusE;
   cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
-  cv::findEssentialMat(undists0, undists, I, cv::RANSAC, 0.99, 1.0 / 640, statusE);
+
+  const double threshold = Config::Vio::epipolarThreashold;
+  cv::findEssentialMat(undists0, undists, I, cv::RANSAC, 0.99, threshold, statusE);
 
   auto  trackSize  = statusE.size();
   auto& keyPoints1 = curr->getFeature(0)->getKeypoints();
@@ -258,7 +260,9 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
 
   std::vector<uchar> statusE;
   cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
-  cv::findEssentialMat(undists0, undists1, I, cv::RANSAC, 0.99, 0.005, statusE);
+
+  const double threshold = Config::Vio::epipolarThreashold;
+  cv::findEssentialMat(undists0, undists1, I, cv::RANSAC, 0.99, threshold, statusE);
 
   auto trackSize = uvs0.size();
 

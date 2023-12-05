@@ -52,6 +52,8 @@ bool LocalTracker::initialize(db::Frame::Ptr currFrame) {
   auto            Sc1c0 = Swc1.inverse() * Swc0;
   Eigen::Vector3d Pc0x;
 
+  int successCount = 0;
+
   for (auto& [mpWeak, factor] : mapPointFactorMap) {
     auto mpPtr = mpWeak.lock();
     if (mpPtr->status() != db::MapPoint::Status::INITIALING) continue;
@@ -65,9 +67,7 @@ bool LocalTracker::initialize(db::Frame::Ptr currFrame) {
       }
       double invD = 1.0 / Pc0x.z();
       mpPtr->setInvDepth(invD);
-      ToyLogD("mp id : {} position : {}",
-              mpPtr->id(),
-              ToyLogger::eigenVec<double, 3>(mpPtr->getPwx()));
+      ++successCount;
       break;
     }
     case db::ReprojectionFactor::Type::DEPTH: {
@@ -75,6 +75,7 @@ bool LocalTracker::initialize(db::Frame::Ptr currFrame) {
     }
     }
   }
+  if (successCount < Config::Vio::initializeMapPointCount) return false;
 
   return true;
 }

@@ -24,9 +24,9 @@ protected:
 
 public:
   enum class Status {
-    INITIALING,
-    TRACKING,
-    DELETING,
+    DELETING   = -1,
+    INITIALING = 0,
+    TRACKING   = 1,
   };
 
 protected:

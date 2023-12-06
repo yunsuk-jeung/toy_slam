@@ -28,14 +28,13 @@ void LocalTracker::process() {
   if (!currFrame)
     return;
 
-  mLocalMap->addFrame(currFrame);
-
   switch (mStatus) {
   case Status::NONE: {
     ToyLogE("prepare tracker before process");
     break;
   }
   case Status::INITIALIZING: {
+    mLocalMap->addFrame(currFrame);
     int  createMPCount = initializeMapPoints(currFrame);
     bool OK            = createMPCount > Config::Vio::initializeMapPointCount;
     if (OK) {
@@ -47,9 +46,14 @@ void LocalTracker::process() {
     break;
   }
   case Status::TRACKING: {
+    mLocalMap->addFrame(currFrame);
     int createMPCount = initializeMapPoints(currFrame);
-    if (createMPCount > 0)
-      ToyLogD("new mps : {}", createMPCount);
+
+    std::vector<db::Frame::Ptr>    frames;
+    std::vector<db::MapPoint::Ptr> mapPoints;
+
+    mLocalMap->getCurrentStates(frames, mapPoints);
+    mVioSolver->solve(frames, mapPoints);
 
     break;
   }

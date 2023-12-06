@@ -3,10 +3,11 @@
 namespace toy {
 class SqrtLocalSolver : public VioSolver {
 public:
-  SqrtLocalSolver() {}
-  virtual ~SqrtLocalSolver() {}
+  SqrtLocalSolver();
+  virtual ~SqrtLocalSolver();
 
-  virtual bool process() { return true; }
+  virtual bool solve(std::vector<std::shared_ptr<db::Frame>>&    frames,
+                     std::vector<std::shared_ptr<db::MapPoint>>& mapPoints);
 
 protected:
 };

@@ -18,9 +18,8 @@ LocalTracker::~LocalTracker() {
 }
 
 void LocalTracker::prepare() {
-  mLocalMap  = std::make_unique<db::LocalMap>();
-  mVioSolver = VioSolverFactory::createVioSolver();
-  mStatus    = Status::INITIALIZING;
+  mLocalMap = std::make_unique<db::LocalMap>();
+  mStatus   = Status::INITIALIZING;
 }
 
 void LocalTracker::process() {
@@ -48,6 +47,8 @@ void LocalTracker::process() {
   case Status::TRACKING: {
     mLocalMap->addFrame(currFrame);
     int createMPCount = initializeMapPoints(currFrame);
+
+    BasicSolver::solveFramePose(currFrame);
 
     std::vector<db::Frame::Ptr>    frames;
     std::vector<db::MapPoint::Ptr> mapPoints;

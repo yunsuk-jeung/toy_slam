@@ -31,14 +31,18 @@ void LocalMap::addFrame(std::shared_ptr<Frame> frame) {
     MapPoint::Ptr mp;
     auto          it = mMapPoints.find(id);
 
-    if (it == mMapPoints.end())
-      mp = std::make_shared<MapPoint>(id);
-    else
-      mp = it->second;
-
-    mMapPoints.insert({mp->id(), mp});
     auto& uv0     = keyPoints0.mUVs[i];
     auto& undist0 = keyPoints0.mUndists[i];
+
+    if (it == mMapPoints.end()) {
+      mp = std::make_shared<MapPoint>(id);
+      mp->setUndist({undist0.x, undist0.y});
+    }
+    else {
+      mp = it->second;
+    }
+
+    mMapPoints.insert({mp->id(), mp});
 
     auto factor = ReprojectionFactor(frame.get(),
                                      mp.get(),

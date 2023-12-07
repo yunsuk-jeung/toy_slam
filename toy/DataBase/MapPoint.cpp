@@ -19,7 +19,10 @@ void MapPoint::addFrameFactor(std::shared_ptr<db::Frame> frame,
 Eigen::Vector3d MapPoint::getPwx() {
   auto& [frameW, factor] = mFrameFactors.front();
   auto fPtr              = frameW.lock();
-  return fPtr->getSwc(0) * factor.undist0() / mInvDepth;
+
+  Eigen::Vector3d undist(mUndist.x(), mUndist.y(), 1.0);
+
+  return fPtr->getSwc(0) * undist / mInvDepth;
 }
 
 }  //namespace db

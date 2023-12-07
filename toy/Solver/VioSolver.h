@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <vector>
+#include <map>
 #include "macros.h"
 namespace toy {
 namespace db {
@@ -15,6 +16,9 @@ public:
 
   virtual bool solve(std::vector<std::shared_ptr<db::Frame>>&    frames,
                      std::vector<std::shared_ptr<db::MapPoint>>& mapPoints) = 0;
+
+protected:
+
 };
 
 class VioSolverFactory {

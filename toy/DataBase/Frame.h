@@ -7,7 +7,6 @@
 #include <sophus/so3.hpp>
 
 #include "macros.h"
-#include "usings.h"
 #include "Factor.h"
 
 namespace toy {

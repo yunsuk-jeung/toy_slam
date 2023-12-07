@@ -4,6 +4,7 @@
 
 namespace toy {
 class VioSolver;
+class BasicSolver;
 namespace db {
 class LocalMap;
 class Frame;

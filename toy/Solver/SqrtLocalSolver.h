@@ -10,5 +10,7 @@ public:
                      std::vector<std::shared_ptr<db::MapPoint>>& mapPoints);
 
 protected:
+  std::map<int, std::pair<int, int>> mFrameRows;
+  std::map<int, std::pair<int, int>> mMapPointRows;
 };
 }  //namespace toy

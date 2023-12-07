@@ -35,6 +35,7 @@ protected:
   int                          mId;
   Status                       mStatus;
   std::vector<FrameFactorPair> mFrameFactors;
+  Eigen::Vector2d              mUndist;
   double                       mInvDepth;
 
 public:
@@ -42,8 +43,12 @@ public:
   const Status& status() const { return mStatus; }
   void          setState(Status status) { mStatus = status; }
 
+  const Eigen::Vector2d undist() const { return mUndist; }
+  void                  setUndist(const Eigen::Vector2d& undist) { mUndist = undist; }
+  Eigen::Vector2d&      getUndist() { return mUndist; }
+
   const double    invDepth() const { return mInvDepth; }
-  void            setInvDepth(double invD) { mInvDepth = invD; }
+  void            setInvDepth(double& invD) { mInvDepth = invD; }
   double&         getInvDepth() { return mInvDepth; }
   Eigen::Vector3d getPwx();
 };

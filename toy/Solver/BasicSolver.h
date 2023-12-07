@@ -50,7 +50,7 @@ public:
 
     for (auto& [mpWeak, factor] : mapPointFactorMap) {
       auto mp = mpWeak.lock();
-      costs.emplace_back(curr, mp, factor.undist0(), huber);
+      costs.emplace_back(&lie, mp, factor.undist0().head(2), huber);
     }
 
     struct Reductor {
@@ -62,7 +62,7 @@ public:
       void operator()(const tbb::blocked_range<size_t>& range) {
         for (size_t r = range.begin(); r != range.end(); ++r) {
           auto& cost = mCosts[r];
-          lb->add_dense_H_b(H_, b_);
+          //lb->add_dense_H_b(H_, b_);
         }
       }
       Reductor(Reductor& src, tbb::split)

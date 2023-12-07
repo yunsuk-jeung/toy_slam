@@ -57,7 +57,7 @@ public:
     reduce << iz, 0.0, -x * izSq, 0.0, iz, -y * izSq;
 
     Eigen::Vector3d undist = Pcx / Pcx.z();
-    Eigen::Vector2d res = mZ - undist;
+    Eigen::Vector2d res = mZ - undist.head(2);
 
     //Eigen::Matrix3d Rcw    = Scw.so3().matrix();
     //Eigen::Matrix3d p_skew = Eigen::skew(Pcx);

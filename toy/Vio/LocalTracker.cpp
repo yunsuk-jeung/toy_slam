@@ -18,8 +18,10 @@ LocalTracker::~LocalTracker() {
 }
 
 void LocalTracker::prepare() {
-  mLocalMap = std::make_unique<db::LocalMap>();
-  mStatus   = Status::INITIALIZING;
+  mLocalMap  = std::make_unique<db::LocalMap>();
+  mVioSolver = VioSolverFactory::createVioSolver();
+
+  mStatus = Status::INITIALIZING;
 }
 
 void LocalTracker::process() {
@@ -45,7 +47,6 @@ void LocalTracker::process() {
     break;
   }
   case Status::TRACKING: {
-
     //todo changed if imu exists;
     if (true) {
       auto& Swb = mLocalMap->getFrames().rbegin()->second->getSwb();
@@ -61,7 +62,7 @@ void LocalTracker::process() {
     std::vector<db::MapPoint::Ptr> mapPoints;
 
     mLocalMap->getCurrentStates(frames, mapPoints);
-    mVioSolver->solve(frames, mapPoints);
+    //mVioSolver->solve(frames, mapPoints);
 
     break;
   }

@@ -1,6 +1,9 @@
 #pragma once
 #include "RendererBase.h"
 #include "macros.h"
+namespace ImGui {
+class Object;
+}
 namespace vkl {
 class InputCallback;
 class Window;
@@ -20,6 +23,7 @@ public:
                std::string        pipelineName) override;
 
   virtual void addInputCallback(InputCallback* cb);
+  void         addImGuiObjects(std::shared_ptr<ImGui::Object> objects);
 
   void onRender();
 
@@ -48,5 +52,7 @@ protected:
   std::unique_ptr<Image>               mFontImage;
   vk::Sampler                          mFontSampler;
   vk::DescriptorSet                    mFontDescSet;
+
+  std::vector<std::shared_ptr<ImGui::Object>> mImGuiObjects;
 };
 }  //namespace vkl

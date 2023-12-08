@@ -9,12 +9,13 @@
 #include "PipelineLayout.h"
 #include "Pipeline.h"
 namespace vkl {
-Pipeline::Pipeline(Device*         device,
-                   RenderContext*  context,
-                   vk::RenderPass  renderPass,
-                   PipelineLayout* pipelineLayout,
-                   uint32_t        subpassId)
-  : mName{""}
+Pipeline::Pipeline(const std::string& name,
+                   Device*            device,
+                   RenderContext*     context,
+                   vk::RenderPass     renderPass,
+                   PipelineLayout*    pipelineLayout,
+                   uint32_t           subpassId)
+  : mName{name}
   , mDevice{device}
   , mRenderContext{context}
   , mVkRenderPass{renderPass}
@@ -23,27 +24,28 @@ Pipeline::Pipeline(Device*         device,
 
 Pipeline::~Pipeline() {}
 
+void Pipeline::prepare() {
+  prepareImpl();
+  addResource();
+}
 void Pipeline::addResource() {
   VklLogD("created pipeline: {}", mName);
   ResourcePool::addPipeline(mName, this);
 }
 
-BasicTraianglePipeline::BasicTraianglePipeline(const std::string& name,
-                                               Device*            device,
-                                               RenderContext*     context,
-                                               vk::RenderPass     renderPass,
-                                               PipelineLayout*    pipelineLayout,
-                                               uint32_t           subpassId)
-  : Pipeline(device, context, renderPass, pipelineLayout, subpassId) {
-  mName = name;
+TextureMaterialPipeline::TextureMaterialPipeline(const std::string& name,
+                                                 Device*            device,
+                                                 RenderContext*     context,
+                                                 vk::RenderPass     renderPass,
+                                                 PipelineLayout*    pipelineLayout,
+                                                 uint32_t           subpassId)
+  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {
 }
 
-BasicTraianglePipeline::~BasicTraianglePipeline() {}
+TextureMaterialPipeline::~TextureMaterialPipeline() {}
 
-void BasicTraianglePipeline::prepare() {
-  auto* basicPipelineLayout = ResourcePool::requestPipelineLayout(
-    "basic_vert_basic_frag");
-  auto& shaders = basicPipelineLayout->getShaderModules();
+void TextureMaterialPipeline::prepareImpl() {
+  auto& shaders = mPipelineLayout->getShaderModules();
 
   std::vector<vk::PipelineShaderStageCreateInfo> shaderStageCIs{
     {{},   vk::ShaderStageFlagBits::eVertex, shaders[0]->vk(), "main"},
@@ -112,7 +114,7 @@ void BasicTraianglePipeline::prepare() {
                                             &depthStencilState,
                                             &colorBlendState,
                                             &dynamicState,
-                                            basicPipelineLayout->vk(),
+                                            mPipelineLayout->vk(),
                                             mVkRenderPass,
                                             {},
                                             {},
@@ -123,8 +125,6 @@ void BasicTraianglePipeline::prepare() {
   std::tie(result, mVkObject) = mDevice->vk().createGraphicsPipeline(VK_NULL_HANDLE,
                                                                      pipelineCI);
   VK_CHECK_ERROR(static_cast<VkResult>(result), "createpipeline");
-
-  addResource();
 }
 
 ImGuiPipeline::ImGuiPipeline(const std::string& name,
@@ -133,13 +133,12 @@ ImGuiPipeline::ImGuiPipeline(const std::string& name,
                              vk::RenderPass     renderPass,
                              PipelineLayout*    pipelineLayout,
                              uint32_t           subpassId)
-  : Pipeline(device, context, renderPass, pipelineLayout, subpassId) {
-  mName = name;
+  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {
 }
 
 ImGuiPipeline::~ImGuiPipeline() {}
 
-void ImGuiPipeline::prepare() {
+void ImGuiPipeline::prepareImpl() {
   auto* pipelineLayout = ResourcePool::requestPipelineLayout("imgui_vert_imgui_frag");
   auto& shaders        = pipelineLayout->getShaderModules();
 
@@ -222,7 +221,6 @@ void ImGuiPipeline::prepare() {
   std::tie(result, mVkObject) = mDevice->vk().createGraphicsPipeline(VK_NULL_HANDLE,
                                                                      pipelineCI);
   VK_CHECK_ERROR(static_cast<VkResult>(result), "createpipeline");
-  addResource();
 }
 
 }  //namespace vkl

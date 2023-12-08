@@ -37,12 +37,12 @@ public:
       return false;
     }
 
-    std::string basicPipeline = "triangle_basic";
-    mBasicRenderer.prepare(mDevice.get(),
-                           mRenderContext.get(),
-                           mVkDescPool,
-                           mVkRenderPass,
-                           basicPipeline);
+    //std::string pcucmstPipeline = "triangle_pcucmst";
+    //mBasicRenderer.prepare(mDevice.get(),
+    //                       mRenderContext.get(),
+    //                       mVkDescPool,
+    //                       mVkRenderPass,
+    //                       pcucmstPipeline);
 
     return true;
   }
@@ -57,37 +57,37 @@ protected:
     App::createPipelineLayouts();
 
     ShaderSourceType   type           = ShaderSourceType::STRING;
-    std::string        name           = "basic";
-    const std::string& vertexShader   = shader::basicVert;
-    const std::string& fragmentShader = shader::basicFrag;
+    std::string        name           = "pcucmst";
+    const std::string& vertexShader   = shader::pose_color_uv_camera_model_vert;
+    const std::string& fragmentShader = shader::color_uv_material_sampler_texture;
 
-    auto* vert = ResourcePool::loadShader(name,
-                                          mDevice.get(),
-                                          type,
-                                          vk::ShaderStageFlagBits::eVertex,
-                                          vertexShader);
+    //auto* vert = ResourcePool::loadShader(name,
+    //                                      mDevice.get(),
+    //                                      type,
+    //                                      vk::ShaderStageFlagBits::eVertex,
+    //                                      vertexShader);
 
-    auto* frag = ResourcePool::loadShader(name,
-                                          mDevice.get(),
-                                          type,
-                                          vk::ShaderStageFlagBits::eFragment,
-                                          fragmentShader);
+    //auto* frag = ResourcePool::loadShader(name,
+    //                                      mDevice.get(),
+    //                                      type,
+    //                                      vk::ShaderStageFlagBits::eFragment,
+    //                                      fragmentShader);
 
-    ResourcePool::addPipelineLayout(mDevice.get(), vert, frag);
+    //ResourcePool::addPipelineLayout(mDevice.get(), vert, frag);
   }
 
   void createPipelines() override {
     App::createPipelines();
 
-    auto* basicPipelineLyout = ResourcePool::requestPipelineLayout(
-      "basic_vert_basic_frag");
+    //auto* basicPipelineLyout = ResourcePool::requestPipelineLayout(
+    //  "pcucmst_vert_pcucmst_frag");
 
-    auto* basicTrianglePL = new BasicTraianglePipeline("triangle_basic",
-                                                       mDevice.get(),
-                                                       mRenderContext.get(),
-                                                       mVkRenderPass,
-                                                       basicPipelineLyout);
-    basicTrianglePL->prepare();
+    //auto* basicTrianglePL = new TextureMaterialPipeline("triangle_pcucmst",
+    //                                                   mDevice.get(),
+    //                                                   mRenderContext.get(),
+    //                                                   mVkRenderPass,
+    //                                                   basicPipelineLyout);
+    //basicTrianglePL->prepare();
   }
 
   void onRender() override {

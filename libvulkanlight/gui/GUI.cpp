@@ -1,5 +1,6 @@
 #pragma once
 #include <imgui.h>
+
 #include "Utils.h"
 #include "Device.h"
 #include "Window.h"
@@ -7,6 +8,7 @@
 #include "Buffer.h"
 #include "ResourcePool.h"
 #include "InputCallback.h"
+#include "ImGuiObject.h"
 #include "GUI.h"
 
 namespace vkl {
@@ -17,9 +19,13 @@ GUI::GUI()
   , mPrevIBSizes{}
   , mVBs{}
   , mIBs{}
-  , mFontImage{nullptr} {}
+  , mFontImage{nullptr} {
+  mImGuiObjects.reserve(30);
+}
 
 GUI::~GUI() {
+  mWindow->endGUI();
+  ImGui::DestroyContext();
   mDevice->vk().destroySampler(mFontSampler);
 }
 
@@ -61,6 +67,10 @@ void GUI::addInputCallback(InputCallback* cb) {
   mInputCallbacks.push_back(cb);
 }
 
+void GUI::addImGuiObjects(std::shared_ptr<ImGui::Object> objects) {
+  mImGuiObjects.push_back(objects);
+}
+
 void GUI::onRender() {
   mWindow->newGUIFrame();
   ImGui::NewFrame();
@@ -69,8 +79,22 @@ void GUI::onRender() {
   ImGuiIO& io = ImGui::GetIO();
   ImGui::Begin("status");
   ImGui::Text("fps: %f", io.Framerate);
-
   ImGui::End();
+  
+  static bool show_demo_window = true;
+
+  if (show_demo_window)
+    ImGui::ShowDemoWindow(&show_demo_window);
+
+  //ImGui::Begin("status2");
+  //ImGui::Text("fps: %f", io.Framerate);
+  //ImGui::End();
+
+  //onWindowResized(1280,1280);
+  //for (const auto& obj : mImGuiObjects) {
+  //  obj->render();
+  //}
+
   ImGui::Render();
 }
 
@@ -200,14 +224,14 @@ void GUI::updateBuffer(uint32_t idx) {
 
     if (VBSize > prevVBSize) {
       VB = Buffer::Uni(new Buffer(mDevice,
-                                  VBSize,
+                                  2 * VBSize,
                                   vk::BufferUsageFlagBits::eVertexBuffer,
                                   vk::MemoryPropertyFlagBits::eHostVisible,
                                   vk::MemoryPropertyFlagBits::eHostCoherent));
     }
     if (IBSize > prevIBSize) {
       IB = Buffer::Uni(new Buffer(mDevice,
-                                  IBSize,
+                                  2 * IBSize,
                                   vk::BufferUsageFlagBits::eIndexBuffer,
                                   vk::MemoryPropertyFlagBits::eHostVisible,
                                   vk::MemoryPropertyFlagBits::eHostCoherent));

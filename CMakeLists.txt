@@ -24,8 +24,14 @@ if(BUILD_TEST)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Test ${CMAKE_BINARY_DIR}/Test)
 endif()
 
-add_executable(euroc_vio exec/vio_main.cpp)
-target_link_libraries(euroc_vio PRIVATE toy::toy libs io)
+file(GLOB_RECURSE APP_SRC
+  app/*.h
+  app/*.cpp
+)
+
+add_executable(euroc_vio exec/vio_main.cpp ${APP_SRC})
+target_include_directories(euroc_vio PRIVATE app)
+target_link_libraries(euroc_vio PRIVATE toy::toy libs io vulkanLight::vulkanLight)
 
 if(WIN32)
   set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../lib)

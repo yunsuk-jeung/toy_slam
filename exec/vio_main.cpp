@@ -6,7 +6,10 @@
 #include "Simulator.h"
 #include "SensorFactory.h"
 #include "Slam.h"
+#include "SlamApp.h"
+#include "GlfwWindow.h"
 
+vkl::SlamApp*   app              = nullptr;
 io::Sensor*     sensor           = nullptr;
 io::DataReader* dataReader       = nullptr;
 std::string     dataPath         = "D:/dataset/EUROC/MH_01_easy";
@@ -43,6 +46,41 @@ void registerCallbacks() {
   sensor->registerGyrCallback(gyrCallback);
 }
 
+void prepareSensor() {
+  setupSensor();
+  registerCallbacks();
+}
+
+void prepareSLAM() {
+  CameraInfo info0;
+  CameraInfo info1;
+  sensor->getInfo(&info0, &info1);
+
+  toy::SLAM::getInstance()->setSensorInfo(&info0, &info1);
+  toy::SLAM::getInstance()->prepare(slamConfigFile);
+}
+
+void prepareGUI() {
+  vkl::WindowInfo winInfo{
+    "Sample window",
+    vkl::WindowInfo::Mode::Default,
+    true,
+    vkl::WindowInfo::Vsync::ON,
+    vkl::WindowInfo::Orientation::Landscape,
+    {1280, 1280}
+  };
+
+  app = new vkl::SlamApp();
+  std::unique_ptr<vkl::Window> glfwWindow(new vkl::GlfwWindow(winInfo, app));
+  app->registerWindow(glfwWindow);
+  app->addShaderPath("F:/transfer/toy_slam/libvulkanlight/shaders");
+  app->addResourcePath("F:/transfer/toy_slam/libvulkanlight/shaders");
+  app->addShaderPath("D:/workspaceD/toy_vio/libvulkanlight/shaders");
+  app->addResourcePath("D:/workspaceD/toy_vio/libvulkanlight/shaders");
+  app->registerSensor(sensor);
+  app->prepare();
+}
+
 int main() {
   if (!std::filesystem::exists(configPath + sensorConfigFile)) {
     configPath = "F:/transfer/toy_slam/configs/";
@@ -50,29 +88,24 @@ int main() {
   sensorConfigFile = configPath + sensorConfigFile;
   slamConfigFile   = configPath + slamConfigFile;
 
-  setupSensor();
-  registerCallbacks();
+  prepareSensor();
+  prepareSLAM();
+  prepareGUI();
 
-  CameraInfo info0;
-  CameraInfo info1;
-  sensor->getInfo(&info0, &info1);
+  //while (true) {
+  //  ((io::Simulator*)sensor)->spinOnce();
+  //  int key = cv::waitKey();
+  //  if (key == 27)
+  //    break;
+  //}
 
-  toy::SLAM::getInstance()->setSensorInfo(&info0, &info1);
-  toy::SLAM::getInstance()->prepare(slamConfigFile);
-
-  while (true) {
-    ((io::Simulator*)sensor)->spinOnce();
-    int key = cv::waitKey();
-    if (key == 27)
-      break;
-  }
-
-  sensor->stop();
+  app->run();
 
   toy::SLAM::deleteInstance();
 
   delete dataReader;
   delete sensor;
+  delete app;
 
   return 0;
 }

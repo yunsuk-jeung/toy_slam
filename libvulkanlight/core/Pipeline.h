@@ -10,13 +10,16 @@ class Pipeline : public VkObject<vk::Pipeline> {
 public:
   USING_SMART_PTR(Pipeline);
   Pipeline() = delete;
-  Pipeline(Device*         device,
-           RenderContext*  context,
-           vk::RenderPass  renderPass,
-           PipelineLayout* pipelineLayout,
-           uint32_t        subpassId);
+  Pipeline(const std::string& name,
+           Device*            device,
+           RenderContext*     context,
+           vk::RenderPass     renderPass,
+           PipelineLayout*    pipelineLayout,
+           uint32_t           subpassId);
   virtual ~Pipeline();
-  virtual void prepare() = 0;
+
+  void         prepare();
+  virtual void prepareImpl() = 0;
 
 protected:
   void addResource();
@@ -33,18 +36,18 @@ public:
   PipelineLayout* getPipelineLayout() { return mPipelineLayout; }
 };
 
-class BasicTraianglePipeline : public Pipeline {
+class TextureMaterialPipeline : public Pipeline {
 public:
-  BasicTraianglePipeline() = delete;
-  BasicTraianglePipeline(const std::string& name,
-                         Device*            device,
-                         RenderContext*     context,
-                         vk::RenderPass     renderPass,
-                         PipelineLayout*    pipelineLayout,
-                         uint32_t           subpassId = 0);
-  ~BasicTraianglePipeline();
+  TextureMaterialPipeline() = delete;
+  TextureMaterialPipeline(const std::string& name,
+                          Device*            device,
+                          RenderContext*     context,
+                          vk::RenderPass     renderPass,
+                          PipelineLayout*    pipelineLayout,
+                          uint32_t           subpassId = 0);
+  ~TextureMaterialPipeline();
 
-  void prepare() override;
+  void prepareImpl() override;
 };
 
 class ImGuiPipeline : public Pipeline {
@@ -58,7 +61,7 @@ public:
                 uint32_t           subpassId = 0);
   ~ImGuiPipeline();
 
-  void prepare() override;
+  void prepareImpl() override;
 };
 
 }  //namespace vkl

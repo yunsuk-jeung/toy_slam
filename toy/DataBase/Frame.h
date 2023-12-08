@@ -64,7 +64,10 @@ public:
   ImagePyramid*      getImagePyramid(int i) { return mImagePyramids[i].get(); }
   Camera*            getCamera(int i) { return mCameras[i].get(); }
   Feature*           getFeature(int i) { return mFeatures[i].get(); }
+  void               setSwb(const Sophus::SE3d& Swb) { mSwb = Swb; }
+  Sophus::SE3d&      getSwb() { return mSwb; }
   Sophus::SE3d       getSwc(int i) { return mSwb * mSbcs[i]; }
+  Sophus::SE3d&      getSbc(int i) { return mSbcs[i]; }
   MapPointFactorMap& getMapPointFactorMap() { return mMapPointFactorMap; }
 };
 

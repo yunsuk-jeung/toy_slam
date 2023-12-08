@@ -45,6 +45,13 @@ void LocalTracker::process() {
     break;
   }
   case Status::TRACKING: {
+
+    //todo changed if imu exists;
+    if (true) {
+      auto& Swb = mLocalMap->getFrames().rbegin()->second->getSwb();
+      currFrame->setSwb(Swb);
+    }
+
     mLocalMap->addFrame(currFrame);
     int createMPCount = initializeMapPoints(currFrame);
 

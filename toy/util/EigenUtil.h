@@ -14,5 +14,4 @@ static Eigen::Matrix<T, 3, 3> skew(Eigen::Matrix<T, 3, 1>& src) {
   skew(2, 1)                  = src[0];
   return skew;
 }
-
 }  //namespace Eigen

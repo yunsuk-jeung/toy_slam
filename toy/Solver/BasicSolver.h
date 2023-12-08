@@ -38,23 +38,26 @@ public:
   }
 
   static bool solveFramePose(db::Frame::Ptr curr) {
-    auto&           mapPointFactorMap = curr->getMapPointFactorMap();
-    Eigen::Matrix6d H                 = Eigen::Matrix6d::Zero();
-    Eigen::Vector6d b                 = Eigen::Vector6d::Zero();
+    auto&            mapPointFactorMap = curr->getMapPointFactorMap();
+    Eigen::Matrix66d H                 = Eigen::Matrix66d::Zero();
+    Eigen::Vector6d  b                 = Eigen::Vector6d::Zero();
 
     std::vector<PoseOnlyReprojectionCost> costs;
     costs.reserve(mapPointFactorMap.size());
 
     MEstimator::Ptr huber = std::shared_ptr<Huber>(new Huber(1.0));
-    Eigen::Vector6d lie = curr->getSwc(0).log();
+
+    Sophus::SE3d Swc = curr->getSwc(0);
 
     for (auto& [mpWeak, factor] : mapPointFactorMap) {
       auto mp = mpWeak.lock();
-      costs.emplace_back(&lie, mp, factor.undist0().head(2), huber);
+      costs.emplace_back(&Swc, mp, factor.undist0().head(2), huber);
     }
 
+    /*
+    //single thread is faster for the small problem
     struct Reductor {
-      Reductor(const std::vector<PoseOnlyReprojectionCost>& costs)
+      Reductor(std::vector<PoseOnlyReprojectionCost>& costs)
         : mCosts{costs} {
         mH.setZero();
         mb.setZero();
@@ -62,7 +65,8 @@ public:
       void operator()(const tbb::blocked_range<size_t>& range) {
         for (size_t r = range.begin(); r != range.end(); ++r) {
           auto& cost = mCosts[r];
-          //lb->add_dense_H_b(H_, b_);
+          cost.linearlize();
+          cost.addToHessian(mH, mb);
         }
       }
       Reductor(Reductor& src, tbb::split)
@@ -75,10 +79,40 @@ public:
         mb += b.mb;
       }
 
-      const std::vector<PoseOnlyReprojectionCost>& mCosts;
-      Eigen::Matrix6d                              mH;
-      Eigen::Vector6d                              mb;
+    std::vector<PoseOnlyReprojectionCost>& mCosts;
+    Eigen::Matrix6d                        mH;
+    Eigen::Vector6d                        mb;
     };
+
+    Reductor                   reductor(costs);
+    tbb::blocked_range<size_t> range(0, costs.size());
+    tbb::parallel_reduce(range, reductor);
+    */
+
+    constexpr int    maxIter = 2;
+    constexpr double lambda  = 1e-6;
+
+    for (int iter = 0; iter < maxIter; iter++) {
+      Eigen::Matrix66d JtJ = Eigen::Matrix66d::Zero();
+      Eigen::Vector6d  JtC = Eigen::Vector6d::Zero();
+
+      for (auto& cost : costs) {
+        cost.linearlize();
+        cost.addToHessian(JtJ, JtC);
+      }
+
+      Eigen::Vector6d D = JtJ.diagonal();
+      D *= lambda;
+      JtJ.diagonal().array() += D.array().max(lambda);
+      Eigen::Vector6d delX = -JtJ.ldlt().solve(JtC);
+
+      Swc = Swc * Sophus::SE3d::exp(delX);
+    }
+
+    auto& Sbc0 = curr->getSbc(0);
+
+    Sophus::SE3d Swb = Swc * Sbc0.inverse();
+    curr->setSwb(Swb);
 
     return true;
   }

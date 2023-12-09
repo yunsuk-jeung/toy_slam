@@ -8,6 +8,8 @@ class Device;
 class RenderContext;
 class ShaderModule;
 class PipelineLayout;
+class Pipeline;
+class UniformBuffer;
 class RendererBase {
 public:
   RendererBase();
@@ -35,11 +37,11 @@ protected:
   std::string        mName;
   Device*            mDevice;
   RenderContext*     mRenderContext;
-  vk::DescriptorPool mDescPool;
+  vk::DescriptorPool mVkDescPool;
 
-  vk::RenderPass     mVkRenderPass;
-  vk::Pipeline       mVkPipeline;
-  vk::PipelineLayout mVkPipelineLayout;
+  vk::RenderPass  mVkRenderPass;
+  PipelineLayout* mPipelineLayout;
+  Pipeline*       mPipeline;
 
   //model matrix
   Eigen::Matrix4f mM;
@@ -49,5 +51,10 @@ protected:
   Eigen::Matrix4f mR;
   Eigen::Matrix4f mS;
   Eigen::Matrix4f mTRS;
+
+  UniformBuffer* mCamUB;
+
+public:
+  void setCamUB(UniformBuffer* buffer) { mCamUB = buffer; }
 };
 }  //namespace vkl

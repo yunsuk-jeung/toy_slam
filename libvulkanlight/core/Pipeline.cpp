@@ -22,7 +22,9 @@ Pipeline::Pipeline(const std::string& name,
   , mPipelineLayout{pipelineLayout}
   , mSubpassId{subpassId} {}
 
-Pipeline::~Pipeline() {}
+Pipeline::~Pipeline() {
+  mDevice->vk().destroyPipeline(this->vk());
+}
 
 void Pipeline::prepare() {
   prepareImpl();
@@ -39,8 +41,7 @@ TextureMaterialPipeline::TextureMaterialPipeline(const std::string& name,
                                                  vk::RenderPass     renderPass,
                                                  PipelineLayout*    pipelineLayout,
                                                  uint32_t           subpassId)
-  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {
-}
+  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {}
 
 TextureMaterialPipeline::~TextureMaterialPipeline() {}
 
@@ -133,8 +134,7 @@ ImGuiPipeline::ImGuiPipeline(const std::string& name,
                              vk::RenderPass     renderPass,
                              PipelineLayout*    pipelineLayout,
                              uint32_t           subpassId)
-  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {
-}
+  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {}
 
 ImGuiPipeline::~ImGuiPipeline() {}
 

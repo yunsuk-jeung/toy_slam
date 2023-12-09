@@ -7,13 +7,6 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
-struct Vertex {
-  float x, y, z;
-  float r, g, b;
-};
-#endif
-
-#ifdef __cplusplus
 struct VertexColorNuv {
   float x, y, z;
   float r, g, b;
@@ -25,6 +18,11 @@ struct VertexColorNuv {
 struct VertexColor {
   float x, y, z;
   float r, g, b;
+};
+
+struct Vertex4d {
+  float x, y, z, w;
+  
 };
 #endif
 

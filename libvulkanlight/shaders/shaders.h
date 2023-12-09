@@ -23,8 +23,7 @@ void main() {
 const std::string basicPointVert = R"(
 #version 450
 #include "ShaderTypes.h"
-layout(location = 0) in vec3 i_pos;
-layout(location = 1) in vec3 i_col;
+layout(location = 0) in vec4 i_pos;
 
 layout(set = 0, binding = 0, std140) uniform camData{
   CameraUniform cam;};
@@ -40,9 +39,9 @@ out gl_PerVertex
 };
 
 void main() {
-    o_col = i_col;
-    gl_Position = cam.P * cam.V * model * vec4(i_pos, 1.0);
-    gl_PointSize = 3.0f;
+    o_col = vec3(1.0,1.0,1.0);
+    gl_Position = cam.P * cam.V * model * vec4(i_pos.xyz, 1.0);
+    gl_PointSize = 10.0f;
 }
 )";
 const std::string basicFrag      = R"(

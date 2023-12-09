@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <map>
 #include <vulkan/vulkan.hpp>
 #include "macros.h"
 #include "VkObject.h"
@@ -13,13 +14,16 @@ public:
   PipelineLayout(Device* device, std::vector<ShaderModule*>& shaderModules);
   ~PipelineLayout();
 
+  vk::DescriptorSetLayout getDescriptorSetLayout(const std::string& name);
+
 protected:
   std::vector<vk::DescriptorSetLayout> prepareDescSetLayouts();
 
 protected:
-  std::string                mName;
-  Device*                    mDevice;
-  std::vector<ShaderModule*> mShaderModules;
+  std::string                        mName;
+  Device*                            mDevice;
+  std::vector<ShaderModule*>         mShaderModules;
+  std::map<std::string, std::string> mDescsetNameMap;
 
 public:
   std::vector<ShaderModule*>& getShaderModules() { return mShaderModules; }

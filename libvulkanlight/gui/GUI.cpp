@@ -1,10 +1,12 @@
 #pragma once
 #include <imgui.h>
-
+#include "VklLogger.h"
 #include "Utils.h"
 #include "Device.h"
 #include "Window.h"
 #include "RenderContext.h"
+#include "PipelineLayout.h"
+#include "Pipeline.h"
 #include "Buffer.h"
 #include "ResourcePool.h"
 #include "InputCallback.h"
@@ -80,20 +82,8 @@ void GUI::onRender() {
   ImGui::Begin("status");
   ImGui::Text("fps: %f", io.Framerate);
   ImGui::End();
-  
-  static bool show_demo_window = true;
 
-  if (show_demo_window)
-    ImGui::ShowDemoWindow(&show_demo_window);
-
-  //ImGui::Begin("status2");
-  //ImGui::Text("fps: %f", io.Framerate);
-  //ImGui::End();
-
-  //onWindowResized(1280,1280);
-  //for (const auto& obj : mImGuiObjects) {
-  //  obj->render();
-  //}
+  for (const auto& obj : mImGuiObjects) { obj->render(); }
 
   ImGui::Render();
 }
@@ -108,7 +98,8 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
 
   updateBuffer(idx);
 
-  cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, mVkPipeline);
+  auto& vkPipeline = mPipeline->vk();
+  cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, vkPipeline);
   //Bind Vertex And Index Buffer:
 
   auto& VB = mVBs[idx];
@@ -130,8 +121,9 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
   trans[0] = -1.0f - dd->DisplayPos.x * scale[0];
   trans[1] = -1.0f - dd->DisplayPos.y * scale[1];
 
-  cmd.pushConstants<float>(mVkPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, scale);
-  cmd.pushConstants<float>(mVkPipelineLayout, vk::ShaderStageFlagBits::eVertex, 8, trans);
+  auto& vkPipelineLayout = mPipelineLayout->vk();
+  cmd.pushConstants<float>(vkPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, scale);
+  cmd.pushConstants<float>(vkPipelineLayout, vk::ShaderStageFlagBits::eVertex, 8, trans);
 
   ImVec2 clipOff   = dd->DisplayPos;
   ImVec2 clipScale = dd->FramebufferScale;
@@ -184,7 +176,7 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
         desc_set = mFontDescSet;
       }
       cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                             mVkPipelineLayout,
+                             vkPipelineLayout,
                              0,
                              {desc_set},
                              {});
@@ -210,6 +202,7 @@ void GUI::updateBuffer(uint32_t idx) {
   ImDrawData* dd        = ImGui::GetDrawData();
   int         fb_width  = (int)(dd->DisplaySize.x * dd->FramebufferScale.x);
   int         fb_height = (int)(dd->DisplaySize.y * dd->FramebufferScale.y);
+
   if (fb_width <= 0 || fb_height <= 0)
     return;
 
@@ -223,21 +216,21 @@ void GUI::updateBuffer(uint32_t idx) {
     auto& IB = mIBs[idx];
 
     if (VBSize > prevVBSize) {
-      VB = Buffer::Uni(new Buffer(mDevice,
-                                  2 * VBSize,
-                                  vk::BufferUsageFlagBits::eVertexBuffer,
-                                  vk::MemoryPropertyFlagBits::eHostVisible,
-                                  vk::MemoryPropertyFlagBits::eHostCoherent));
+      VB.reset(new Buffer(mDevice,
+                          VBSize,
+                          vk::BufferUsageFlagBits::eVertexBuffer,
+                          vk::MemoryPropertyFlagBits::eHostVisible,
+                          vk::MemoryPropertyFlagBits::eHostCoherent));
     }
     if (IBSize > prevIBSize) {
-      IB = Buffer::Uni(new Buffer(mDevice,
-                                  2 * IBSize,
-                                  vk::BufferUsageFlagBits::eIndexBuffer,
-                                  vk::MemoryPropertyFlagBits::eHostVisible,
-                                  vk::MemoryPropertyFlagBits::eHostCoherent));
+      IB.reset(new Buffer(mDevice,
+                          IBSize,
+                          vk::BufferUsageFlagBits::eIndexBuffer,
+                          vk::MemoryPropertyFlagBits::eHostVisible,
+                          vk::MemoryPropertyFlagBits::eHostCoherent));
     }
-    uint8_t* pVBO = VB->map();
-    uint8_t* pIBO = IB->map();
+    ImDrawVert* pVBO = (ImDrawVert*)VB->map();
+    ImDrawIdx*  pIBO = (ImDrawIdx*)IB->map();
 
     for (int n = 0; n < dd->CmdListsCount; n++) {
       const ImDrawList* cmd_list = dd->CmdLists[n];
@@ -428,7 +421,7 @@ void GUI::createTextures() {
 void GUI::createDescriptorsets() {
   auto l = ResourcePool::requestDescriptorSetLayout("imgui_frag_sTexture");
 
-  mFontDescSet = mDevice->vk().allocateDescriptorSets({mDescPool, l}).front();
+  mFontDescSet = mDevice->vk().allocateDescriptorSets({mVkDescPool, l}).front();
 
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->SetTexID((ImTextureID)(VkDescriptorSet(mFontDescSet)));

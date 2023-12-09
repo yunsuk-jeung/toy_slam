@@ -8,14 +8,16 @@ RendererBase::RendererBase()
   : mName{"Base Renderer"}
   , mDevice{nullptr}
   , mRenderContext{nullptr}
-  , mDescPool{VK_NULL_HANDLE}
+  , mVkDescPool{VK_NULL_HANDLE}
   , mVkRenderPass{VK_NULL_HANDLE}
-  , mVkPipeline{VK_NULL_HANDLE}
+  , mPipelineLayout{nullptr}
+  , mPipeline{nullptr}
   , mM{Eigen::Matrix4f::Identity()}
   , mR{Eigen::Matrix4f::Identity()}
   , mT{Eigen::Matrix4f::Identity()}
   , mS{Eigen::Matrix4f::Identity()}
-  , mTRS{Eigen::Matrix4f::Identity()} {}
+  , mTRS{Eigen::Matrix4f::Identity()}
+  , mCamUB{nullptr} {}
 
 RendererBase::~RendererBase() {}
 
@@ -30,12 +32,11 @@ void RendererBase::prepare(Device*            device,
 
   mDevice        = device;
   mRenderContext = context;
-  mDescPool      = descPool;
+  mVkDescPool    = descPool;
   mVkRenderPass  = renderPass;
 
-  auto* pipeline    = ResourcePool::requestPipeline(pipelineName);
-  mVkPipeline       = pipeline->vk();
-  mVkPipelineLayout = pipeline->getPipelineLayout()->vk();
+  mPipeline       = ResourcePool::requestPipeline(pipelineName);
+  mPipelineLayout = mPipeline->getPipelineLayout();
 
   createVertexBuffer();
   createIndexBuffers();

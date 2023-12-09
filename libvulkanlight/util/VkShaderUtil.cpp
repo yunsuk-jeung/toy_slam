@@ -364,14 +364,14 @@ std::vector<std::string> VkShaderUtil::replaceInclude(const std::string& src) {
     if (line.find("#include \"") == 0) {
       std::string headerFile = line.substr(10);
       size_t      last_quote = headerFile.find("\"");
-
+      std::string file;
       for (const std::string& shaderFolderPath : ResourcePool::getShaderPaths()) {
-        headerFile = shaderFolderPath + "/" + headerFile.substr(0, last_quote);
-        if (fs::fileExists(headerFile))
+        file = shaderFolderPath + "/" + headerFile.substr(0, last_quote);
+        if (fs::fileExists(file))
           break;
       }
 
-      std::string headerSrc    = readFileAsString(headerFile);
+      std::string headerSrc    = readFileAsString(file);
       auto        intermediate = replaceInclude(headerSrc);
       for (auto& interLine : intermediate) { outs.push_back(interLine); }
     }

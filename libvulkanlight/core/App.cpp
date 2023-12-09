@@ -566,11 +566,6 @@ void App::createGraphicsCamera() {
 
   auto count   = mRenderContext->getContextImageCount();
   auto memSize = sizeof(CameraUniform);
-  mCameraUB    = std::make_unique<UniformBuffer>(mDevice.get(), count, memSize);
-  //mCameraUB    = UniformBuffer::Uni(new UniformBuffer(mDevice.get(), count, memSize));
-
-  CameraUniform tmp;
-  for (int i = 0; i < count; ++i) { mCameraUB->update(i, &tmp, 0); }
 
   vk::DescriptorSetLayoutBinding camBinding{0,
                                             vk::DescriptorType::eUniformBuffer,
@@ -579,7 +574,17 @@ void App::createGraphicsCamera() {
 
   auto layout = mDevice->vk().createDescriptorSetLayout({{}, camBinding});
   ResourcePool::addDescriptorSetLayout("gui cam", layout);
-  mCameraUB->createDescSets(0, layout, mVkDescPool);
+
+  //mCameraUB = UniformBuffer::Uni(
+  //  new UniformBuffer(mDevice.get(), layout, mVkDescPool, 0, count, memSize));
+  mCameraUB = std::make_unique<UniformBuffer>(mDevice.get(),
+                                              mVkDescPool,
+                                              layout,
+                                              0,
+                                              count,
+                                              memSize);
+  CameraUniform tmp;
+  for (int i = 0; i < count; ++i) { mCameraUB->update(i, &tmp, 0); }
 }
 
 void App::requestGpuFeatures(Device* vkPhysicalDevice) {

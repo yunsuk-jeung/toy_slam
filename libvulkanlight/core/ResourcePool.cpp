@@ -20,14 +20,13 @@ std::unordered_map<size_t, Pipeline::Uni>           ResourcePool::mPipelines;
 
 void ResourcePool::clear(Device* device) {
   mShaderPools.clear();
+
   for (auto& [key, layout] : mDescriptorSetLayouts) {
     device->vk().destroyDescriptorSetLayout(layout);
   }
+  mDescriptorSetLayouts.clear();
   mPipelineLayouts.clear();
-
-  for (auto& [key, pipeline] : mPipelines) {
-    device->vk().destroyPipeline(pipeline->vk());
-  }
+  mPipelines.clear();
 }
 
 void ResourcePool::addShaderPath(std::string path) {

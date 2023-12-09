@@ -13,8 +13,8 @@ LocalTracker::LocalTracker()
   , mLocalMap{nullptr} {}
 
 LocalTracker::~LocalTracker() {
-  mLocalMap.release();
-  mVioSolver.release();
+  mLocalMap.reset();
+  mVioSolver.reset();
 }
 
 void LocalTracker::prepare() {

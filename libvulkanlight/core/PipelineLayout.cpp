@@ -73,7 +73,7 @@ std::vector<vk::DescriptorSetLayout> PipelineLayout::prepareDescSetLayouts() {
       layoutBinding.descriptorType  = descriptor_type;
       layoutBinding.stageFlags      = static_cast<vk::ShaderStageFlags>(resource.stages);
 
-      auto name = "_" + resource.name;
+      auto name = resource.name;
       VklLogD("desc set : {} binding : {} name : {}",
               resource.set,
               resource.binding,
@@ -86,9 +86,17 @@ std::vector<vk::DescriptorSetLayout> PipelineLayout::prepareDescSetLayouts() {
   for (auto& [key, bindings] : bindingsMap) {
     auto descSetLayout = mDevice->vk().createDescriptorSetLayout({{}, bindings});
 
-    std::string name  = shaderNameMap[key];
+    std::string name = shaderNameMap[key];
+
     auto&       names = namesMap[key];
-    for (auto& n : names) { name += n; }
+    std::string layoutNames;
+
+    for (auto& n : names) { layoutNames = layoutNames  + n + "_"; }
+    layoutNames.pop_back();
+
+    name = name + "_" + layoutNames;
+
+    mDescsetNameMap[layoutNames] = name;
 
     VklLogD("name : {} desc set : {} binding num : {}", name, key, bindings.size());
     ResourcePool::addDescriptorSetLayout(name, descSetLayout);
@@ -126,4 +134,10 @@ PipelineLayout::PipelineLayout(Device* device, std::vector<ShaderModule*>& shade
 PipelineLayout::~PipelineLayout() {
   mDevice->vk().destroyPipelineLayout(mVkObject);
 }
+
+vk::DescriptorSetLayout PipelineLayout::getDescriptorSetLayout(const std::string& name) {
+  std::string id = mDescsetNameMap[name];
+  return ResourcePool::requestDescriptorSetLayout(id);
+}
+
 }  //namespace vkl

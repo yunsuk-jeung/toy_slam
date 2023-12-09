@@ -1,7 +1,26 @@
 #pragma once
+#include <vector>
+#include "RendererBase.h"
 
 namespace vkl {
-class PointCloudRenderer {
+class BufferingBuffer;
+class UniformBuffer;
+class PointCloudRenderer : public RendererBase {
 public:
+  PointCloudRenderer();
+  ~PointCloudRenderer();
+
+  virtual void createVertexBuffer() override;
+  virtual void createUniformBuffers() override;
+
+  void buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx);
+
+protected:
+  virtual void setName() override;
+
+protected:
+  std::vector<float>               mPointBuffer;
+  std::unique_ptr<BufferingBuffer> mBVB;
+  std::unique_ptr<UniformBuffer>   mUB;
 };
 }  //namespace vkl

@@ -31,12 +31,12 @@ public:
     };
 
     std::vector<vk::VertexInputBindingDescription> vertBindingDescription{
-      {0, sizeof(VertexColor), vk::VertexInputRate::eVertex}
+      {0, sizeof(Vertex4d), vk::VertexInputRate::eVertex}
     };
 
     std::vector<vk::VertexInputAttributeDescription> attributeDescription{
-      {0, 0, vk::Format::eR32G32B32Sfloat,                 0},
-      {1, 0, vk::Format::eR32G32B32Sfloat, sizeof(float) * 3}
+      {0, 0, vk::Format::eR32G32B32A32Sfloat, 0},
+ //{1, 0, vk::Format::eR32G32B32Sfloat, sizeof(float) * 3}
     };
 
     vk::PipelineVertexInputStateCreateInfo inputStateCI({},

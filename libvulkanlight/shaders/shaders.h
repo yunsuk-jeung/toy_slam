@@ -3,6 +3,33 @@
 
 namespace vkl {
 namespace shader {
+const std::string sampleVert = R"(
+#version 450
+#include "ShaderTypes.h"
+
+layout(location = 0) in vec4 i_pos;
+layout(location = 0) out vec3 o_col;
+
+layout(set = 0, binding = 0, std140) uniform camData{
+  CameraUniform cam;};
+
+void main(){
+    gl_Position  = cam.P * cam.V * vec4(i_pos.xyz,1.0);
+    gl_PointSize = 10.0f;
+    o_col = vec3(1.0, 1.0, 0.0);
+}
+)";
+
+const std::string sampleFrag = R"(
+#version 450
+precision mediump float;
+layout(location = 0) in vec3 i_col;
+layout(location = 0) out vec4 FragColor0;
+void main(){
+    FragColor0 = vec4(i_col, 1.0);
+}
+)";
+
 const std::string basicVert      = R"(
 #version 450
 #include "ShaderTypes.h"
@@ -23,37 +50,29 @@ void main() {
 const std::string basicPointVert = R"(
 #version 450
 #include "ShaderTypes.h"
+
 layout(location = 0) in vec4 i_pos;
+layout(location = 0) out vec3 o_col;
 
 layout(set = 0, binding = 0, std140) uniform camData{
   CameraUniform cam;};
+
 layout(set = 1, binding = 0, std140) uniform modelMat{
   mat4 model;};
 
-layout(location = 0) out vec3 o_col;
-
-out gl_PerVertex
-{
-	vec4 gl_Position;
-	float gl_PointSize;
-};
-
-void main() {
-    o_col = vec3(1.0,1.0,1.0);
-    gl_Position = cam.P * cam.V * model * vec4(i_pos.xyz, 1.0);
-    gl_PointSize = 10.0f;
+void main(){
+    gl_Position  = cam.P * cam.V * model * vec4(i_pos.xyz, 1.0);
+    gl_PointSize = 3.0f;
+    o_col = vec3(1.0, 1.0, 0.0);
 }
 )";
 const std::string basicFrag      = R"(
 #version 450
 precision mediump float;
-#include "ShaderTypes.h"
 layout(location = 0) in vec3 i_col;
-
 layout(location = 0) out vec4 FragColor0;
-
-void main() {
-  vec4 FragColor0 = vec4(i_col,1.0);
+void main(){
+    FragColor0 = vec4(i_col, 1.0);
 }
 )";
 

@@ -39,9 +39,7 @@ bool SlamApp::prepare() {
   mGUI->addImGuiObjects(obj);
 
   mPointCloudRenderer = std::make_unique<PointCloudRenderer>();
-
   mPointCloudRenderer->setCamUB(mCameraUB.get());
-
   mPointCloudRenderer->prepare(mDevice.get(),
                                mRenderContext.get(),
                                mVkDescPool,
@@ -62,17 +60,16 @@ void SlamApp::run() {
 
 void SlamApp::createPipelineLayouts() {
   App::createPipelineLayouts();
-
-  ShaderSourceType type      = ShaderSourceType::STRING;
-  std::string      name      = "basic";
-  const auto&      basicVert = shader::basicPointVert;
-  const auto&      basicFrag = shader::basicFrag;
+  ShaderSourceType type           = ShaderSourceType::STRING;
+  std::string      name           = "basic";
+  const auto&      basicPointVert = shader::basicPointVert;
+  const auto&      basicFrag      = shader::basicFrag;
 
   auto* vert = ResourcePool::loadShader("point_basic",
                                         mDevice.get(),
                                         type,
                                         vk::ShaderStageFlagBits::eVertex,
-                                        basicVert);
+                                        basicPointVert);
 
   auto* frag = ResourcePool::loadShader(name,
                                         mDevice.get(),
@@ -87,8 +84,7 @@ void SlamApp::createPipelines() {
   App::createPipelines();
   using RP               = ResourcePool;
   auto* basicPointLayout = RP::requestPipelineLayout("point_basic_vert_basic_frag");
-
-  auto* basicPointPL = new PointBasicPipeline("point_basic",
+  auto* basicPointPL     = new PointBasicPipeline("point_basic",
                                               mDevice.get(),
                                               mRenderContext.get(),
                                               mVkRenderPass,
@@ -113,7 +109,6 @@ void SlamApp::onRender() {
 void SlamApp::buildCommandBuffer() {
   auto cmd = beginCommandBuffer();
   beginRenderPass(cmd);
-
 
   mPointCloudRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
 

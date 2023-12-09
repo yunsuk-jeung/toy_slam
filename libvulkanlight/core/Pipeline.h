@@ -64,4 +64,17 @@ public:
   void prepareImpl() override;
 };
 
+class SamplePipeline : public Pipeline {
+public:
+  SamplePipeline() = delete;
+  SamplePipeline(const std::string& name,
+                 Device*            device,
+                 RenderContext*     context,
+                 vk::RenderPass     renderPass,
+                 PipelineLayout*    pipelineLayout,
+                 uint32_t           subpassId = 0);
+  ~SamplePipeline();
+
+  void prepareImpl() override;
+};
 }  //namespace vkl

@@ -73,28 +73,22 @@ void PointCloudRenderer::createUniformBuffers() {
 
   Eigen::Matrix4f I = Eigen::Matrix4f::Identity();
 
-  mUB->update(0, I.data());
-  mUB->update(1, I.data());
-  mUB->update(2, I.data());
+  for (int i = 0; i < count; ++i) { mUB->update(i, I.data()); }
 }
 
 void PointCloudRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
+  auto& vkBuffer     = mBVB->getVkBuffer(idx);
+  auto& camDescSet   = mCamUB->getVkDescSet(idx);
+  auto& modelDescSet = mUB->getVkDescSet(idx);
+  auto  vertexCount  = mPointBuffer.size() >> 2;
+
   cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline->vk());
-
-  mBVB->at(idx)->vk();
-
-  cmd.bindVertexBuffers(0, {mBVB->at(idx)->vk()}, {0});
-
-  auto& camDescSet = mCamUB->getVkDescSet(idx);
-  auto& modelSet   = mUB->getVkDescSet(idx);
-
+  cmd.bindVertexBuffers(0, {vkBuffer}, {0});
   cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                          mPipelineLayout->vk(),
                          0,
-                         {camDescSet, modelSet},
+                         {camDescSet, modelDescSet},
                          {});
-
-  auto vertexCount = mPointBuffer.size() >> 2;
 
   cmd.draw(vertexCount, 1, 0, 0);
 }

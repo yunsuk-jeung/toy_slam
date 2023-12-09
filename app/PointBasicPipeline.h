@@ -36,16 +36,15 @@ public:
 
     std::vector<vk::VertexInputAttributeDescription> attributeDescription{
       {0, 0, vk::Format::eR32G32B32A32Sfloat, 0},
- //{1, 0, vk::Format::eR32G32B32Sfloat, sizeof(float) * 3}
     };
 
     vk::PipelineVertexInputStateCreateInfo inputStateCI({},
                                                         vertBindingDescription,
                                                         attributeDescription);
+
     vk::PipelineInputAssemblyStateCreateInfo
       inputAssemCI({}, vk::PrimitiveTopology::ePointList, false);
 
-    auto&                               scProps = mRenderContext->getContextProps();
     vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
 
     vk::PipelineRasterizationStateCreateInfo rasterizationState;
@@ -56,22 +55,28 @@ public:
 
     vk::PipelineMultisampleStateCreateInfo multisample_state({},
                                                              vk::SampleCountFlagBits::e1);
+    vk::PipelineColorBlendAttachmentState  blendAttachmentState;
+    blendAttachmentState.blendEnable         = true;
+    blendAttachmentState.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
+    blendAttachmentState.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+    blendAttachmentState.colorBlendOp        = vk::BlendOp::eAdd;
+    blendAttachmentState.srcAlphaBlendFactor = vk::BlendFactor::eOne;
+    blendAttachmentState.dstAlphaBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
+    blendAttachmentState.alphaBlendOp        = vk::BlendOp::eAdd;
+    blendAttachmentState.colorWriteMask      = vk::ColorComponentFlagBits::eR
+                                          | vk::ColorComponentFlagBits::eG
+                                          | vk::ColorComponentFlagBits::eB
+                                          | vk::ColorComponentFlagBits::eA;
 
     vk::PipelineDepthStencilStateCreateInfo depthStencilState;
-    depthStencilState.depthCompareOp   = vk::CompareOp::eLessOrEqual;
+    depthStencilState.depthCompareOp   = vk::CompareOp::eAlways;
     depthStencilState.depthTestEnable  = true;
     depthStencilState.depthWriteEnable = true;
     depthStencilState.back.compareOp   = vk::CompareOp::eAlways;
     depthStencilState.front            = depthStencilState.back;
 
-    vk::PipelineColorBlendAttachmentState blendAttachmentState;
-    blendAttachmentState.colorWriteMask = vk::ColorComponentFlagBits::eR
-                                          | vk::ColorComponentFlagBits::eG
-                                          | vk::ColorComponentFlagBits::eB
-                                          | vk::ColorComponentFlagBits::eA;
-
     vk::PipelineColorBlendStateCreateInfo colorBlendState({},
-                                                          false,
+                                                          {},
                                                           {},
                                                           blendAttachmentState);
 
@@ -93,9 +98,7 @@ public:
                                               &dynamicState,
                                               mPipelineLayout->vk(),
                                               mVkRenderPass,
-                                              {},
-                                              {},
-                                              -1);
+                                              mSubpassId);
 
     vk::Result result;
 

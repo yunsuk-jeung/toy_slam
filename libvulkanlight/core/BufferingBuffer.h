@@ -27,8 +27,9 @@ public:
 
   ~BufferingBuffer();
 
-  Buffer* at(uint32_t idx) { return mBuffers[idx].get(); }
-  Buffer* operator[](uint32_t idx) { return mBuffers[idx].get(); }
+  Buffer*    at(uint32_t idx) { return mBuffers[idx].get(); }
+  Buffer*    operator[](uint32_t idx) { return mBuffers[idx].get(); }
+  vk::Buffer getVkBuffer(uint32_t idx) { return mBuffers[idx]->vk(); }
 
   uint8_t* map(uint32_t idx) { return mBuffers[idx]->map(); };
   void     unmap(uint32_t idx) { return mBuffers[idx]->unmap(); };

@@ -20,9 +20,11 @@ struct VertexColor {
   float r, g, b;
 };
 
+struct Vertex {
+  float x, y, z;
+};
 struct Vertex4d {
   float x, y, z, w;
-  
 };
 #endif
 

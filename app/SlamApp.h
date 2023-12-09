@@ -9,6 +9,7 @@ namespace vkl {
 class AxisRenderer;
 class PathRenderer;
 class PointCloudRenderer;
+class SampleRenderer;
 class SlamApp : public App {
 public:
   SlamApp();
@@ -29,7 +30,8 @@ protected:
   //std::unique_ptr<PathRenderer> mPathRenderer;
 
   std::unique_ptr<PointCloudRenderer> mPointCloudRenderer;
-  io::Sensor*                         mSensor;
+
+  io::Sensor* mSensor;
 
 public:
   void registerSensor(io::Sensor* sensor) { mSensor = sensor; }

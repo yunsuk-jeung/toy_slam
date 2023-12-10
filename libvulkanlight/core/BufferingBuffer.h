@@ -40,8 +40,8 @@ public:
   void update(uint32_t idx, uint8_t* data, size_t size, size_t offset);
 
 protected:
-  uint32_t                             mBufferCount;
   Device*                              mDevice;
+  uint32_t                             mBufferCount;
   std::vector<std::unique_ptr<Buffer>> mBuffers;
 };
 }  //namespace vkl

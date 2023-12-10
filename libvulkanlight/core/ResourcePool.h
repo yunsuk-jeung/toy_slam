@@ -52,7 +52,7 @@ public:
     auto                   it  = mPipelines.find(key);
     if (it != mPipelines.end()) {
       VklLogE("you are adding existing pipeline: {}", name);
-    return mPipelines[key].get();
+      return mPipelines[key].get();
     }
 
     mPipelines.insert({key,

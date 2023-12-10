@@ -1,8 +1,10 @@
 #pragma once
+#include <Eigen/Dense>
 #include "RendererBase.h"
 namespace vkl {
 class Buffer;
-class UniformBuffer;
+class DynamicUniformBuffer;
+
 class AxisRenderer : public RendererBase {
 public:
   AxisRenderer();
@@ -14,7 +16,8 @@ protected:
   virtual void createVertexBuffer() override;
   virtual void createUniformBuffers() override;
 
-  std::unique_ptr<Buffer>        mVB;
-  std::unique_ptr<UniformBuffer> mUB;
+  std::unique_ptr<Buffer>               mVB;
+  std::unique_ptr<DynamicUniformBuffer> mDUB;
+  std::vector<Eigen::Matrix4f>          mMs;
 };
 }  //namespace vkl

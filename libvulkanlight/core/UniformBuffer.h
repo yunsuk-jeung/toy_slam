@@ -25,6 +25,7 @@ public:
     , mBufferCount{bufferCount}
     , mMemSize{memSize} {
     mUBs.resize(mBufferCount);
+
     for (auto& UB : mUBs) {
       UB = std::make_unique<Buffer>(mDevice,
                                     mMemSize,
@@ -38,7 +39,15 @@ public:
 
   ~UniformBuffer() { mUBs.clear(); }
 
-  void createDescSets() {
+  void update(int idx, void* ptr, int offset = 0) { mUBs[idx]->update(ptr, mMemSize, 0); }
+
+  const uint32_t getBufferCount() const { return mBufferCount; }
+  auto&          getVkDescLayout() { return mVkDescLayout; }
+  auto&          getVkDescSets() { return mVkDescSets; }
+  auto&          getVkDescSet(uint32_t idx) { return mVkDescSets[idx]; }
+
+protected:
+  virtual void createDescSets() {
     mVkDescSets.resize(mBufferCount);
     for (auto& descset : mVkDescSets) {
       descset = mDevice->vk()
@@ -58,13 +67,6 @@ public:
       mDevice->vk().updateDescriptorSets(writeDescriptorSet, nullptr);
     }
   }
-
-  void update(int idx, void* ptr, int offset = 0) { mUBs[idx]->update(ptr, mMemSize, 0); }
-
-  const uint32_t getBufferCount() const { return mBufferCount; }
-  auto&          getVkDescLayout() { return mVkDescLayout; }
-  auto&          getVkDescSets() { return mVkDescSets; }
-  auto&          getVkDescSet(uint32_t idx) { return mVkDescSets[idx]; }
 
 protected:
   Device*                        mDevice;

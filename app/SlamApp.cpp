@@ -140,18 +140,26 @@ void SlamApp::createPointRenderer() {
 void SlamApp::createAxisRenderer() {
   ShaderSourceType type = ShaderSourceType::STRING_FILE;
 
-  constexpr char vert[]     = "basic";
+  constexpr char vert[]     = "basicDynamic";
   constexpr char vertFile[] = "basic.vert";
 
   constexpr char frag[]     = "basic";
   constexpr char fragFile[] = "basic.frag";
 
-  using RP         = ResourcePool;
-  auto* vertShader = RP::loadShader(vert,
+  using RP              = ResourcePool;
+  auto* vertShader      = RP::loadShader(vert,
                                     mDevice.get(),
                                     type,
                                     vk::ShaderStageFlagBits::eVertex,
                                     vertFile);
+  auto& shaderResources = vertShader->getShaderResources();
+
+  for (auto& resource : shaderResources) {
+    if (resource.set != 1) {
+      continue;
+    }
+    resource.mode = ShaderResourceMode::Dynamic;
+  }
 
   auto* fragShader = RP::loadShader(frag,
                                     mDevice.get(),

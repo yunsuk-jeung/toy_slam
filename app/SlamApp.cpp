@@ -5,7 +5,8 @@
 #include "VkShaderUtil.h"
 #include "shaders.h"
 #include "ResourcePool.h"
-#include "PointBasicPipeline.h"
+#include "SlamObjectPipeline.h"
+#include "AxisRenderer.h"
 #include "PointCloudRenderer.h"
 #include "ImGuiObject.h"
 #include "SlamApp.h"
@@ -58,7 +59,44 @@ void SlamApp::run() {
   mSensor->stop();
 }
 
-void SlamApp::createPipelines() {
+void SlamApp::createRenderers() {
+  createPointRenderer();
+  createAxisRenderer();
+}
+
+void SlamApp::onRender() {
+  mWindow->pollEvents();
+
+  if (mGUI) {
+    mGUI->onRender();
+  }
+
+  updateUniform(mCurrBufferingIdx);
+
+  prepareFrame();
+  buildCommandBuffer();
+  presentFrame();
+}
+
+void SlamApp::buildCommandBuffer() {
+  auto cmd = beginCommandBuffer();
+  beginRenderPass(cmd);
+
+  mAxisRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
+  mPointCloudRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
+
+  if (mGUI)
+    mGUI->buildCommandBuffer(cmd, mCurrBufferingIdx);
+
+  cmd.endRenderPass();
+  cmd.end();
+}
+
+void SlamApp::updateUniform(int idx) {
+  updateCameraUniform(idx);
+}
+
+void SlamApp::createPointRenderer() {
   ShaderSourceType type = ShaderSourceType::STRING_FILE;
 
   constexpr char vert[]     = "basicPoint";
@@ -84,7 +122,7 @@ void SlamApp::createPipelines() {
 
   constexpr char pointPipelinename[] = "point_basic";
 
-  auto* pointPipeline = RP::addPipeline<PointBasicPipeline>(pointPipelinename,
+  auto* pointPipeline = RP::addPipeline<BasicPointPipeline>(pointPipelinename,
                                                             mDevice.get(),
                                                             mRenderContext.get(),
                                                             mVkRenderPass,
@@ -99,35 +137,47 @@ void SlamApp::createPipelines() {
                                pointPipeline);
 }
 
-void SlamApp::onRender() {
-  mWindow->pollEvents();
+void SlamApp::createAxisRenderer() {
+  ShaderSourceType type = ShaderSourceType::STRING_FILE;
 
-  if (mGUI) {
-    mGUI->onRender();
-  }
+  constexpr char vert[]     = "basic";
+  constexpr char vertFile[] = "basic.vert";
 
-  updateUniform(mCurrBufferingIdx);
+  constexpr char frag[]     = "basic";
+  constexpr char fragFile[] = "basic.frag";
 
-  prepareFrame();
-  buildCommandBuffer();
-  presentFrame();
+  using RP         = ResourcePool;
+  auto* vertShader = RP::loadShader(vert,
+                                    mDevice.get(),
+                                    type,
+                                    vk::ShaderStageFlagBits::eVertex,
+                                    vertFile);
+
+  auto* fragShader = RP::loadShader(frag,
+                                    mDevice.get(),
+                                    type,
+                                    vk::ShaderStageFlagBits::eFragment,
+                                    fragFile);
+
+  auto* basicPointLayout = RP::addPipelineLayout(mDevice.get(), vertShader, fragShader);
+
+  constexpr char pointPipelinename[] = "basic_line";
+
+  auto* axisPipeline = RP::addPipeline<BasicLinePipeline>(pointPipelinename,
+                                                          mDevice.get(),
+                                                          mRenderContext.get(),
+                                                          mVkRenderPass,
+                                                          basicPointLayout);
+
+  mAxisRenderer = std::make_unique<AxisRenderer>();
+  mAxisRenderer->setCamUB(mCameraUB.get());
+  mAxisRenderer->prepare(mDevice.get(),
+                         mRenderContext.get(),
+                         mVkDescPool,
+                         mVkRenderPass,
+                         axisPipeline);
 }
 
-void SlamApp::buildCommandBuffer() {
-  auto cmd = beginCommandBuffer();
-  beginRenderPass(cmd);
-
-  mPointCloudRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
-
-  if (mGUI)
-    mGUI->buildCommandBuffer(cmd, mCurrBufferingIdx);
-
-  cmd.endRenderPass();
-  cmd.end();
-}
-
-void SlamApp::updateUniform(int idx) {
-  updateCameraUniform(idx);
-}
+void SlamApp::createPathRenderer() {}
 
 }  //namespace vkl

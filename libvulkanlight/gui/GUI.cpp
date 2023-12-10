@@ -23,6 +23,8 @@ GUI::GUI()
   , mIBs{}
   , mFontImage{nullptr} {
   mImGuiObjects.reserve(30);
+  mName = "GUI";
+
 }
 
 GUI::~GUI() {
@@ -301,10 +303,6 @@ void GUI::handleInputCallbacks() {
       }
     }  //0 left //1 right //2 wheel
   };
-}
-
-void GUI::setName() {
-  mName = "GUI";
 }
 
 void GUI::createVertexBuffer() {

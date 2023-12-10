@@ -174,7 +174,7 @@ bool App::prepare() {
   createGUI();
   createGraphicsCamera();
 
-  createPipelines();
+  createRenderers();
 
   mPrepared = true;
   return mPrepared;
@@ -298,6 +298,7 @@ void App::createDevice() {
     VkSettings::addDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
     VkSettings::addDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
   }
+
 
   //bool bufferDeivceAddr  = VkSettings::isAvailableDeviceExtension(
   //    VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
@@ -578,7 +579,7 @@ void App::createGraphicsCamera() {
   for (int i = 0; i < count; ++i) { mCameraUB->update(i, &tmp, 0); }
 }
 
-void App::createPipelines() {}
+void App::createRenderers() {}
 
 void App::requestGpuFeatures(Device* vkPhysicalDevice) {
   VklLogD("This Function should be overriden by app");

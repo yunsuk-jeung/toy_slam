@@ -28,8 +28,6 @@ void RendererBase::prepare(Device*            device,
                            vk::DescriptorPool descPool,
                            vk::RenderPass     renderPass,
                            Pipeline*          pipeline) {
-  setName();
-
   mDevice        = device;
   mRenderContext = context;
   mVkDescPool    = descPool;

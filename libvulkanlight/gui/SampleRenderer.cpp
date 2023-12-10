@@ -13,7 +13,9 @@
 
 namespace vkl {
 SampleRenderer::SampleRenderer()
-  : RendererBase() {}
+  : RendererBase() {
+  mName = "SampleRenderer";
+}
 
 SampleRenderer::~SampleRenderer() {}
 
@@ -34,10 +36,6 @@ void SampleRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
   cmd.draw(3, 1, 0, 0);
 }
 
-void SampleRenderer::setName() {
-  mName = "SampleRenderer";
-  VklLogI("SampleRenderer");
-}
 void SampleRenderer::createVertexBuffer() {
   std::vector<Vertex4d> vertices = {
     {-0.0, -0.5, 0.2, 1.0},

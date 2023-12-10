@@ -16,9 +16,6 @@ public:
   void buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx);
 
 protected:
-  virtual void setName() override;
-
-protected:
   std::vector<float>               mPointBuffer;
   std::unique_ptr<BufferingBuffer> mBVB;
   std::unique_ptr<UniformBuffer>   mUB;

@@ -12,12 +12,12 @@
 namespace vkl {
 namespace {
 constexpr size_t initialSize = 4 * 100000;
-
 }
 PointCloudRenderer::PointCloudRenderer()
   : mBVB{nullptr}
   , mUB{nullptr} {
   mPointBuffer.reserve(initialSize);
+  mName = "PointCloud Renderer";
 }
 
 PointCloudRenderer::~PointCloudRenderer() {
@@ -35,12 +35,12 @@ void PointCloudRenderer::createVertexBuffer() {
                                            vk::MemoryPropertyFlagBits::eHostVisible,
                                            vk::MemoryPropertyFlagBits::eHostCoherent);
 
-  constexpr float                  radius = 1.0f;
+  constexpr float                  radius = 3.0f;
   std::random_device               rd;
   std::mt19937                     gen(rd());
   std::uniform_real_distribution<> dis(-radius, radius);
 
-  for (int i = 0; i < 1000; ++i) {
+  for (int i = 0; i < 30000; ++i) {
     float x, y, z;
     do {
       x = dis(gen);
@@ -77,6 +77,7 @@ void PointCloudRenderer::createUniformBuffers() {
 }
 
 void PointCloudRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
+
   auto& vkBuffer     = mBVB->getVkBuffer(idx);
   auto& camDescSet   = mCamUB->getVkDescSet(idx);
   auto& modelDescSet = mUB->getVkDescSet(idx);
@@ -91,10 +92,6 @@ void PointCloudRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx)
                          {});
 
   cmd.draw(vertexCount, 1, 0, 0);
-}
-
-void PointCloudRenderer::setName() {
-  mName = "PointCloud Renderer";
 }
 
 }  //namespace vkl

@@ -37,14 +37,22 @@ public:
   void update(uint8_t* data, size_t size, size_t offset);
 
 public:
-  vk::DeviceMemory memory;
-  vk::DeviceSize   size;
-  uint8_t*         mapped_data;
+  vk::DeviceMemory mMemory;
+  vk::DeviceSize   mSize;
+  vk::DeviceSize   mCapacity;
+  uint8_t*         mMapped_data;
 
 protected:
-  VmaAllocation vmaAllocation;
-  Device*       device;
-  bool          mapped;
-  bool          persistent;
+  Device* mDevice;
+
+  vk::BufferUsageFlags        mBufferUsage;
+  vk::MemoryPropertyFlags     mRequired;
+  vk::MemoryPropertyFlags     mPrefered;
+  VmaAllocationCreateFlagBits mFlags;
+  std::vector<uint32_t>       mQueueIdxs;
+  VmaAllocation               mVmaAllocation;
+
+  bool mMapped;
+  bool mPersistent;
 };
 }  //namespace vkl

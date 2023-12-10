@@ -43,7 +43,7 @@ protected:
   virtual void createRenderPass();
   virtual void createFrameBuffer();
   virtual void createVkDescriptorPool();
-  virtual void createPipelines();
+  virtual void createRenderers();
   virtual void createGUI();
   virtual void createGraphicsCamera();
 

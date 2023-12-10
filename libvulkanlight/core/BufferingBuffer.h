@@ -43,7 +43,5 @@ protected:
   uint32_t                             mBufferCount;
   Device*                              mDevice;
   std::vector<std::unique_ptr<Buffer>> mBuffers;
-  std::vector<size_t>                  mPrevSize;
-  std::vector<size_t>                  mCapacities;
 };
 }  //namespace vkl

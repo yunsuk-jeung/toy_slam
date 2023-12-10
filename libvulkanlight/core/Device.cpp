@@ -64,7 +64,14 @@ void Device::initLogicalDevice() {
 
   std::vector<const char*>& extensions = VkSettings::enabledDeviceExtensions;
 
-  vk::DeviceCreateInfo deviceCreateInfo{{}, queueCreateInfos, {}, extensions, {}};
+  vk::PhysicalDeviceFeatures deviceFeatures;
+  deviceFeatures.wideLines = true;
+
+  vk::DeviceCreateInfo deviceCreateInfo{{},
+                                        queueCreateInfos,
+                                        {},
+                                        extensions,
+                                        &deviceFeatures};
 
   mVkObject = vkPhysicalDevice.createDevice(deviceCreateInfo);
   if (!mVkObject) {

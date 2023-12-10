@@ -18,35 +18,41 @@ vkl::Buffer::Buffer(Device*                      _device,
                     vk::MemoryPropertyFlags      prefered,
                     VmaAllocationCreateFlagBits  flags,
                     const std::vector<uint32_t>& queueIdxs)
-  : device(_device)
-  , size(_size)
-  , memory{VK_NULL_HANDLE}
-  , mapped_data{nullptr}
-  , vmaAllocation{VK_NULL_HANDLE}
-  , mapped{false}
-  , persistent{false} {
-  persistent = (flags & VMA_ALLOCATION_CREATE_MAPPED_BIT) != 0;
+  : mDevice(_device)
+  , mSize(_size)
+  , mCapacity(_size << 1)
+  , mBufferUsage{bufferUsage}
+  , mRequired{required}
+  , mPrefered{prefered}
+  , mFlags{flags}
+  , mQueueIdxs{queueIdxs}
+  , mMemory{VK_NULL_HANDLE}
+  , mMapped_data{nullptr}
+  , mVmaAllocation{VK_NULL_HANDLE}
+  , mMapped{false}
+  , mPersistent{false} {
+  mPersistent = (mFlags & VMA_ALLOCATION_CREATE_MAPPED_BIT) != 0;
 
-  vk::BufferCreateInfo buffer_create_info({}, size, bufferUsage);
-  if (queueIdxs.size() >= 2) {
+  vk::BufferCreateInfo buffer_create_info({}, mCapacity, mBufferUsage);
+  if (mQueueIdxs.size() >= 2) {
     buffer_create_info.sharingMode           = vk::SharingMode::eConcurrent;
-    buffer_create_info.queueFamilyIndexCount = static_cast<uint32_t>(queueIdxs.size());
-    buffer_create_info.pQueueFamilyIndices   = queueIdxs.data();
+    buffer_create_info.queueFamilyIndexCount = static_cast<uint32_t>(mQueueIdxs.size());
+    buffer_create_info.pQueueFamilyIndices   = mQueueIdxs.data();
   }
 
   VmaAllocationCreateInfo memoryInfo{};
-  memoryInfo.requiredFlags  = static_cast<VkMemoryPropertyFlags>(required);
-  memoryInfo.preferredFlags = static_cast<VkMemoryPropertyFlags>(prefered);
-  memoryInfo.flags          = flags;
+  memoryInfo.requiredFlags  = static_cast<VkMemoryPropertyFlags>(mRequired);
+  memoryInfo.preferredFlags = static_cast<VkMemoryPropertyFlags>(mPrefered);
+  memoryInfo.flags          = mFlags;
 
   VmaAllocationInfo allocationInfo{};
 
-  auto result = vmaCreateBuffer(device->getMemoryAllocator(),
+  auto result = vmaCreateBuffer(mDevice->getMemoryAllocator(),
                                 reinterpret_cast<VkBufferCreateInfo*>(
                                   &buffer_create_info),
                                 &memoryInfo,
                                 reinterpret_cast<VkBuffer*>(&mVkObject),
-                                &vmaAllocation,
+                                &mVmaAllocation,
                                 &allocationInfo);
 
   if (result != VK_SUCCESS) {
@@ -54,10 +60,10 @@ vkl::Buffer::Buffer(Device*                      _device,
     throw std::runtime_error("failed to create buffer");
   }
 
-  memory = static_cast<vk::DeviceMemory>(allocationInfo.deviceMemory);
+  mMemory = static_cast<vk::DeviceMemory>(allocationInfo.deviceMemory);
 
-  if (persistent) {
-    mapped_data = static_cast<uint8_t*>(allocationInfo.pMappedData);
+  if (mPersistent) {
+    mMapped_data = static_cast<uint8_t*>(allocationInfo.pMappedData);
   }
 
   //std::cout << "create Buffer : " << ++COUNTER << std::endl;
@@ -68,66 +74,84 @@ Buffer::Buffer(Buffer&& src) noexcept {
 }
 
 void vkl::Buffer::swap(Buffer& buffer) {
-  auto _mVkObject     = mVkObject;
-  auto _memory        = memory;
-  auto _size          = size;
-  auto _mapped_data   = mapped_data;
-  auto _vmaAllocation = vmaAllocation;
-  auto _device        = device;
-  auto _mapped        = mapped;
-  auto _persistent    = persistent;
+  auto vkObject      = mVkObject;
+  auto memory        = mMemory;
+  auto size          = mSize;
+  auto capacity      = mCapacity;
+  auto mapped_data   = mMapped_data;
+  auto device        = mDevice;
+  auto bufferUsage   = mBufferUsage;
+  auto required      = mRequired;
+  auto prefered      = mPrefered;
+  auto flags         = mFlags;
+  auto queueIdxs     = mQueueIdxs;
+  auto vmaAllocation = mVmaAllocation;
+  auto mapped        = mMapped;
+  auto persistent    = mPersistent;
 
-  mVkObject     = buffer.mVkObject;
-  memory        = buffer.memory;
-  size          = buffer.size;
-  mapped_data   = buffer.mapped_data;
-  vmaAllocation = buffer.vmaAllocation;
-  device        = buffer.device;
-  mapped        = buffer.mapped;
-  persistent    = buffer.persistent;
+  mVkObject      = buffer.mVkObject;
+  mMemory        = buffer.mMemory;
+  mSize          = buffer.mSize;
+  mCapacity      = buffer.mCapacity;
+  mMapped_data   = buffer.mMapped_data;
+  mDevice        = buffer.mDevice;
+  mBufferUsage   = buffer.mBufferUsage;
+  mRequired      = buffer.mRequired;
+  mPrefered      = buffer.mPrefered;
+  mFlags         = buffer.mFlags;
+  mQueueIdxs     = buffer.mQueueIdxs;
+  mVmaAllocation = buffer.mVmaAllocation;
+  mMapped        = buffer.mMapped;
+  mPersistent    = buffer.mPersistent;
 
-  buffer.mVkObject     = _mVkObject;
-  buffer.memory        = _memory;
-  buffer.size          = _size;
-  buffer.mapped_data   = _mapped_data;
-  buffer.vmaAllocation = _vmaAllocation;
-  buffer.device        = _device;
-  buffer.mapped        = _mapped;
-  buffer.persistent    = _persistent;
+  buffer.mVkObject      = vkObject;
+  buffer.mMemory        = memory;
+  buffer.mSize          = size;
+  buffer.mCapacity      = capacity;
+  buffer.mMapped_data   = mapped_data;
+  buffer.mDevice        = device;
+  buffer.mBufferUsage   = bufferUsage;
+  buffer.mRequired      = required;
+  buffer.mPrefered      = prefered;
+  buffer.mFlags         = flags;
+  buffer.mQueueIdxs     = queueIdxs;
+  buffer.mVmaAllocation = vmaAllocation;
+  buffer.mMapped        = mapped;
+  buffer.mPersistent    = persistent;
 }
 
 void Buffer::clear() {
-  if (mVkObject && (vmaAllocation != VK_NULL_HANDLE)) {
+  if (mVkObject && (mVmaAllocation != VK_NULL_HANDLE)) {
     unmap();
-    vmaDestroyBuffer(device->getMemoryAllocator(),
+    vmaDestroyBuffer(mDevice->getMemoryAllocator(),
                      static_cast<VkBuffer>(mVkObject),
-                     vmaAllocation);
-    mVkObject     = VK_NULL_HANDLE;
-    vmaAllocation = VK_NULL_HANDLE;
+                     mVmaAllocation);
+    mVkObject      = VK_NULL_HANDLE;
+    mVmaAllocation = VK_NULL_HANDLE;
   }
 }
 
 uint8_t* Buffer::map() {
-  if (!mapped && !mapped_data) {
-    VK_CHECK_ERROR(vmaMapMemory(device->getMemoryAllocator(),
-                                vmaAllocation,
-                                reinterpret_cast<void**>(&mapped_data)),
+  if (!mMapped && !mMapped_data) {
+    VK_CHECK_ERROR(vmaMapMemory(mDevice->getMemoryAllocator(),
+                                mVmaAllocation,
+                                reinterpret_cast<void**>(&mMapped_data)),
                    "");
-    mapped = true;
+    mMapped = true;
   }
-  return mapped_data;
+  return mMapped_data;
 }
 
 void vkl::Buffer::unmap() {
-  if (mapped) {
-    vmaUnmapMemory(device->getMemoryAllocator(), vmaAllocation);
-    mapped_data = nullptr;
-    mapped      = false;
+  if (mMapped) {
+    vmaUnmapMemory(mDevice->getMemoryAllocator(), mVmaAllocation);
+    mMapped_data = nullptr;
+    mMapped      = false;
   }
 }
 
 void Buffer::flush() {
-  vmaFlushAllocation(device->getMemoryAllocator(), vmaAllocation, 0, size);
+  vmaFlushAllocation(mDevice->getMemoryAllocator(), mVmaAllocation, 0, mSize);
 }
 
 void Buffer::update(std::vector<uint8_t>& data, size_t offset) {
@@ -139,13 +163,26 @@ void Buffer::update(void* data, size_t size, size_t offset) {
 }
 
 void Buffer::update(uint8_t* data, size_t size, size_t offset) {
-  if (persistent) {
-    std::copy(data, data + size, mapped_data + offset);
+  if (offset + size > mCapacity) {
+    auto newSize = offset + size;
+
+    Buffer buffer = Buffer(mDevice,
+                           newSize,
+                           mBufferUsage,
+                           mRequired,
+                           mPrefered,
+                           mFlags,
+                           mQueueIdxs);
+    this->swap(buffer);
+  }
+
+  if (mPersistent) {
+    std::copy(data, data + size, mMapped_data + offset);
     flush();
   }
   else {
     map();
-    std::copy(data, data + size, mapped_data + offset);
+    std::copy(data, data + size, mMapped_data + offset);
     flush();
     unmap();
   }

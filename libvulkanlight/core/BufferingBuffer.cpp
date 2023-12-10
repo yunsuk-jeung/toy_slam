@@ -12,8 +12,6 @@ BufferingBuffer::BufferingBuffer(Device*                      device,
                                  const std::vector<uint32_t>& queueIdxs)
   : mBufferCount{bufferCount}
   , mDevice{device} {
-  mPrevSize.resize(mBufferCount, 0);
-  mCapacities.resize(mBufferCount, size);
   mBuffers.resize(mBufferCount);
   for (auto& buffer : mBuffers) {
     buffer = std::make_unique<Buffer>(mDevice,
@@ -28,8 +26,6 @@ BufferingBuffer::BufferingBuffer(Device*                      device,
 
 BufferingBuffer::~BufferingBuffer() {
   mBuffers.clear();
-  mCapacities.clear();
-  mPrevSize.clear();
 }
 
 void BufferingBuffer::update(uint32_t idx, std::vector<uint8_t>& data, size_t offset) {

@@ -33,7 +33,6 @@ protected:
   void updateBuffer(uint32_t idx);
   void handleInputCallbacks();
 
-  void setName() override;
   void createVertexBuffer() override;
   void createIndexBuffers() override;
   void createTextures() override;

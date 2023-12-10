@@ -145,7 +145,7 @@ PipelineLayout* ResourcePool::addPipelineLayout(Device*       device,
 
   if (mPipelineLayouts.find(key) != mPipelineLayouts.end()) {
     VklLogE("you are adding existing pipeline: {}", name);
-    throw std::runtime_error("existing pipeline");
+    return mPipelineLayouts[key].get();
   }
   mPipelineLayouts.insert({key, std::make_unique<PipelineLayout>(device, shaders)});
   return mPipelineLayouts[key].get();

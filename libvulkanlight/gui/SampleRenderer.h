@@ -12,7 +12,6 @@ public:
   void buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx);
 
 protected:
-  virtual void setName() override;
   virtual void createVertexBuffer() override;
 
   std::unique_ptr<Buffer>          mVB;

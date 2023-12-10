@@ -18,16 +18,20 @@ public:
   bool prepare() override;
   void run() override;
 
-  void createPipelines() override;
+  void createRenderers() override;
   void onRender() override;
 
   void buildCommandBuffer() override;
   void updateUniform(int idx) override;
 
 protected:
-  //std::unique_ptr<AxisRenderer> mAxisRenderer;
-  //std::unique_ptr<PathRenderer> mPathRenderer;
+  void createPointRenderer();
+  void createAxisRenderer();
+  void createPathRenderer();
 
+protected:
+  std::unique_ptr<AxisRenderer> mAxisRenderer;
+  //std::unique_ptr<PathRenderer> mPathRenderer;
   std::unique_ptr<PointCloudRenderer> mPointCloudRenderer;
 
   io::Sensor* mSensor;

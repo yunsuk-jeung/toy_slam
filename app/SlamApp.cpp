@@ -16,6 +16,14 @@ SlamApp::SlamApp()
   mName       = "SLAM Application";
   mApiVersion = VK_API_VERSION_1_1;
   GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
+
+  std::string filePath = __FILE__;
+  size_t      pos      = filePath.find_last_of("\\/");
+  std::string dir      = (std::string::npos == pos) ? "" : filePath.substr(0, pos);
+  VklLogD("app directory : {}", dir);
+
+  addShaderPath(dir);
+  addAssetPath(dir);
 }
 
 SlamApp ::~SlamApp() {
@@ -38,14 +46,6 @@ bool SlamApp::prepare() {
   ImGui::Object::Ptr obj = std::make_shared<ImGui::Object>(impl);
   mGUI->addImGuiObjects(obj);
 
-  mPointCloudRenderer = std::make_unique<PointCloudRenderer>();
-  mPointCloudRenderer->setCamUB(mCameraUB.get());
-  mPointCloudRenderer->prepare(mDevice.get(),
-                               mRenderContext.get(),
-                               mVkDescPool,
-                               mVkRenderPass,
-                               "point_basic");
-
   return true;
 }
 
@@ -59,33 +59,44 @@ void SlamApp::run() {
 }
 
 void SlamApp::createPipelines() {
-  App::createPipelines();
+  ShaderSourceType type = ShaderSourceType::STRING_FILE;
 
-  ShaderSourceType type           = ShaderSourceType::STRING;
-  std::string      name           = "basic";
-  const auto&      basicPointVert = shader::basicPointVert;
-  const auto&      basicFrag      = shader::basicFrag;
+  constexpr char vert[]     = "basicPoint";
+  constexpr char vertFile[] = "basicPoint.vert";
 
-  using RP   = ResourcePool;
-  auto* vert = RP::loadShader("point_basic",
-                              mDevice.get(),
-                              type,
-                              vk::ShaderStageFlagBits::eVertex,
-                              basicPointVert);
+  constexpr char frag[]     = "basic";
+  constexpr char fragFile[] = "basic.frag";
 
-  auto* frag = RP::loadShader(name,
-                              mDevice.get(),
-                              type,
-                              vk::ShaderStageFlagBits::eFragment,
-                              basicFrag);
+  using RP         = ResourcePool;
+  auto* vertShader = RP::loadShader(vert,
+                                    mDevice.get(),
+                                    type,
+                                    vk::ShaderStageFlagBits::eVertex,
+                                    vertFile);
 
-  auto* basicPointLayout = RP::addPipelineLayout(mDevice.get(), vert, frag);
+  auto* fragShader = RP::loadShader(frag,
+                                    mDevice.get(),
+                                    type,
+                                    vk::ShaderStageFlagBits::eFragment,
+                                    fragFile);
 
-  RP::addPipeline<PointBasicPipeline>("point_basic",
-                                      mDevice.get(),
-                                      mRenderContext.get(),
-                                      mVkRenderPass,
-                                      basicPointLayout);
+  auto* basicPointLayout = RP::addPipelineLayout(mDevice.get(), vertShader, fragShader);
+
+  constexpr char pointPipelinename[] = "point_basic";
+
+  auto* pointPipeline = RP::addPipeline<PointBasicPipeline>(pointPipelinename,
+                                                            mDevice.get(),
+                                                            mRenderContext.get(),
+                                                            mVkRenderPass,
+                                                            basicPointLayout);
+
+  mPointCloudRenderer = std::make_unique<PointCloudRenderer>();
+  mPointCloudRenderer->setCamUB(mCameraUB.get());
+  mPointCloudRenderer->prepare(mDevice.get(),
+                               mRenderContext.get(),
+                               mVkDescPool,
+                               mVkRenderPass,
+                               pointPipeline);
 }
 
 void SlamApp::onRender() {

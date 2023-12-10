@@ -41,7 +41,7 @@ void GUI::prepare(Device*            device,
                   RenderContext*     context,
                   vk::DescriptorPool descPool,
                   vk::RenderPass     vkRenderPass,
-                  std::string        pipelineName) {
+                  Pipeline*          pipeline) {
   mWindow = context->getWindow();
   ImGui::CreateContext();
 
@@ -62,7 +62,7 @@ void GUI::prepare(Device*            device,
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
   mWindow->prepareGUI();
 
-  RendererBase::prepare(device, context, descPool, vkRenderPass, pipelineName);
+  RendererBase::prepare(device, context, descPool, vkRenderPass, pipeline);
 }
 
 void GUI::addInputCallback(InputCallback* cb) {

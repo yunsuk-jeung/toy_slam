@@ -27,7 +27,7 @@ void RendererBase::prepare(Device*            device,
                            RenderContext*     context,
                            vk::DescriptorPool descPool,
                            vk::RenderPass     renderPass,
-                           std::string        pipelineName) {
+                           Pipeline*          pipeline) {
   setName();
 
   mDevice        = device;
@@ -35,7 +35,7 @@ void RendererBase::prepare(Device*            device,
   mVkDescPool    = descPool;
   mVkRenderPass  = renderPass;
 
-  mPipeline       = ResourcePool::requestPipeline(pipelineName);
+  mPipeline       = pipeline;
   mPipelineLayout = mPipeline->getPipelineLayout();
 
   createVertexBuffer();

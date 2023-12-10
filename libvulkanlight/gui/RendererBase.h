@@ -21,7 +21,7 @@ public:
                        RenderContext*     context,
                        vk::DescriptorPool descPool,
                        vk::RenderPass     vkRenderPass,
-                       std::string        pipelineName);
+                       Pipeline*          pipeline);
 
 protected:
   virtual void setName() = 0;

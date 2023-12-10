@@ -20,7 +20,7 @@ public:
                RenderContext*     context,
                vk::DescriptorPool descPool,
                vk::RenderPass     vkRenderPass,
-               std::string        pipelineName) override;
+               Pipeline*          pipeline) override;
 
   virtual void addInputCallback(InputCallback* cb);
   void         addImGuiObjects(std::shared_ptr<ImGui::Object> objects);

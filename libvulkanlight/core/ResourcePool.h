@@ -20,8 +20,8 @@ public:
   static void                      addShaderPath(std::string path);
   static std::vector<std::string>& getShaderPaths();
 
-  static void                      addResourcePath(std::string path);
-  static std::vector<std::string>& getResourcePaths();
+  static void                      addAssetPath(std::string path);
+  static std::vector<std::string>& getAssetPaths();
 
   static ShaderModule* loadShader(const std::string&      name,
                                   Device*                 device,

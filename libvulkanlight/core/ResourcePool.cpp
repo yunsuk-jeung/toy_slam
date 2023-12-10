@@ -37,11 +37,11 @@ std::vector<std::string>& ResourcePool::getShaderPaths() {
   return mShaderPaths;
 }
 
-void ResourcePool::addResourcePath(std::string path) {
+void ResourcePool::addAssetPath(std::string path) {
   mResourcePaths.push_back(path);
 }
 
-std::vector<std::string>& ResourcePool::getResourcePaths() {
+std::vector<std::string>& ResourcePool::getAssetPaths() {
   return mResourcePaths;
 }
 

@@ -96,8 +96,8 @@ void App::addShaderPath(const std::string& shaderPath) {
   ResourcePool::addShaderPath(shaderPath);
 }
 
-void App::addResourcePath(const std::string& resourcePath) {
-  ResourcePool::addResourcePath(resourcePath);
+void App::addAssetPath(const std::string& resourcePath) {
+  ResourcePool::addAssetPath(resourcePath);
 }
 
 void App::registerWindow(std::unique_ptr<Window>& _window) {
@@ -169,12 +169,12 @@ bool App::prepare() {
   createRenderPass();
   createFrameBuffer();
 
-  createPipelines();
-
   createVkDescriptorPool();
 
   createGUI();
   createGraphicsCamera();
+
+  createPipelines();
 
   mPrepared = true;
   return mPrepared;
@@ -497,7 +497,7 @@ void App::createVkDescriptorPool() {
   //check_vk_result(err);
 }
 
-void App::createPipelines() {
+void App::createGUI() {
   ShaderSourceType  type           = ShaderSourceType::SPV;
   std::string       name           = "imgui";
   const std::string vertexShader   = std::string((const char*)shader::imguiVertspv,
@@ -519,25 +519,17 @@ void App::createPipelines() {
 
   auto* imguiPipelineLayout = ResourcePool::addPipelineLayout(mDevice.get(), vert, frag);
 
-  ResourcePool::addPipeline<ImGuiPipeline>("imgui",
-                                           mDevice.get(),
-                                           mRenderContext.get(),
-                                           mVkRenderPass,
-                                           imguiPipelineLayout,
-                                           0);
-  /*auto* imguiPipeline = new ImGuiPipeline("imgui",
-                                          mDevice.get(),
-                                          mRenderContext.get(),
-                                          mVkRenderPass,
-                                          imguiPipelineLayout,
-                                          0);
-  imguiPipeline->prepare();*/
-}
+  constexpr char plname[] = "imgui";
 
-void App::createGUI() {
-  //mGUI = GUI::Uni(new GUI());
+  auto* guiPL = ResourcePool::addPipeline<ImGuiPipeline>(plname,
+                                                         mDevice.get(),
+                                                         mRenderContext.get(),
+                                                         mVkRenderPass,
+                                                         imguiPipelineLayout,
+                                                         0);
+
   mGUI = std::make_unique<GUI>();
-  mGUI->prepare(mDevice.get(), mRenderContext.get(), mVkDescPool, mVkRenderPass, "imgui");
+  mGUI->prepare(mDevice.get(), mRenderContext.get(), mVkDescPool, mVkRenderPass, guiPL);
 
   mInputCallback   = std::make_unique<InputCallback>();
   auto keyCallback = [&](int key) {
@@ -561,7 +553,6 @@ void App::createGraphicsCamera() {
                                                      int(mWindow->getWindowInfo()
                                                            .orientation));
 
-  //mGraphicsCamera->init(extent.width, extent.height);
   mGUI->addInputCallback(mGraphicsCamera.get());
 
   auto count   = mRenderContext->getContextImageCount();
@@ -586,6 +577,8 @@ void App::createGraphicsCamera() {
   CameraUniform tmp;
   for (int i = 0; i < count; ++i) { mCameraUB->update(i, &tmp, 0); }
 }
+
+void App::createPipelines() {}
 
 void App::requestGpuFeatures(Device* vkPhysicalDevice) {
   VklLogD("This Function should be overriden by app");

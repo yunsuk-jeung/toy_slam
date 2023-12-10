@@ -74,9 +74,9 @@ void prepareGUI() {
   std::unique_ptr<vkl::Window> glfwWindow(new vkl::GlfwWindow(winInfo, app));
   app->registerWindow(glfwWindow);
   app->addShaderPath("F:/transfer/toy_slam/libvulkanlight/shaders");
-  app->addResourcePath("F:/transfer/toy_slam/libvulkanlight/shaders");
+  app->addAssetPath("F:/transfer/toy_slam/libvulkanlight/shaders");
   app->addShaderPath("D:/workspaceD/toy_vio/libvulkanlight/shaders");
-  app->addResourcePath("D:/workspaceD/toy_vio/libvulkanlight/shaders");
+  app->addAssetPath("D:/workspaceD/toy_vio/libvulkanlight/shaders");
   app->registerSensor(sensor);
   app->prepare();
 }

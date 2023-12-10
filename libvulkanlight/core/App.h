@@ -23,7 +23,7 @@ public:
   virtual ~App();
 
   void addShaderPath(const std::string& shaderPath);
-  void addResourcePath(const std::string& shaderPath);
+  void addAssetPath(const std::string& shaderPath);
 
   void registerWindow(std::unique_ptr<Window>& _window);
 

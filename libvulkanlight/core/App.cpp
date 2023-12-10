@@ -169,7 +169,6 @@ bool App::prepare() {
   createRenderPass();
   createFrameBuffer();
 
-  createPipelineLayouts();
   createPipelines();
 
   createVkDescriptorPool();
@@ -498,7 +497,7 @@ void App::createVkDescriptorPool() {
   //check_vk_result(err);
 }
 
-void App::createPipelineLayouts() {
+void App::createPipelines() {
   ShaderSourceType  type           = ShaderSourceType::SPV;
   std::string       name           = "imgui";
   const std::string vertexShader   = std::string((const char*)shader::imguiVertspv,
@@ -518,20 +517,21 @@ void App::createPipelineLayouts() {
                                         vk::ShaderStageFlagBits::eFragment,
                                         fragmentShader);
 
-  ResourcePool::addPipelineLayout(mDevice.get(), vert, frag);
-}
+  auto* imguiPipelineLayout = ResourcePool::addPipelineLayout(mDevice.get(), vert, frag);
 
-void App::createPipelines() {
-  auto* imguiPipelineLayout = ResourcePool::requestPipelineLayout(
-    "imgui_vert_imgui_frag");
-
-  auto* imguiPipeline = new ImGuiPipeline("imgui",
+  ResourcePool::addPipeline<ImGuiPipeline>("imgui",
+                                           mDevice.get(),
+                                           mRenderContext.get(),
+                                           mVkRenderPass,
+                                           imguiPipelineLayout,
+                                           0);
+  /*auto* imguiPipeline = new ImGuiPipeline("imgui",
                                           mDevice.get(),
                                           mRenderContext.get(),
                                           mVkRenderPass,
                                           imguiPipelineLayout,
                                           0);
-  imguiPipeline->prepare();
+  imguiPipeline->prepare();*/
 }
 
 void App::createGUI() {
@@ -658,7 +658,7 @@ void App::prepareFrame() {
 
   mCurrBufferingSemaphore = mRenderContext->getCurrBufferingSemaphore();
 
-  auto vkDevice = mDevice->vk();
+  auto& vkDevice = mDevice->vk();
 
   auto result = vkDevice.acquireNextImageKHR(vkSwapchain,
                                              0xFFFFFFFFFFFFFFFF,

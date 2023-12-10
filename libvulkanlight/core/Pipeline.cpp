@@ -26,14 +26,10 @@ Pipeline::~Pipeline() {
   mDevice->vk().destroyPipeline(this->vk());
 }
 
-void Pipeline::prepare() {
-  prepareImpl();
-  addResource();
-}
-void Pipeline::addResource() {
-  VklLogD("created pipeline: {}", mName);
-  ResourcePool::addPipeline(mName, this);
-}
+//void Pipeline::addResource() {
+//  VklLogD("created pipeline: {}", mName);
+//  ResourcePool::addPipeline(mName, this);
+//}
 
 TextureMaterialPipeline::TextureMaterialPipeline(const std::string& name,
                                                  Device*            device,
@@ -41,11 +37,13 @@ TextureMaterialPipeline::TextureMaterialPipeline(const std::string& name,
                                                  vk::RenderPass     renderPass,
                                                  PipelineLayout*    pipelineLayout,
                                                  uint32_t           subpassId)
-  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {}
+  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {
+  prepare();
+}
 
 TextureMaterialPipeline::~TextureMaterialPipeline() {}
 
-void TextureMaterialPipeline::prepareImpl() {
+void TextureMaterialPipeline::prepare() {
   auto& shaders = mPipelineLayout->getShaderModules();
 
   std::vector<vk::PipelineShaderStageCreateInfo> shaderStageCIs{
@@ -134,11 +132,13 @@ ImGuiPipeline::ImGuiPipeline(const std::string& name,
                              vk::RenderPass     renderPass,
                              PipelineLayout*    pipelineLayout,
                              uint32_t           subpassId)
-  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {}
+  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {
+  prepare();
+}
 
 ImGuiPipeline::~ImGuiPipeline() {}
 
-void ImGuiPipeline::prepareImpl() {
+void ImGuiPipeline::prepare() {
   auto* pipelineLayout = ResourcePool::requestPipelineLayout("imgui_vert_imgui_frag");
   auto& shaders        = pipelineLayout->getShaderModules();
 
@@ -229,13 +229,14 @@ SamplePipeline::SamplePipeline(const std::string& name,
                                vk::RenderPass     renderPass,
                                PipelineLayout*    pipelineLayout,
                                uint32_t           subpassId)
-  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {}
+  : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {
+  prepare();
+}
 
 SamplePipeline::~SamplePipeline() {}
 
-void SamplePipeline::prepareImpl() {
-  auto* pipelineLayout = mPipelineLayout;
-  auto& shaders        = pipelineLayout->getShaderModules();
+void SamplePipeline::prepare() {
+  auto& shaders = mPipelineLayout->getShaderModules();
 
   std::vector<vk::PipelineShaderStageCreateInfo> shaderStageCIs{
     {{},   vk::ShaderStageFlagBits::eVertex, shaders[0]->vk(), "main"},
@@ -305,7 +306,7 @@ void SamplePipeline::prepareImpl() {
                                             &depthStencilState,
                                             &colorBlendState,
                                             &dynamicState,
-                                            pipelineLayout->vk(),
+                                            mPipelineLayout->vk(),
                                             mVkRenderPass,
                                             mSubpassId);
 

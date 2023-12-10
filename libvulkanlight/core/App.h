@@ -43,12 +43,9 @@ protected:
   virtual void createRenderPass();
   virtual void createFrameBuffer();
   virtual void createVkDescriptorPool();
-
-  virtual void createPipelineLayouts();
-
+  virtual void createPipelines();
   virtual void createGUI();
   virtual void createGraphicsCamera();
-  virtual void createPipelines();
 
   void requestGpuFeatures(Device* vkPhysicalDevice);
 

@@ -5,7 +5,6 @@
 #include "GUI.h"
 #include "VkShaderUtil.h"
 #include "App.h"
-#include "BasicRenderer.h"
 #include "ResourcePool.h"
 #include "shaders.h"
 #include "ShaderModule.h"
@@ -37,13 +36,6 @@ public:
       return false;
     }
 
-    //std::string pcucmstPipeline = "triangle_pcucmst";
-    //mBasicRenderer.prepare(mDevice.get(),
-    //                       mRenderContext.get(),
-    //                       mVkDescPool,
-    //                       mVkRenderPass,
-    //                       pcucmstPipeline);
-
     return true;
   }
 
@@ -53,31 +45,13 @@ public:
   }
 
 protected:
-  void createPipelineLayouts() override {
-    App::createPipelineLayouts();
+  void createPipelines() override {
+    App::createPipelines();
 
     ShaderSourceType   type           = ShaderSourceType::STRING;
     std::string        name           = "pcucmst";
     const std::string& vertexShader   = shader::pose_color_uv_camera_model_vert;
     const std::string& fragmentShader = shader::color_uv_material_sampler_texture;
-
-    //auto* vert = ResourcePool::loadShader(name,
-    //                                      mDevice.get(),
-    //                                      type,
-    //                                      vk::ShaderStageFlagBits::eVertex,
-    //                                      vertexShader);
-
-    //auto* frag = ResourcePool::loadShader(name,
-    //                                      mDevice.get(),
-    //                                      type,
-    //                                      vk::ShaderStageFlagBits::eFragment,
-    //                                      fragmentShader);
-
-    //ResourcePool::addPipelineLayout(mDevice.get(), vert, frag);
-  }
-
-  void createPipelines() override {
-    App::createPipelines();
 
     //auto* basicPipelineLyout = ResourcePool::requestPipelineLayout(
     //  "pcucmst_vert_pcucmst_frag");
@@ -118,7 +92,6 @@ protected:
   void updateUniform(int idx) override { updateCameraUniform(idx); }
 
 protected:
-  BasicRenderer mBasicRenderer;
 };
 }  //namespace vkl
 

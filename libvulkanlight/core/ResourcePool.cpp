@@ -133,9 +133,9 @@ vk::DescriptorSetLayout ResourcePool::requestDescriptorSetLayout(
   return it->second;
 }
 
-void ResourcePool::addPipelineLayout(Device*       device,
-                                     ShaderModule* vert,
-                                     ShaderModule* frag) {
+PipelineLayout* ResourcePool::addPipelineLayout(Device*       device,
+                                                ShaderModule* vert,
+                                                ShaderModule* frag) {
   std::vector<ShaderModule*> shaders{vert, frag};
 
   std::string            name = vert->getName() + "_" + frag->getName();
@@ -148,6 +148,7 @@ void ResourcePool::addPipelineLayout(Device*       device,
     throw std::runtime_error("existing pipeline");
   }
   mPipelineLayouts.insert({key, std::make_unique<PipelineLayout>(device, shaders)});
+  return mPipelineLayouts[key].get();
 }
 
 PipelineLayout* ResourcePool::requestPipelineLayout(const std::string& name) {
@@ -163,20 +164,6 @@ PipelineLayout* ResourcePool::requestPipelineLayout(const std::string& name) {
   }
 
   return it->second.get();
-}
-
-void ResourcePool::addPipeline(const std::string& name, Pipeline* pipeline) {
-  const std::string& hash = name;
-
-  std::hash<std::string> hasher;
-  size_t                 key = hasher(hash);
-  auto                   it  = mPipelines.find(key);
-  if (it != mPipelines.end()) {
-    VklLogE("you are adding existing pipeline: {}", name);
-    throw std::runtime_error("existing pipeline");
-  }
-
-  mPipelines[key] = Pipeline::Uni(pipeline);
 }
 
 Pipeline* ResourcePool::requestPipeline(const std::string& name) {

@@ -58,38 +58,34 @@ void SlamApp::run() {
   mSensor->stop();
 }
 
-void SlamApp::createPipelineLayouts() {
-  App::createPipelineLayouts();
+void SlamApp::createPipelines() {
+  App::createPipelines();
+
   ShaderSourceType type           = ShaderSourceType::STRING;
   std::string      name           = "basic";
   const auto&      basicPointVert = shader::basicPointVert;
   const auto&      basicFrag      = shader::basicFrag;
 
-  auto* vert = ResourcePool::loadShader("point_basic",
-                                        mDevice.get(),
-                                        type,
-                                        vk::ShaderStageFlagBits::eVertex,
-                                        basicPointVert);
+  using RP   = ResourcePool;
+  auto* vert = RP::loadShader("point_basic",
+                              mDevice.get(),
+                              type,
+                              vk::ShaderStageFlagBits::eVertex,
+                              basicPointVert);
 
-  auto* frag = ResourcePool::loadShader(name,
-                                        mDevice.get(),
-                                        type,
-                                        vk::ShaderStageFlagBits::eFragment,
-                                        basicFrag);
+  auto* frag = RP::loadShader(name,
+                              mDevice.get(),
+                              type,
+                              vk::ShaderStageFlagBits::eFragment,
+                              basicFrag);
 
-  ResourcePool::addPipelineLayout(mDevice.get(), vert, frag);
-}
+  auto* basicPointLayout = RP::addPipelineLayout(mDevice.get(), vert, frag);
 
-void SlamApp::createPipelines() {
-  App::createPipelines();
-  using RP               = ResourcePool;
-  auto* basicPointLayout = RP::requestPipelineLayout("point_basic_vert_basic_frag");
-  auto* basicPointPL     = new PointBasicPipeline("point_basic",
-                                              mDevice.get(),
-                                              mRenderContext.get(),
-                                              mVkRenderPass,
-                                              basicPointLayout);
-  basicPointPL->prepare();
+  RP::addPipeline<PointBasicPipeline>("point_basic",
+                                      mDevice.get(),
+                                      mRenderContext.get(),
+                                      mVkRenderPass,
+                                      basicPointLayout);
 }
 
 void SlamApp::onRender() {

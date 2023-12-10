@@ -18,11 +18,9 @@ public:
            uint32_t           subpassId);
   virtual ~Pipeline();
 
-  void         prepare();
-  virtual void prepareImpl() = 0;
-
 protected:
-  void addResource();
+  virtual void prepare() = 0;
+  //void addResource();
 
 protected:
   std::string     mName;
@@ -47,7 +45,8 @@ public:
                           uint32_t           subpassId = 0);
   ~TextureMaterialPipeline();
 
-  void prepareImpl() override;
+protected:
+  void prepare() override;
 };
 
 class ImGuiPipeline : public Pipeline {
@@ -61,7 +60,8 @@ public:
                 uint32_t           subpassId = 0);
   ~ImGuiPipeline();
 
-  void prepareImpl() override;
+protected:
+  void prepare() override;
 };
 
 class SamplePipeline : public Pipeline {
@@ -75,6 +75,7 @@ public:
                  uint32_t           subpassId = 0);
   ~SamplePipeline();
 
-  void prepareImpl() override;
+protected:
+  void prepare() override;
 };
 }  //namespace vkl

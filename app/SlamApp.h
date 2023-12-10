@@ -18,7 +18,6 @@ public:
   bool prepare() override;
   void run() override;
 
-  void createPipelineLayouts() override;
   void createPipelines() override;
   void onRender() override;
 

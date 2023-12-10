@@ -18,11 +18,13 @@ public:
                      vk::RenderPass     renderPass,
                      PipelineLayout*    pipelineLayout,
                      uint32_t           subpassId = 0)
-    : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {}
+    : Pipeline(name, device, context, renderPass, pipelineLayout, subpassId) {
+    prepare();
+  }
 
   ~PointBasicPipeline() = default;
 
-  void PointBasicPipeline::prepareImpl() override {
+  void PointBasicPipeline::prepare() override {
     auto& shaders = mPipelineLayout->getShaderModules();
 
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStageCIs{

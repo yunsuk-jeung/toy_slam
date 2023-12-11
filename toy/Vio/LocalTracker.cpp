@@ -64,8 +64,6 @@ void LocalTracker::process() {
     std::vector<db::MapPoint::Ptr> mapPoints;
 
     mLocalMap->getCurrentStates(frames, mapPoints);
-    //mVioSolver->solve(frames, mapPoints);
-
     break;
   }
   }

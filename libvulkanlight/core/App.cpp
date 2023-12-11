@@ -105,6 +105,9 @@ void App::registerWindow(std::unique_ptr<Window>& _window) {
 }
 
 void App::onWindowResized(int w, int h, int orientation) {
+  if (w * h == 0)
+    return;
+
   if (!mRenderContext->getVkSwapchain()) {
     VklLogW("Can't handle surface changes in headless mode, skipping.");
     return;
@@ -298,7 +301,6 @@ void App::createDevice() {
     VkSettings::addDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
     VkSettings::addDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
   }
-
 
   //bool bufferDeivceAddr  = VkSettings::isAvailableDeviceExtension(
   //    VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);

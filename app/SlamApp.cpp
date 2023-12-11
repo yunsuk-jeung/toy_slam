@@ -1,5 +1,9 @@
-#include "Sensor.h"
+#include <iostream>
+#include <string>
+#include <iomanip>
+#include "Simulator.h"
 #include "Window.h"
+#include "GraphicsCamera.h"
 #include "GUI.h"
 #include "Device.h"
 #include "VkShaderUtil.h"
@@ -9,10 +13,33 @@
 #include "AxisRenderer.h"
 #include "PointCloudRenderer.h"
 #include "ImGuiObject.h"
-#include "SlamApp.h"
+#include "SLAMInfo.h"
+#include "SLAMApp.h"
 
 namespace vkl {
-SlamApp::SlamApp()
+namespace {
+template <typename Type, int Row>
+static std::string eigenVec(const Eigen::Matrix<Type, Row, 1>& vec, int precision = 4) {
+  Eigen::IOFormat CleanVec(precision, 0, ", ", "\n", "[", "]");
+
+  std::stringstream ss;
+  ss << std::fixed << std::setprecision(precision);  //Set the precision
+  ss << vec.transpose().format(CleanVec);
+  return ss.str();
+}
+
+template <typename Type, int Row, int Col>
+static std::string eigenMat(const Eigen::Matrix<Type, Row, Col>& mat, int precision = 4) {
+  Eigen::IOFormat CleanMat(precision, 0, ", ", "\n", "[", "]");
+
+  std::stringstream ss;
+  ss << std::fixed << std::setprecision(precision);  //Set the precision
+  ss << "\n " << mat.transpose().format(CleanMat);
+  return ss.str();
+}
+}  //namespace
+
+SLAMApp::SLAMApp()
   : mSensor{nullptr} {
   mName       = "SLAM Application";
   mApiVersion = VK_API_VERSION_1_1;
@@ -27,30 +54,38 @@ SlamApp::SlamApp()
   addAssetPath(dir);
 }
 
-SlamApp ::~SlamApp() {
+SLAMApp ::~SLAMApp() {
   vk::Device vkDevice = mDevice->vk();
   vkDevice.waitIdle();
 
   mPointCloudRenderer.reset();
 }
 
-bool SlamApp::prepare() {
+bool SLAMApp::prepare() {
   if (!App::prepare()) {
     return false;
   }
 
-  ImGui::Object::RenderImpl impl = []() {
-    ImGui::Begin("test2");
-    ImGui::Text("ffffffffffffffffffffff");
+  Eigen::Quaternionf Qxz = Eigen::Quaternionf::FromTwoVectors(Eigen::Vector3f::UnitX(),
+                                                              Eigen::Vector3f::UnitZ());
+  mGraphicsCamera->cam.M.block<3, 3>(0, 0) = Qxz.toRotationMatrix();
+
+  //((io::Simulator*)mSensor)->setContinuosMode(false);
+  ImGui::Object::RenderImpl impl = [this]() {
+    ImGui::Begin("Simulator");
+    if (ImGui::Button("next image")) {
+      ((io::Simulator*)mSensor)->sendImage();
+    }
     ImGui::End();
   };
+
   ImGui::Object::Ptr obj = std::make_shared<ImGui::Object>(impl);
   mGUI->addImGuiObjects(obj);
 
   return true;
 }
 
-void SlamApp::run() {
+void SLAMApp::run() {
   mSensor->start();
 
   mEndApplication = false;
@@ -59,31 +94,34 @@ void SlamApp::run() {
   mSensor->stop();
 }
 
-void SlamApp::createRenderers() {
+void SLAMApp::createRenderers() {
   createPointRenderer();
+  createOriginRenderer();
   createAxisRenderer();
 }
 
-void SlamApp::onRender() {
+void SLAMApp::onRender() {
   mWindow->pollEvents();
 
   if (mGUI) {
     mGUI->onRender();
   }
-
   updateUniform(mCurrBufferingIdx);
+  updateSLAMData();
 
   prepareFrame();
   buildCommandBuffer();
   presentFrame();
 }
 
-void SlamApp::buildCommandBuffer() {
+void SLAMApp::buildCommandBuffer() {
   auto cmd = beginCommandBuffer();
   beginRenderPass(cmd);
 
-  mAxisRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
+  mOriginAxisRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
   mPointCloudRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
+
+  mAxisRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
 
   if (mGUI)
     mGUI->buildCommandBuffer(cmd, mCurrBufferingIdx);
@@ -92,11 +130,11 @@ void SlamApp::buildCommandBuffer() {
   cmd.end();
 }
 
-void SlamApp::updateUniform(int idx) {
+void SLAMApp::updateUniform(int idx) {
   updateCameraUniform(idx);
 }
 
-void SlamApp::createPointRenderer() {
+void SLAMApp::createPointRenderer() {
   ShaderSourceType type = ShaderSourceType::STRING_FILE;
 
   constexpr char vert[]     = "basicPoint";
@@ -130,6 +168,7 @@ void SlamApp::createPointRenderer() {
 
   mPointCloudRenderer = std::make_unique<PointCloudRenderer>();
   mPointCloudRenderer->setCamUB(mCameraUB.get());
+  mPointCloudRenderer->setPointCloud(&mLocalPointClouds);
   mPointCloudRenderer->prepare(mDevice.get(),
                                mRenderContext.get(),
                                mVkDescPool,
@@ -137,7 +176,7 @@ void SlamApp::createPointRenderer() {
                                pointPipeline);
 }
 
-void SlamApp::createAxisRenderer() {
+void SLAMApp::createOriginRenderer() {
   ShaderSourceType type = ShaderSourceType::STRING_FILE;
 
   constexpr char vert[]     = "basicDynamic";
@@ -169,23 +208,60 @@ void SlamApp::createAxisRenderer() {
 
   auto* basicPointLayout = RP::addPipelineLayout(mDevice.get(), vertShader, fragShader);
 
-  constexpr char pointPipelinename[] = "basic_line";
+  constexpr char linePipelinename[] = "basic_line";
 
-  auto* axisPipeline = RP::addPipeline<BasicLinePipeline>(pointPipelinename,
+  auto* axisPipeline = RP::addPipeline<BasicLinePipeline>(linePipelinename,
                                                           mDevice.get(),
                                                           mRenderContext.get(),
                                                           mVkRenderPass,
                                                           basicPointLayout);
+  Eigen::Matrix4f S = Eigen::Matrix4f::Identity();
+  S(0,0) = 4.0f;
+  S(1,1) = 4.0f;
+  S(2,2) = 4.0f;
 
-  mAxisRenderer = std::make_unique<AxisRenderer>();
+  mIs.push_back(S);
+
+  mOriginAxisRenderer = std::make_unique<AxisRenderer>(1);
+  mOriginAxisRenderer->setCamUB(mCameraUB.get());
+  mOriginAxisRenderer->setMwcs(&mIs);
+  mOriginAxisRenderer->prepare(mDevice.get(),
+                               mRenderContext.get(),
+                               mVkDescPool,
+                               mVkRenderPass,
+                               axisPipeline);
+}
+
+void SLAMApp::createAxisRenderer() {
+  using RP = ResourcePool;
+
+  constexpr char linePipelinename[] = "basic_line";
+  auto*          axisPipeline       = RP::requestPipeline(linePipelinename);
+
+  mAxisRenderer = std::make_unique<AxisRenderer>(2000);
   mAxisRenderer->setCamUB(mCameraUB.get());
   mAxisRenderer->prepare(mDevice.get(),
                          mRenderContext.get(),
                          mVkDescPool,
                          mVkRenderPass,
                          axisPipeline);
+
+  mAxisRenderer->setMwcs(&mMWcs);
 }
 
-void SlamApp::createPathRenderer() {}
+void SLAMApp::updateSLAMData() {
+  auto* info = toy::SLAMInfo::getInstance();
+
+  if (info->getLocalPath(mMWcs)) {
+    mAxisRenderer->updateSyndId();
+    VklLogD("current local path size : {}", mMWcs.size());
+    Eigen::Vector3f vec = mMWcs.back().block<3,1>(0,3);
+    VklLogD("latest frame pose : {} ", eigenVec(vec));
+  }
+
+  if (info->getLocalPoints(mLocalPointClouds)) {
+    mPointCloudRenderer->updateSyncId();
+  }
+}
 
 }  //namespace vkl

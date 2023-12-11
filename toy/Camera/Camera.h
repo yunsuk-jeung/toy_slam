@@ -16,9 +16,12 @@ public:
   virtual ~Camera();
   virtual Camera* clone() = 0;
 
-  virtual void project(Eigen::Vector3d& _xyz, Eigen::Vector2d& uv_) = 0;
+  virtual void        project(Eigen::Vector3d& xyz, Eigen::Vector2d& uv);
+  virtual cv::Point2d project(Eigen::Vector3d& xyz);
+  virtual void        distort(const Eigen::Vector2d& input, Eigen::Vector2d& output) = 0;
+
   virtual void undistortPoints(std::vector<cv::Point2f>& pts,
-                               std::vector<cv::Point2f>& upts)      = 0;
+                               std::vector<cv::Point2f>& upts) = 0;
 
 protected:
   int    cameraModel;
@@ -29,7 +32,9 @@ protected:
   double mInvFx, mInvFy, mInvCx, mInvCy;
   bool   mIsDistortion;
 
-  cv::Mat mK, mD;
+  cv::Mat                     mK, mD;
+  Eigen::Matrix3d             mEK;
+  Eigen::Matrix<double, 5, 1> mED;
 };
 
 class CameraFactory {

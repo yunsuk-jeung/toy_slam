@@ -17,6 +17,9 @@ int         Config::Vio::rowGridCount       = 12;
 int         Config::Vio::colGridCount       = 8;
 std::string Config::Vio::pointTracker       = "Fast.OpticalflowLK";
 double      Config::Vio::epipolarThreashold = 0.005;
+bool        Config::Vio::showExtraction     = false;
+bool        Config::Vio::showMonoTracking   = false;
+bool        Config::Vio::showStereoTracking = false;
 
 std::string Config::Vio::lineTracker           = "none";
 bool        Config::Vio::frameTrackerSolvePose = false;

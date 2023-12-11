@@ -5,7 +5,10 @@ namespace io {
 Simulator::Simulator()
   : mDataReader{nullptr}
   , mImageType0{0}
-  , mImageType1{0} {
+  , mImageType1{0}
+  , mContinuousMode{true}
+  , mSendImage{false}
+  , mWorking{false} {
   mIsSimulator = true;
 }
 
@@ -22,6 +25,15 @@ void Simulator::prepare() {
 void Simulator::getInfo(CameraInfo* info0, CameraInfo* info1) {
   *info0 = mCamInfo0;
   *info1 = mCamInfo1;
+}
+
+void Simulator::sendImage() {
+  if (mContinuousMode)
+    return;
+
+  std::unique_lock<std::mutex> ulock(mImageCallbackMutex);
+  mSendImage = true;
+  mImageCallbackCv.notify_one();
 }
 
 void Simulator::start() {
@@ -51,7 +63,13 @@ void Simulator::start() {
                              image1.data,
                              image1.cols,
                              image1.rows};
-        //mImageC
+
+        if (!mContinuousMode) {
+          std::unique_lock<std::mutex> ulock(mImageCallbackMutex);
+          mImageCallbackCv.wait(ulock, [&]() { return mSendImage; });
+          mSendImage = false;
+        }
+
         mImageCallBack(imageData0, imageData1);
 
         //cv::imshow("111", image0);
@@ -68,6 +86,7 @@ void Simulator::start() {
 
 void Simulator::stop() {
   mWorking = false;
+  sendImage();
   if (mThread.joinable())
     mThread.join();
 }

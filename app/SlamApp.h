@@ -10,10 +10,10 @@ class AxisRenderer;
 class PathRenderer;
 class PointCloudRenderer;
 class SampleRenderer;
-class SlamApp : public App {
+class SLAMApp : public App {
 public:
-  SlamApp();
-  ~SlamApp();
+  SLAMApp();
+  ~SLAMApp();
 
   bool prepare() override;
   void run() override;
@@ -26,15 +26,23 @@ public:
 
 protected:
   void createPointRenderer();
+  void createOriginRenderer();
   void createAxisRenderer();
-  void createPathRenderer();
+
+  void updateSLAMData();
 
 protected:
-  std::unique_ptr<AxisRenderer> mAxisRenderer;
-  //std::unique_ptr<PathRenderer> mPathRenderer;
+  std::unique_ptr<AxisRenderer> mOriginAxisRenderer;
   std::unique_ptr<PointCloudRenderer> mPointCloudRenderer;
 
+  std::unique_ptr<AxisRenderer> mAxisRenderer;
+  //std::unique_ptr<PathRenderer> mPathRenderer;
+
   io::Sensor* mSensor;
+
+  std::vector<Eigen::Matrix4f> mIs;
+  std::vector<Eigen::Matrix4f> mMWcs;
+  std::vector<float>           mLocalPointClouds;
 
 public:
   void registerSensor(io::Sensor* sensor) { mSensor = sensor; }

@@ -10,15 +10,34 @@
 
 namespace vkl {
 
-constexpr size_t maxAxisNum = 2000;
+AxisRenderer::AxisRenderer()
+  : mMaxAixsSize{2000}
+  , mSyncId{0}
+  , mSyncIds{} {
+  mName = "Axis Renderer";
+}
 
-AxisRenderer::AxisRenderer() {
+AxisRenderer::AxisRenderer(int maxAxisSize)
+  : mMaxAixsSize{maxAxisSize} {
   mName = "Axis Renderer";
 }
 
 AxisRenderer::~AxisRenderer() {}
 
+void AxisRenderer::updateSyndId() {
+  ++mSyncId;
+}
+
 void AxisRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
+  if (mMwcsPtr->empty())
+    return;
+  auto size = mMwcsPtr->size();
+
+  if (mSyncIds[idx] != mSyncId) {
+    mDUB->update(idx, size, sizeof(Eigen::Matrix4f), mMwcsPtr->data());
+    mSyncIds[idx] = mSyncId;
+  }
+
   auto& vkBuffer     = mVB->vk();
   auto& camDescSet   = mCamUB->getVkDescSet(idx);
   auto& modelDescSet = mDUB->getVkDescSet(idx);
@@ -31,7 +50,6 @@ void AxisRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
                          {camDescSet},
                          {});
 
-  auto size = mMs.size();
   for (int i = 0; i < size; i++) {
     uint32_t offset = i * mDUB->getAlignment();
     cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
@@ -45,12 +63,12 @@ void AxisRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
 
 void AxisRenderer::createVertexBuffer() {
   std::vector<VertexColor> vertices = {
-    {0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f},
-    {1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f},
-    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f},
-    {0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f},
-    {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f},
-    {0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f}
+    { 0.0f,  0.0f,  0.0f, 1.0f, 0.0f, 0.0f},
+    {0.25f,  0.0f,  0.0f, 1.0f, 0.0f, 0.0f},
+    { 0.0f,  0.0f,  0.0f, 0.0f, 1.0f, 0.0f},
+    { 0.0f, 0.25f,  0.0f, 0.0f, 1.0f, 0.0f},
+    { 0.0f,  0.0f,  0.0f, 0.0f, 0.0f, 1.0f},
+    { 0.0f,  0.0f, 0.25f, 0.0f, 0.0f, 1.0f}
   };
 
   auto memSize = sizeof(VertexColor) * vertices.size();
@@ -64,6 +82,9 @@ void AxisRenderer::createVertexBuffer() {
 }
 
 void AxisRenderer::createUniformBuffers() {
+  auto count = mRenderContext->getContextImageCount();
+  mSyncIds.resize(count, 0);
+
   auto minVkMemoryAlignment = mDevice->getVkPhysicalDevice()
                                 .getProperties()
                                 .limits.minUniformBufferOffsetAlignment;
@@ -78,9 +99,8 @@ void AxisRenderer::createUniformBuffers() {
       VklLogE("you have to implement this part");
   }
 
-  auto count         = mRenderContext->getContextImageCount();
   auto descsetLayout = mPipelineLayout->getDescriptorSetLayout("modelMat");
-  auto memSize       = maxAxisNum * alignment;
+  auto memSize       = mMaxAixsSize * alignment;
 
   mDUB = std::make_unique<DynamicUniformBuffer>(mDevice,
                                                 count,
@@ -90,18 +110,5 @@ void AxisRenderer::createUniformBuffers() {
                                                 0,
                                                 uniformSize,
                                                 alignment);
-
-  Eigen::Matrix4f I = Eigen::Matrix4f::Identity();
-
-  mMs.push_back(I);
-  I(1, 3) += 1.0f;
-  mMs.push_back(I);
-  I(1, 3) += 1.0f;
-  mMs.push_back(I);
-  I(1, 3) += 1.0f;
-
-  for (int i = 0; i < count; ++i) {
-    mDUB->update(i, mMs.size(), sizeof(Eigen::Matrix4f), mMs.data());
-  }
 }
 }  //namespace vkl

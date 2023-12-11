@@ -12,7 +12,9 @@
           "colGridCount": 14,
           "on": true,
           "tracker": "Fast.OpticalflowLK",
-          "epipolarThreashold": 0.005
+          "epipolarThreashold": 0.005,
+          "showExtraction": false,
+          "showMonoTracking": false
         },
         "line": {
           "on": false
@@ -22,7 +24,7 @@
     },
     "localTracker": {
       "solver": "SqrtLocalSolver",
-      "initializeMapPointCount": 80
+      "initializeMapPointCount": 30
     },
     "localMap": {
       "frameSize": 8

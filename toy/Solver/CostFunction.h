@@ -1,10 +1,11 @@
 #pragma once
 #include "macros.h"
 #include "usings.h"
+#include "ToyLogger.h"
 #include "Frame.h"
 #include "MapPoint.h"
-#include "Factor.h"
 #include "EigenUtil.h"
+#include "Factor.h"
 
 namespace toy {
 class MEstimator {
@@ -48,7 +49,7 @@ public:
     , mME{ME}
     , mScale{scale} {}
 
-  void linearlize() {
+  double linearlize() {
     Eigen::Vector3d Pwx = mMapPoint->getPwx();
 
     Sophus::SE3d    Scw  = mSwc->inverse();
@@ -61,11 +62,13 @@ public:
     Eigen::Vector3d undist = Pcx * iz;
     mC                     = mScale * (undist.head(2) - mZ);
 
+    Eigen::Vector2d undist2d = undist.head(2);
+
     Eigen::Matrix23d reduce;
     reduce << iz, 0.0, -Pcx.x() * izSq, 0.0, iz, -Pcx.y() * izSq;
 
     Eigen::Matrix36d J;
-    J.leftCols(3)  = Rcw;
+    J.leftCols(3)  = -Rcw;
     J.rightCols(3) = Eigen::skew(Pcx);
 
     mJ = mScale * reduce * J;
@@ -78,14 +81,18 @@ public:
       std::tie(error, weight) = mME->computeError(cSq);
 
     double sqrtW = std::sqrt(weight);
+    //ToyLogD("error : {} - {} = {} -> norm : {} , sqrtW {}", ToyLogger::eigenVec(undist2d),
+    //ToyLogger::eigenVec(mZ), ToyLogger::eigenVec(mC), error, sqrtW);
 
     mC *= sqrtW;
     mJ *= sqrtW;
+
+    return error;
   }
 
   void addToHessian(Eigen::Matrix66d& H, Eigen::Vector6d& b) {
-    //H += mJ.transpose() * mJ;
-    //b += mJ.transpose() * mC;
+    H += mJ.transpose() * mJ;
+    b += mJ.transpose() * mC;
   }
 
 protected:
@@ -97,5 +104,8 @@ protected:
 
   MEstimator::Ptr mME;
   double          mScale;
+
+  public:
+  db::MapPoint::Ptr getMapPoint() {return mMapPoint;}
 };
 }  //namespace toy

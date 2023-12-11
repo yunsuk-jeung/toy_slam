@@ -1,5 +1,6 @@
 #pragma once
 #include <mutex>
+#include <condition_variable>
 #include <thread>
 #include <atomic>
 #include "Sensor.h"
@@ -15,6 +16,8 @@ public:
   void prepare() override;
   void getInfo(CameraInfo* info0, CameraInfo* info1) override;
 
+  void setContinuosMode(bool sendImage) { mContinuousMode = sendImage; }
+  void sendImage();
   void start() override;
   void stop() override;
 
@@ -25,7 +28,12 @@ public:
 protected:
   DataReader* mDataReader;
 
-  std::atomic<bool> mWorking = false;
+  bool                    mContinuousMode;
+  bool                    mSendImage;
+  std::condition_variable mImageCallbackCv;
+  std::mutex              mImageCallbackMutex;
+
+  std::atomic<bool> mWorking;
   std::thread       mThread;
 
   int mImageType0;

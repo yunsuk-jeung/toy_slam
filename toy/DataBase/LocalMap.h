@@ -26,7 +26,8 @@ protected:
   std::map<int, std::shared_ptr<MapPoint>> mMapPoints;
 
 public:
-  std::map<int, std::shared_ptr<Frame>>& getFrames() { return mFrames; }
+  std::map<int, std::shared_ptr<Frame>>&    getFrames() { return mFrames; }
+  std::map<int, std::shared_ptr<MapPoint>>& getMapPoints() { return mMapPoints; }
 };
 
 }  //namespace db

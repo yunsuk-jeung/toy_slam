@@ -15,8 +15,8 @@ constexpr size_t initialSize = 4 * 100000;
 }
 PointCloudRenderer::PointCloudRenderer()
   : mBVB{nullptr}
-  , mUB{nullptr} {
-  mPointBuffer.reserve(initialSize);
+  , mUB{nullptr}
+  , mSyncId{0} {
   mName = "PointCloud Renderer";
 }
 
@@ -27,7 +27,7 @@ PointCloudRenderer::~PointCloudRenderer() {
 
 void PointCloudRenderer::createVertexBuffer() {
   auto count = mRenderContext->getContextImageCount();
-
+  mSyncIds.resize(count, 0);
   mBVB = std::make_unique<BufferingBuffer>(mDevice,
                                            count,
                                            initialSize,
@@ -35,28 +35,28 @@ void PointCloudRenderer::createVertexBuffer() {
                                            vk::MemoryPropertyFlagBits::eHostVisible,
                                            vk::MemoryPropertyFlagBits::eHostCoherent);
 
-  constexpr float                  radius = 3.0f;
-  std::random_device               rd;
-  std::mt19937                     gen(rd());
-  std::uniform_real_distribution<> dis(-radius, radius);
+  //constexpr float                  radius = 3.0f;
+  //std::random_device               rd;
+  //std::mt19937                     gen(rd());
+  //std::uniform_real_distribution<> dis(-radius, radius);
 
-  for (int i = 0; i < 30000; ++i) {
-    float x, y, z;
-    do {
-      x = dis(gen);
-      y = dis(gen);
-      z = dis(gen);
-    } while (std::sqrt(x * x + y * y + z * z) > radius);
+  //for (int i = 0; i < 30000; ++i) {
+  //  float x, y, z;
+  //  do {
+  //    x = dis(gen);
+  //    y = dis(gen);
+  //    z = dis(gen);
+  //  } while (std::sqrt(x * x + y * y + z * z) > radius);
 
-    mPointBuffer.push_back(x);
-    mPointBuffer.push_back(y);
-    mPointBuffer.push_back(z);
-    mPointBuffer.push_back(1.0f);
-  }
+  //mPointBuffer.push_back(x);
+  //mPointBuffer.push_back(y);
+  //mPointBuffer.push_back(z);
+  //mPointBuffer.push_back(1.0f);
+  //}
 
-  auto memorySize = sizeof(float) * mPointBuffer.size();
+  //auto memorySize = sizeof(float) * mPointBuffer.size();
 
-  for (int i = 0; i < 3; i++) { mBVB->update(i, mPointBuffer.data(), memorySize, 0); }
+  //for (int i = 0; i < 3; i++) { mBVB->update(i, mPointBuffer.data(), memorySize, 0); }
 }
 
 void PointCloudRenderer::createUniformBuffers() {
@@ -76,12 +76,24 @@ void PointCloudRenderer::createUniformBuffers() {
   for (int i = 0; i < count; ++i) { mUB->update(i, I.data()); }
 }
 
+void PointCloudRenderer::updateSyncId() {
+  ++mSyncId;
+}
+
 void PointCloudRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
+  if (mPointBufferPtr->empty())
+    return;
+
+  if (mSyncIds[idx] != mSyncId) {
+    auto memorySize = sizeof(float) * mPointBufferPtr->size();
+    mBVB->update(idx, mPointBufferPtr->data(), memorySize, 0);
+    mSyncIds[idx] = mSyncId;
+  }
 
   auto& vkBuffer     = mBVB->getVkBuffer(idx);
   auto& camDescSet   = mCamUB->getVkDescSet(idx);
   auto& modelDescSet = mUB->getVkDescSet(idx);
-  auto  vertexCount  = mPointBuffer.size() >> 2;
+  auto  vertexCount  = mPointBufferPtr->size() >> 2;
 
   cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline->vk());
   cmd.bindVertexBuffers(0, {vkBuffer}, {0});

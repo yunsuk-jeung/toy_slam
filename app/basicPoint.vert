@@ -11,7 +11,7 @@ layout(set = 1, binding = 0, std140) uniform modelMat{
   mat4 model;};
 
 void main(){
-    gl_Position  = cam.P * cam.V * model * vec4(i_pos.xyz,1.0);
+    gl_Position  = cam.P * cam.V * cam.M * model * vec4(i_pos.xyz,1.0);
     gl_PointSize = 3.0f;
     o_col = vec3(1.0, 1.0, 0.0);
 }

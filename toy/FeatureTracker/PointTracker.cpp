@@ -81,10 +81,12 @@ size_t PointTracker::extract(db::Frame* frame) {
 
   convertCVKeyPointsToFeature(cam, keyPoints, feature);
 
-  cv::Mat image = origin.clone();
-  cv::cvtColor(image, image, CV_GRAY2BGR);
-  for (const auto& kpt : keyPoints) { cv::circle(image, kpt.pt, 3, {255, 0, 0}, -1); }
-  cv::imshow("keyPoint", image);
+  if (Config::Vio::showExtraction) {
+    cv::Mat image = origin.clone();
+    cv::cvtColor(image, image, CV_GRAY2BGR);
+    for (const auto& kpt : keyPoints) { cv::circle(image, kpt.pt, 3, {255, 0, 0}, -1); }
+    cv::imshow("keyPoint", image);
+  }
 
   return keyPoints.size();
 }
@@ -164,21 +166,6 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
   auto& keyPoints1 = curr->getFeature(0)->getKeypoints();
   keyPoints1.reserve(trackSize);
 
-  //#####################################################################
-  cv::Mat image1 = pyramid1[0].clone();
-  cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);
-
-  for (int i = 0; i < uvs0.size(); i++) {
-    if (statusO[i] == 0) {
-      cv::line(image1, uvs0[i], uvs[i], {0.0, 0.0, 255.0}, 1);
-      cv::circle(image1, uvs[i], 4, {0.0, 0.0, 255.0}, -1);
-    }
-    else {
-      cv::line(image1, uvs0[i], uvs[i], {255, 0.0, 0.0}, 1);
-      cv::circle(image1, uvs[i], 4, {255, 0.0, 0.0}, -1);
-    }
-  }
-  //#####################################################################
   auto& ids1        = keyPoints1.mIds;
   auto& levels1     = keyPoints1.mLevels;
   auto& uvs1        = keyPoints1.mUVs;
@@ -198,20 +185,32 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
   }
 
   //#####################################################################
-  auto calcColor = [](int trackCount) -> cv::Scalar {
-    trackCount   = std::max(0, std::min(trackCount, 20));
-    double ratio = trackCount / 30.0;
-    int    blue  = static_cast<int>((1 - ratio) * 255);
-    int    red   = static_cast<int>(ratio * 255);
-    return cv::Scalar(blue, 0, red);
-  };
-  int iiii = 0;
-  for (const auto& uv : uvs1) {
-    auto color = calcColor(trackCount1[iiii++]);
-    cv::circle(image1, uv, 3, color, -1);
+  if (Config::Vio::showMonoTracking) {
+    cv::Mat image1 = pyramid1[0].clone();
+    cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);
+
+    for (int i = 0; i < uvs0.size(); i++) {
+      if (statusO[i] == 0 || statusE[i] == 0) {
+        cv::line(image1, uvs0[i], uvs[i], {0.0, 0.0, 255.0}, 1);
+        cv::circle(image1, uvs[i], 4, {0.0, 0.0, 255.0}, -1);
+      }
+    }
+
+    auto calcColor = [](int trackCount) -> cv::Scalar {
+      trackCount   = std::max(0, std::min(trackCount, 20));
+      double ratio = trackCount / 30.0;
+      int    blue  = static_cast<int>((1 - ratio) * 255);
+      int    red   = static_cast<int>(ratio * 255);
+      return cv::Scalar(blue, 0, red);
+    };
+    int iiii = 0;
+    for (const auto& uv : uvs1) {
+      auto color = calcColor(trackCount1[iiii++]);
+      cv::circle(image1, uv, 3, color, -1);
+    }
+    cv::imshow("mono opticalflow", image1);
+    cv::waitKey(1);
   }
-  cv::imshow("mono opticalflow", image1);
-  cv::waitKey(1);
   //#####################################################################
 
   return ids1.size();
@@ -249,26 +248,6 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
 
   auto* cam1 = frame->getCamera(1);
   cam1->undistortPoints(uvs1, undists1);
-  //#####################################################################
-  cv::Mat image0 = pyramid0[0].clone();
-  cv::cvtColor(image0, image0, cv::COLOR_GRAY2BGR);
-
-  cv::Mat image1 = pyramid1[0].clone();
-  cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);
-
-  for (int i = 0; i < uvs0.size(); i++) {
-    if (status[i] == 0) {
-      cv::line(image1, uvs0[i], uvs1[i], {0.0, 0.0, 255.0}, 1);
-      cv::circle(image1, uvs1[i], 4, {0.0, 0.0, 255.0}, -1);
-    }
-    else {
-      cv::line(image1, uvs0[i], uvs1[i], {0.0, 255.0, 0.0}, 1);
-      cv::circle(image1, uvs1[i], 4, {0.0, 255.0, 0.0}, -1);
-    }
-    cv::circle(image0, uvs0[i], 4, {0.0, 255.0, 0.0}, -1);
-  }
-  //#####################################################################
-
   std::vector<uchar> statusE;
   cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
 
@@ -277,12 +256,14 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
 
   auto trackSize = uvs0.size();
 
+  size_t stereoFeatureSize = 0u;
   for (int i = 0; i < trackSize; ++i) {
     if (status[i] == 0 || statusE[i] == 0) {
       ids1.push_back(0);
       continue;
     }
     ids1.push_back(1);  //stereo
+    ++stereoFeatureSize;
   }
 
   //Sophus::SE3d    Sbc0    = Sophus::SE3d::exp(frame->getLbc(0));
@@ -308,18 +289,30 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
   //}
 
   //#####################################################################
-  for (int i = 0; i < uvs0.size(); i++) {
-    if (status[i] == 0 || statusE[i] == 0) {
-      cv::line(image1, uvs0[i], uvs1[i], {255.0, 0.0, 0.0}, 1);
-      cv::circle(image1, uvs1[i], 2, {255.0, 0.0, 0.0}, -1);
+  if (Config::Vio::showStereoTracking) {
+    cv::Mat image0 = pyramid0[0].clone();
+    cv::cvtColor(image0, image0, cv::COLOR_GRAY2BGR);
+
+    cv::Mat image1 = pyramid1[0].clone();
+    cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);
+
+    for (int i = 0; i < uvs0.size(); i++) {
+      cv::line(image1, uvs0[i], uvs1[i], {0.0, 255.0, 0.0}, 1);
+      cv::circle(image1, uvs1[i], 4, {0.0, 255.0, 0.0}, -1);
     }
+    for (int i = 0; i < uvs0.size(); i++) {
+      if (status[i] == 0 || statusE[i] == 0) {
+        cv::line(image1, uvs0[i], uvs1[i], {255.0, 0.0, 0.0}, 1);
+        cv::circle(image1, uvs1[i], 2, {255.0, 0.0, 0.0}, -1);
+      }
+    }
+    cv::imshow("stereo opticalflow0", image0);
+    cv::imshow("stereo opticalflow1", image1);
+    cv::waitKey(1);
   }
-  cv::imshow("stereo opticalflow0", image0);
-  cv::imshow("stereo opticalflow1", image1);
-  cv::waitKey(1);
   //#####################################################################
 
-  return size_t();
+  return stereoFeatureSize;
 }
 
 void PointTracker::convertCVKeyPointsToFeature(Camera*                    cam,
@@ -364,10 +357,10 @@ cv::Mat PointTracker::createMask(const cv::Mat& origin, db::Feature* feature) {
   const int radius   = gridCols > gridRows ? gridRows >> 1 : gridCols >> 1;
 
   for (const auto& uv : uvs) { cv::circle(mask, uv, radius, {0}, -1); }
-  //#####################################################################
-  cv::imshow("mask", mask);
-  cv::waitKey(1);
-  //#####################################################################
+  ////#####################################################################
+  //cv::imshow("mask", mask);
+  //cv::waitKey(1);
+  ////#####################################################################
 
   return mask;
 }

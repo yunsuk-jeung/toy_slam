@@ -19,6 +19,9 @@ public:
     static int         colGridCount;
     static std::string pointTracker;
     static double      epipolarThreashold;
+    static bool        showExtraction;
+    static bool        showMonoTracking;
+    static bool        showStereoTracking;
 
     static std::string lineTracker;
     static bool        frameTrackerSolvePose;

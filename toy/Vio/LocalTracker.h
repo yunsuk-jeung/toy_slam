@@ -25,7 +25,8 @@ private:
   using Thread<db::Frame, void>::getLatestInput;
   using Thread<db::Frame, void>::mInQueue;
 
-  int initializeMapPoints(std::shared_ptr<db::Frame> currFrame);
+  int  initializeMapPoints(std::shared_ptr<db::Frame> currFrame);
+  void setDataToInfo();
 
 private:
   enum class Status { NONE = -1, INITIALIZING = 0, TRACKING = 1 };

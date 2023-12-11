@@ -1,4 +1,5 @@
 #include "ToyLogger.h"
+#include "SLAMInfo.h"
 #include "MapPoint.h"
 #include "Frame.h"
 #include "Factor.h"
@@ -43,6 +44,7 @@ void LocalTracker::process() {
     }
     else {
       mLocalMap->reset();
+      return;
     }
     break;
   }
@@ -67,6 +69,8 @@ void LocalTracker::process() {
     break;
   }
   }
+
+  setDataToInfo();
 }
 
 int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
@@ -105,4 +109,38 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
   }
   return successCount;
 }
+
+void LocalTracker::setDataToInfo() {
+  auto* info     = SLAMInfo::getInstance();
+  auto& frameMap = mLocalMap->getFrames();
+
+  std::vector<Eigen::Matrix4f> Mwcs;
+  Mwcs.reserve(frameMap.size());
+
+  for (auto& [key, framePtr] : frameMap) {
+    Eigen::Matrix4f Mwc = framePtr->getSwc(0).matrix().cast<float>();
+    Mwcs.push_back(std::move(Mwc));
+  }
+  info->setLocalPath(Mwcs);
+
+  auto& mpMap  = mLocalMap->getMapPoints();
+  auto  mpSize = mpMap.size();
+
+  std::vector<float> outmp;
+  outmp.reserve(mpSize * 4);
+
+  for (auto& [key, mpPtr] : mpMap) {
+    if (mpPtr->status() < db::MapPoint::Status::TRACKING)
+      continue;
+
+    Eigen::Vector3d Pwx = mpPtr->getPwx();
+    outmp.push_back(Pwx.x());
+    outmp.push_back(Pwx.y());
+    outmp.push_back(Pwx.z());
+    outmp.push_back(1.0);
+  }
+
+  info->setLocalPoints(outmp);
+}
+
 }  //namespace toy

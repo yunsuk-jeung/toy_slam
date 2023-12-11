@@ -5,14 +5,14 @@
 #include "DataReader.h"
 #include "Simulator.h"
 #include "SensorFactory.h"
-#include "Slam.h"
-#include "SlamApp.h"
+#include "SLAM.h"
+#include "SLAMApp.h"
 #include "GlfwWindow.h"
 
-vkl::SlamApp*   app              = nullptr;
+vkl::SLAMApp*   app              = nullptr;
 io::Sensor*     sensor           = nullptr;
 io::DataReader* dataReader       = nullptr;
-std::string     dataPath         = "D:/dataset/EUROC/MH_01_easy";
+std::string     dataPath         = "D:/dataset/EUROC/V1_01_easy";
 std::string     configPath       = "D:/workspaceD/toy_vio/configs/";
 std::string     sensorConfigFile = "euroc_sensor.json";
 std::string     slamConfigFile   = "VioOnly.json";
@@ -70,7 +70,7 @@ void prepareGUI() {
     {1280, 1280}
   };
 
-  app = new vkl::SlamApp();
+  app = new vkl::SLAMApp();
   std::unique_ptr<vkl::Window> glfwWindow(new vkl::GlfwWindow(winInfo, app));
   app->registerWindow(glfwWindow);
   app->addShaderPath("F:/transfer/toy_slam/libvulkanlight/shaders");

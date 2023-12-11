@@ -44,6 +44,8 @@ Camera::Camera(Camera* src) {
   this->mIsDistortion = src->mIsDistortion;
   this->mK            = src->mK.clone();
   this->mD            = src->mD.clone();
+  this->mEK           = src->mEK;
+  this->mED           = src->mED;
 }
 
 Camera* CameraFactory::createCamera(CameraInfo* camInfo) {
@@ -62,5 +64,27 @@ Camera* CameraFactory::createCamera(CameraInfo* camInfo) {
 }
 
 Camera::~Camera() {}
+
+void Camera::project(Eigen::Vector3d& xyz, Eigen::Vector2d& uv) {
+  Eigen::Vector2d nuv(xyz.x() / xyz.z(), xyz.y() / xyz.z());
+
+  if (mIsDistortion) {
+    Eigen::Vector2d dnuv;
+    distort(nuv, dnuv);
+    nuv += dnuv;
+  }
+  uv << mFx * nuv.x() + mCx, mFy * nuv.y() + mCy;
+}
+
+cv::Point2d Camera::project(Eigen::Vector3d& xyz) {
+  Eigen::Vector2d nuv(xyz.x() / xyz.z(), xyz.y() / xyz.z());
+
+  if (mIsDistortion) {
+    Eigen::Vector2d dnuv;
+    distort(nuv, dnuv);
+    nuv += dnuv;
+  }
+  return cv::Point2d(mFx * nuv.x() + mCx, mFy * nuv.y() + mCy);
+}
 
 }  //namespace toy

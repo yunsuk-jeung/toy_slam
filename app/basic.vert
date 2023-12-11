@@ -10,6 +10,6 @@ layout(set = 1, binding = 0, std140) uniform modelMat{
 
 layout(location = 0) out vec3 o_col;
 void main() {
-    gl_Position = cam.P * cam.V * model * vec4(i_pos, 1.0);
+    gl_Position = cam.P * cam.V * cam.M * model * vec4(i_pos, 1.0);
     o_col = i_col;
 }

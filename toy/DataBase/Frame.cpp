@@ -10,12 +10,14 @@ namespace db {
 int Frame::globalId = 0;
 Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   : mId{globalId++}
+  , mIsKeyFrame{false}
   , mImagePyramids{std::move(set->mImagePyramid0), std::move(set->mImagePyramid1)}
   , mCameras{nullptr, nullptr}
   , mFeatures{std::make_unique<Feature>(), std::make_unique<Feature>()} {}
 
 Frame::Frame(Frame* src) {
-  this->mId = src->mId;
+  this->mId         = src->mId;
+  this->mIsKeyFrame = src->mIsKeyFrame;
 
   db::ImagePyramid* pyramid0 = src->mImagePyramids[0]->clone();
   db::ImagePyramid* pyramid1 = src->mImagePyramids[1]->clone();
@@ -32,8 +34,8 @@ Frame::Frame(Frame* src) {
   this->mFeatures[0] = std::unique_ptr<Feature>(feature0);
   this->mFeatures[1] = std::unique_ptr<Feature>(feature1);
 
-  this->mSwb  = src->mSwb;
-  this->mSbcs = src->mSbcs;
+  this->mTwb  = src->mTwb;
+  this->mTbcs = src->mTbcs;
 }
 
 Frame::~Frame() {
@@ -86,8 +88,8 @@ void Frame::setSbc(float* pfbc0, float* pfbc1) {
   Eigen::Quaterniond Qbc0(Rbc0);
   Eigen::Quaterniond Qbc1(Rbc1);
 
-  mSbcs[0] = Sophus::SE3d(Qbc0, Tbc0);
-  mSbcs[1] = Sophus::SE3d(Qbc1, Tbc1);
+  mTbcs[0] = Sophus::SE3d(Qbc0, Tbc0);
+  mTbcs[1] = Sophus::SE3d(Qbc1, Tbc1);
 }
 
 void Frame::addMapPointFactor(std::shared_ptr<db::MapPoint> mp,

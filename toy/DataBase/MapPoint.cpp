@@ -4,10 +4,11 @@
 namespace toy {
 namespace db {
 
-MapPoint::MapPoint(int id)
-  : mStatus{Status::INITIALING}
+MapPoint::MapPoint(int id, int hostFrameId)
+  : mId{id}
+  , mHostFrameId{hostFrameId}
+  , mStatus{Status::INITIALING}
   , mInvDepth{1.0} {
-  mId = id;
   mFrameFactors.reserve(50);
 }
 
@@ -22,7 +23,7 @@ Eigen::Vector3d MapPoint::getPwx() {
 
   Eigen::Vector3d undist(mUndist.x(), mUndist.y(), 1.0);
 
-  return fPtr->getSwc(0) * undist / mInvDepth;
+  return fPtr->getTwc(0) * undist / mInvDepth;
 }
 
 }  //namespace db

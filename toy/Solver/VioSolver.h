@@ -14,11 +14,10 @@ public:
   VioSolver() {}
   virtual ~VioSolver() {}
 
-  virtual bool solve(std::vector<std::shared_ptr<db::Frame>>&    frames,
-                     std::vector<std::shared_ptr<db::MapPoint>>& mapPoints) = 0;
+  virtual int solve(std::vector<std::shared_ptr<db::Frame>>&    frames,
+                    std::vector<std::shared_ptr<db::MapPoint>>& mapPoints) = 0;
 
 protected:
-
 };
 
 class VioSolverFactory {

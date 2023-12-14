@@ -21,8 +21,13 @@ PointTracker::~PointTracker() {}
 size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
   size_t trackedPtSize = track(prevFrame, currFrame);
 
-  if (trackedPtSize > 80)
+  auto  prevSize = prevFrame->getFeature(0)->getKeypoints().size();
+  float ratio    = float(trackedPtSize) / float(prevSize);
+
+  if (ratio > Config::Vio::minTrackedRatio
+      && trackedPtSize > Config::Vio::minTrackedPoint) {
     return trackedPtSize;
+  }
 
   auto newKptSize = extract(currFrame);
 
@@ -31,8 +36,6 @@ size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
   if (currFrame->getImagePyramid(1)->type() != 1)
     return trackedPtSize;
 
-  db::Feature* feature0 = currFrame->getFeature(0);
-  db::Feature* feature1 = currFrame->getFeature(1);
   trackStereo(currFrame);
 
   return trackedPtSize;

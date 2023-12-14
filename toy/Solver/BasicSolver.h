@@ -54,11 +54,11 @@ public:
     std::vector<PoseOnlyReprojectionCost> costs;
     costs.reserve(mapPointFactorMap.size());
 
-    Sophus::SE3d Swc = curr->getSwc(0);
+    Sophus::SE3d Twc = curr->getTwc(0);
 
     for (auto& [mpWeak, factor] : mapPointFactorMap) {
       auto mp = mpWeak.lock();
-      costs.emplace_back(&Swc, mp, factor.undist0().head(2), huber);
+      costs.emplace_back(&Twc, mp, factor.undist0().head(2), huber);
     }
 
     /*
@@ -114,14 +114,14 @@ public:
       JtJ.diagonal().array() += D.array().max(lambda);
       Eigen::Vector6d delX = -JtJ.ldlt().solve(JtC);
 
-      Swc.translation() += delX.head(3);
-      Swc.so3() *= Sophus::SO3d::exp(delX.tail(3));
+      Twc.translation() += delX.head(3);
+      Twc.so3() *= Sophus::SO3d::exp(delX.tail(3));
     }
 
-    auto&        Sbc0 = curr->getSbc(0);
-    Sophus::SE3d Swb  = Swc * Sbc0.inverse();
+    auto&        Tbc0 = curr->getTbc(0);
+    Sophus::SE3d Twb  = Twc * Tbc0.inverse();
 
-    curr->setSwb(Swb);
+    curr->setTwb(Twb);
 
     return true;
   }

@@ -16,7 +16,7 @@ public:
   DELETE_MOVE_CONSTRUCTORS(MapPoint);
 
   MapPoint() = delete;
-  MapPoint(int id);
+  MapPoint(int id, int hostFrameId);
 
   void addFrameFactor(std::shared_ptr<db::Frame> frame, ReprojectionFactor factor);
 
@@ -33,6 +33,7 @@ protected:
   using FrameFactorPair = std::pair<std::weak_ptr<db::Frame>, ReprojectionFactor>;
 
   int                          mId;
+  int                          mHostFrameId;
   Status                       mStatus;
   std::vector<FrameFactorPair> mFrameFactors;
   Eigen::Vector2d              mUndist;

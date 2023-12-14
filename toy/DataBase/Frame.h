@@ -43,6 +43,7 @@ protected:
                                      std::owner_less<std::weak_ptr<db::MapPoint>>>;
   static int globalId;
   int        mId;
+  bool       mIsKeyFrame;
 
   std::array<std::unique_ptr<ImagePyramid>, 2> mImagePyramids;
   std::array<std::unique_ptr<Camera>, 2>       mCameras;
@@ -56,18 +57,20 @@ protected:
   //Eigen::Vector6d&   getLbc(int i) { return mLbcs[i]; }
 
   //S : se3
-  Sophus::SE3d                mSwb;
-  std::array<Sophus::SE3d, 2> mSbcs;
+  Sophus::SE3d                mTwb;
+  std::array<Sophus::SE3d, 2> mTbcs;
 
 public:
   const int          id() const { return mId; }
+  void               setKeyFrame() { mIsKeyFrame = true; }
+  const bool         isKeyFrame() const { return mIsKeyFrame; }
   ImagePyramid*      getImagePyramid(int i) { return mImagePyramids[i].get(); }
   Camera*            getCamera(int i) { return mCameras[i].get(); }
   Feature*           getFeature(int i) { return mFeatures[i].get(); }
-  void               setSwb(const Sophus::SE3d& Swb) { mSwb = Swb; }
-  Sophus::SE3d&      getSwb() { return mSwb; }
-  Sophus::SE3d       getSwc(int i) { return mSwb * mSbcs[i]; }
-  Sophus::SE3d&      getSbc(int i) { return mSbcs[i]; }
+  void               setTwb(const Sophus::SE3d& Swb) { mTwb = Swb; }
+  Sophus::SE3d&      getTwb() { return mTwb; }
+  Sophus::SE3d       getTwc(int i) { return mTwb * mTbcs[i]; }
+  Sophus::SE3d&      getTbc(int i) { return mTbcs[i]; }
   MapPointFactorMap& getMapPointFactorMap() { return mMapPointFactorMap; }
 };
 

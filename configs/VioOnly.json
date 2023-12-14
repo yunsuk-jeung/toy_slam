@@ -12,9 +12,12 @@
           "colGridCount": 14,
           "on": true,
           "tracker": "Fast.OpticalflowLK",
+          "minTrackedPoint": 30,
+          "minTrackedRatio": 0.7,
           "epipolarThreashold": 0.005,
           "showExtraction": false,
-          "showMonoTracking": false
+          "showMonoTracking": false,
+          "showStereoTracking": false
         },
         "line": {
           "on": false

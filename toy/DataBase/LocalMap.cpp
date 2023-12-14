@@ -17,14 +17,17 @@ void LocalMap::reset() {
   mMapPoints.clear();
 }
 
-void LocalMap::addFrame(std::shared_ptr<Frame> frame) {
-  mFrames.insert({frame->id(), frame});
+bool LocalMap::addFrame(std::shared_ptr<Frame> frame) {
+  int frameId = frame->id();
+
+  mFrames.insert({frameId, frame});
   auto& keyPoints0 = frame->getFeature(0)->getKeypoints();
   auto& keyPoints1 = frame->getFeature(1)->getKeypoints();
 
   auto size0 = keyPoints0.size();
   auto size1 = keyPoints1.size();
 
+  auto newMpCount = 0;
   for (size_t i = 0; i < size0; ++i) {
     int id = keyPoints0.mIds[i];
 
@@ -35,8 +38,9 @@ void LocalMap::addFrame(std::shared_ptr<Frame> frame) {
     auto& undist0 = keyPoints0.mUndists[i];
 
     if (it == mMapPoints.end()) {
-      mp = std::make_shared<MapPoint>(id);
+      mp = std::make_shared<MapPoint>(id, frameId);
       mp->setUndist({undist0.x, undist0.y});
+      ++newMpCount;
     }
     else {
       mp = it->second;
@@ -60,6 +64,7 @@ void LocalMap::addFrame(std::shared_ptr<Frame> frame) {
     frame->addMapPointFactor(mp, factor);
     mp->addFrameFactor(frame, factor);
   }
+  return newMpCount > 0;
 }
 
 void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,

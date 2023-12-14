@@ -39,6 +39,8 @@ void LocalTracker::process() {
     mLocalMap->addFrame(currFrame);
     int  createMPCount = initializeMapPoints(currFrame);
     bool OK            = createMPCount > Config::Vio::initializeMapPointCount;
+    currFrame->setKeyFrame();
+
     if (OK) {
       mStatus = Status::TRACKING;
     }
@@ -51,11 +53,14 @@ void LocalTracker::process() {
   case Status::TRACKING: {
     //todo changed if imu exists;
     if (true) {
-      auto& Swb = mLocalMap->getFrames().rbegin()->second->getSwb();
-      currFrame->setSwb(Swb);
+      auto& Twb = mLocalMap->getFrames().rbegin()->second->getTwb();
+      currFrame->setTwb(Twb);
     }
 
-    mLocalMap->addFrame(currFrame);
+    if (mLocalMap->addFrame(currFrame)) {
+      currFrame->setKeyFrame();
+    }
+
     int createMPCount = initializeMapPoints(currFrame);
 
     BasicSolver::solveFramePose(currFrame);
@@ -64,6 +69,8 @@ void LocalTracker::process() {
     std::vector<db::MapPoint::Ptr> mapPoints;
 
     mLocalMap->getCurrentStates(frames, mapPoints);
+    mVioSolver->solve(frames, mapPoints);
+
     break;
   }
   }
@@ -74,9 +81,9 @@ void LocalTracker::process() {
 int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
   auto& mapPointFactorMap = currFrame->getMapPointFactorMap();
 
-  auto            Swc0  = currFrame->getSwc(0);
-  auto            Swc1  = currFrame->getSwc(1);  //identity for mono or depth..
-  auto            Sc1c0 = Swc1.inverse() * Swc0;
+  auto            Twc0  = currFrame->getTwc(0);
+  auto            Twc1  = currFrame->getTwc(1);  //identity for mono or depth..
+  auto            Tc1c0 = Twc1.inverse() * Twc0;
   Eigen::Vector3d Pc0x;
 
   int successCount = 0;
@@ -91,7 +98,7 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
       break;
     }
     case db::ReprojectionFactor::Type::STEREO: {
-      if (!BasicSolver::triangulate(factor.undist0(), factor.undist1(), Sc1c0, Pc0x)) {
+      if (!BasicSolver::triangulate(factor.undist0(), factor.undist1(), Tc1c0, Pc0x)) {
         continue;
       }
       double invD = 1.0 / Pc0x.z();
@@ -116,7 +123,7 @@ void LocalTracker::setDataToInfo() {
   Mwcs.reserve(frameMap.size());
 
   for (auto& [key, framePtr] : frameMap) {
-    Eigen::Matrix4f Mwc = framePtr->getSwc(0).matrix().cast<float>();
+    Eigen::Matrix4f Mwc = framePtr->getTwc(0).matrix().cast<float>();
     Mwcs.push_back(std::move(Mwc));
   }
   info->setLocalPath(Mwcs);

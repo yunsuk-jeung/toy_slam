@@ -18,6 +18,8 @@ public:
     static int         rowGridCount;
     static int         colGridCount;
     static std::string pointTracker;
+    static int         minTrackedPoint;
+    static float       minTrackedRatio;
     static double      epipolarThreashold;
     static bool        showExtraction;
     static bool        showMonoTracking;

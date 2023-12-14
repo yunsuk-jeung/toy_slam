@@ -14,7 +14,7 @@ public:
   ~LocalMap();
 
   void reset();
-  void addFrame(std::shared_ptr<Frame> in);
+  bool addFrame(std::shared_ptr<Frame> in);
   void getCurrentStates(std::vector<std::shared_ptr<Frame>>&    frames,
                         std::vector<std::shared_ptr<MapPoint>>& mapPoints);
 

@@ -39,9 +39,15 @@ Frame::Frame(Frame* src) {
 }
 
 Frame::~Frame() {
-  for (ImagePyramid::Uni& ptr : mImagePyramids) { ptr.reset(); }
-  for (Camera::Uni& ptr : mCameras) { ptr.reset(); }
-  for (Feature::Uni& ptr : mFeatures) { ptr.reset(); }
+  for (ImagePyramid::Uni& ptr : mImagePyramids) {
+    ptr.reset();
+  }
+  for (Camera::Uni& ptr : mCameras) {
+    ptr.reset();
+  }
+  for (Feature::Uni& ptr : mFeatures) {
+    ptr.reset();
+  }
 }
 
 Frame::Ptr Frame::clonePtr() {

@@ -111,7 +111,9 @@ void SqrtLocalSolver::createStates(std::vector<db::Frame::Ptr>&    frames,
   mFrameParameterMap.clear();
   mMapPointParameterMap.clear();
 
-  for (auto& f : frames) { mFrameParameterMap.insert({f->id(), FrameParameter(f)}); }
+  for (auto& f : frames) {
+    mFrameParameterMap.insert({f->id(), FrameParameter(f)});
+  }
 
   for (auto& mp : mapPoints) {
     mMapPointParameterMap.insert({mp->id(), MapPointParameter(mp)});

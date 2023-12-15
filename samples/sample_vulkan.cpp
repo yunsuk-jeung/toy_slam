@@ -41,7 +41,9 @@ public:
 
   void run() override {
     mEndApplication = false;
-    while (!mEndApplication) { onRender(); }
+    while (!mEndApplication) {
+      onRender();
+    }
   }
 
 protected:

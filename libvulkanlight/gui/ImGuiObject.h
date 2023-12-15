@@ -6,7 +6,7 @@
 namespace ImGui {
 class Object {
 public:
-  using Ptr = std::shared_ptr<Object>;
+  using Ptr        = std::shared_ptr<Object>;
   using RenderImpl = std::function<void()>;
 
   Object() = delete;

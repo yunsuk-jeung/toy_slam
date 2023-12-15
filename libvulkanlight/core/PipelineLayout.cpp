@@ -91,7 +91,9 @@ std::vector<vk::DescriptorSetLayout> PipelineLayout::prepareDescSetLayouts() {
     auto&       names = namesMap[key];
     std::string layoutNames;
 
-    for (auto& n : names) { layoutNames = layoutNames  + n + "_"; }
+    for (auto& n : names) {
+      layoutNames = layoutNames + n + "_";
+    }
     layoutNames.pop_back();
 
     name = name + "_" + layoutNames;
@@ -109,7 +111,9 @@ std::vector<vk::DescriptorSetLayout> PipelineLayout::prepareDescSetLayouts() {
 PipelineLayout::PipelineLayout(Device* device, std::vector<ShaderModule*>& shaderModules)
   : mDevice{device}
   , mName{""} {
-  for (auto& shader : shaderModules) { mName += shader->getName() + "_"; }
+  for (auto& shader : shaderModules) {
+    mName += shader->getName() + "_";
+  }
   mName.pop_back();
 
   mShaderModules = shaderModules;

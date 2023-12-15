@@ -73,7 +73,9 @@ void PointCloudRenderer::createUniformBuffers() {
 
   Eigen::Matrix4f I = Eigen::Matrix4f::Identity();
 
-  for (int i = 0; i < count; ++i) { mUB->update(i, I.data()); }
+  for (int i = 0; i < count; ++i) {
+    mUB->update(i, I.data());
+  }
 }
 
 void PointCloudRenderer::updateSyncId() {

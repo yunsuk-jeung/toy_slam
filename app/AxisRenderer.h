@@ -15,7 +15,6 @@ public:
   void updateSyndId();
   void buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx);
 
-
 protected:
   virtual void createVertexBuffer() override;
   virtual void createUniformBuffers() override;

@@ -89,7 +89,9 @@ void SLAMApp::run() {
   mSensor->start();
 
   mEndApplication = false;
-  while (!mEndApplication) { onRender(); }
+  while (!mEndApplication) {
+    onRender();
+  }
 
   mSensor->stop();
 }
@@ -210,15 +212,15 @@ void SLAMApp::createOriginRenderer() {
 
   constexpr char linePipelinename[] = "basic_line";
 
-  auto* axisPipeline = RP::addPipeline<BasicLinePipeline>(linePipelinename,
+  auto*           axisPipeline = RP::addPipeline<BasicLinePipeline>(linePipelinename,
                                                           mDevice.get(),
                                                           mRenderContext.get(),
                                                           mVkRenderPass,
                                                           basicPointLayout);
-  Eigen::Matrix4f S = Eigen::Matrix4f::Identity();
-  S(0,0) = 4.0f;
-  S(1,1) = 4.0f;
-  S(2,2) = 4.0f;
+  Eigen::Matrix4f S            = Eigen::Matrix4f::Identity();
+  S(0, 0)                      = 4.0f;
+  S(1, 1)                      = 4.0f;
+  S(2, 2)                      = 4.0f;
 
   mIs.push_back(S);
 
@@ -255,7 +257,7 @@ void SLAMApp::updateSLAMData() {
   if (info->getLocalPath(mMWcs)) {
     mAxisRenderer->updateSyndId();
     //VklLogD("current local path size : {}", mMWcs.size());
-    Eigen::Vector3f vec = mMWcs.back().block<3,1>(0,3);
+    Eigen::Vector3f vec = mMWcs.back().block<3, 1>(0, 3);
     //VklLogD("latest frame pose : {} ", eigenVec(vec));
   }
 

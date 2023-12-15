@@ -32,7 +32,7 @@ protected:
   void updateSLAMData();
 
 protected:
-  std::unique_ptr<AxisRenderer> mOriginAxisRenderer;
+  std::unique_ptr<AxisRenderer>       mOriginAxisRenderer;
   std::unique_ptr<PointCloudRenderer> mPointCloudRenderer;
 
   std::unique_ptr<AxisRenderer> mAxisRenderer;

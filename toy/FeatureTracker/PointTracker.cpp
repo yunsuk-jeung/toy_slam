@@ -90,7 +90,9 @@ size_t PointTracker::extract(db::Frame* frame) {
   if (Config::Vio::showExtraction) {
     cv::Mat image = origin.clone();
     cv::cvtColor(image, image, CV_GRAY2BGR);
-    for (const auto& kpt : keyPoints) { cv::circle(image, kpt.pt, 3, {255, 0, 0}, -1); }
+    for (const auto& kpt : keyPoints) {
+      cv::circle(image, kpt.pt, 3, {255, 0, 0}, -1);
+    }
     cv::imshow("keyPoint", image);
   }
 
@@ -362,7 +364,9 @@ cv::Mat PointTracker::createMask(const cv::Mat& origin, db::Feature* feature) {
   const int gridRows = origin.rows / rowGridCount;
   const int radius   = gridCols > gridRows ? gridRows >> 1 : gridCols >> 1;
 
-  for (const auto& uv : uvs) { cv::circle(mask, uv, radius, {0}, -1); }
+  for (const auto& uv : uvs) {
+    cv::circle(mask, uv, radius, {0}, -1);
+  }
   ////#####################################################################
   //cv::imshow("mask", mask);
   //cv::waitKey(1);

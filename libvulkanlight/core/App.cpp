@@ -141,7 +141,9 @@ void App::onWindowResized(int w, int h, int orientation) {
     mGraphicsCamera->onWindowResized(w, h, orientation);
 
     auto count = mRenderContext->getContextImageCount();
-    for (size_t i = 0; i < count; i++) { updateCameraUniform(i); }
+    for (size_t i = 0; i < count; i++) {
+      updateCameraUniform(i);
+    }
   }
 }
 
@@ -578,7 +580,9 @@ void App::createGraphicsCamera() {
                                               count,
                                               memSize);
   CameraUniform tmp;
-  for (int i = 0; i < count; ++i) { mCameraUB->update(i, &tmp, 0); }
+  for (int i = 0; i < count; ++i) {
+    mCameraUB->update(i, &tmp, 0);
+  }
 }
 
 void App::createRenderers() {}

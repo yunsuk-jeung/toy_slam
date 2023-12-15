@@ -69,7 +69,9 @@ bool LocalMap::addFrame(std::shared_ptr<Frame> frame) {
 
 void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
                                 std::vector<MapPoint::Ptr>& mapPoints) {
-  for (auto& [id, frame] : mFrames) { frames.push_back(frame); }
+  for (auto& [id, frame] : mFrames) {
+    frames.push_back(frame);
+  }
   for (auto& [id, mp] : mMapPoints) {
     if (static_cast<int>(mp->status()) < static_cast<int>(MapPoint::Status::TRACKING)) {
       continue;

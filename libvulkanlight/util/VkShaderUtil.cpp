@@ -19,7 +19,9 @@ size_t ShaderVariant::get_id() const {
 }
 
 void ShaderVariant::add_definitions(const std::vector<std::string>& definitions) {
-  for (auto& definition : definitions) { add_define(definition); }
+  for (auto& definition : definitions) {
+    add_define(definition);
+  }
 }
 
 void ShaderVariant::add_define(const std::string& def) {
@@ -356,7 +358,9 @@ std::vector<std::string> VkShaderUtil::replaceInclude(const std::string& src) {
 
   std::stringstream sstream(src);
 
-  while (std::getline(sstream, line_, delim)) { lines.push_back(line_ + "\n"); }
+  while (std::getline(sstream, line_, delim)) {
+    lines.push_back(line_ + "\n");
+  }
 
   std::vector<std::string> outs;
 
@@ -373,7 +377,9 @@ std::vector<std::string> VkShaderUtil::replaceInclude(const std::string& src) {
 
       std::string headerSrc    = readFileAsString(file);
       auto        intermediate = replaceInclude(headerSrc);
-      for (auto& interLine : intermediate) { outs.push_back(interLine); }
+      for (auto& interLine : intermediate) {
+        outs.push_back(interLine);
+      }
     }
     else {
       outs.push_back(line);

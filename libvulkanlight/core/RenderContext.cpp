@@ -26,7 +26,9 @@ RenderContext::~RenderContext() {
     vkDevice.destroyCommandPool(renderCommandPool);
   }
 
-  for (auto& fence : cmdFences) { vkDevice.destroyFence(fence); }
+  for (auto& fence : cmdFences) {
+    vkDevice.destroyFence(fence);
+  }
 
   for (auto& semaphore : bfSemaphores) {
     vkDevice.destroySemaphore(semaphore.available);

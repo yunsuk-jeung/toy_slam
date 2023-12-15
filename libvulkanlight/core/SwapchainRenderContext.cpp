@@ -232,7 +232,9 @@ std::set<vk::ImageUsageFlagBits> chooseImageUsage(
 vk::ImageUsageFlags compositeImageFlags(
   std::set<vk::ImageUsageFlagBits>& image_usage_flags) {
   vk::ImageUsageFlags image_usage;
-  for (auto flag : image_usage_flags) { image_usage |= flag; }
+  for (auto flag : image_usage_flags) {
+    image_usage |= flag;
+  }
   return image_usage;
 }
 }  //namespace

@@ -24,7 +24,6 @@ GUI::GUI()
   , mFontImage{nullptr} {
   mImGuiObjects.reserve(30);
   mName = "GUI";
-
 }
 
 GUI::~GUI() {
@@ -85,7 +84,9 @@ void GUI::onRender() {
   ImGui::Text("fps: %f", io.Framerate);
   ImGui::End();
 
-  for (const auto& obj : mImGuiObjects) { obj->render(); }
+  for (const auto& obj : mImGuiObjects) {
+    obj->render();
+  }
 
   ImGui::Render();
 }
@@ -280,7 +281,9 @@ void GUI::handleInputCallbacks() {
       }
 
       if (ImGui::IsKeyPressed(key)) {
-        for (auto& cb : mInputCallbacks) { (*cb).onKeyPressed(key); }
+        for (auto& cb : mInputCallbacks) {
+          (*cb).onKeyPressed(key);
+        }
       }
     }
   }
@@ -289,7 +292,9 @@ void GUI::handleInputCallbacks() {
     auto mpos = io.MousePos;
     for (int i = 0; i < 3; i++) {
       if (ImGui::IsMouseClicked(i)) {
-        for (auto& cb : mInputCallbacks) { (*cb).onMouseClick(i, mpos.x, mpos.y); }
+        for (auto& cb : mInputCallbacks) {
+          (*cb).onMouseClick(i, mpos.x, mpos.y);
+        }
       }
       if (ImGui::IsMouseDragging(i)) {
         for (auto& cb : mInputCallbacks) {
@@ -299,7 +304,9 @@ void GUI::handleInputCallbacks() {
       }
 
       if (io.MouseWheel) {
-        for (auto& cb : mInputCallbacks) { (*cb).onMouseWheel(io.MouseWheel); }
+        for (auto& cb : mInputCallbacks) {
+          (*cb).onMouseWheel(io.MouseWheel);
+        }
       }
     }  //0 left //1 right //2 wheel
   };
@@ -309,7 +316,9 @@ void GUI::createVertexBuffer() {
   auto size = mRenderContext->getContextImageCount();
   mVBs.resize(size);
 
-  for (auto& VB : mVBs) { VB = std::make_unique<Buffer>(); }
+  for (auto& VB : mVBs) {
+    VB = std::make_unique<Buffer>();
+  }
 
   mPrevVBSizes.resize(size, 0);
   mPrevIBSizes.resize(size, 0);
@@ -318,7 +327,9 @@ void GUI::createVertexBuffer() {
 void GUI::createIndexBuffers() {
   auto size = mRenderContext->getContextImageCount();
   mIBs.resize(size);
-  for (auto& IB : mIBs) { IB = std::make_unique<Buffer>(); }
+  for (auto& IB : mIBs) {
+    IB = std::make_unique<Buffer>();
+  }
 }
 
 void GUI::createTextures() {

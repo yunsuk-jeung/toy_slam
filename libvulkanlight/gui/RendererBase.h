@@ -24,7 +24,6 @@ public:
                        Pipeline*          pipeline);
 
 protected:
-
   virtual void createVertexBuffer();
   virtual void createIndexBuffers();
   virtual void createUniformBuffers();

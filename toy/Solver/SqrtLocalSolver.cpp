@@ -106,9 +106,8 @@ void SqrtLocalSolver::marginalize(int id) {
   ToyLogE("NOT IMPLEMENTED YET, {}", __FUNCTION__);
 }
 
-void SqrtLocalSolver::createStates(
-  std::vector<std::shared_ptr<db::Frame>>&    frames,
-  std::vector<std::shared_ptr<db::MapPoint>>& mapPoints) {
+void SqrtLocalSolver::createStates(std::vector<db::Frame::Ptr>&    frames,
+                                   std::vector<db::MapPoint::Ptr>& mapPoints) {
   mFrameParameterMap.clear();
   mMapPointParameterMap.clear();
 

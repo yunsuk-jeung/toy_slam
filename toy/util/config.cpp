@@ -5,6 +5,15 @@
 #include "config.h"
 
 namespace toy {
+namespace {
+int parseME(const std::string& name) {
+  if (name == "huber")
+    return 1;
+  else
+    return 0;
+}
+}  //namespace
+
 bool Config::sync = {false};
 
 CameraInfo Config::Vio::camInfo0;
@@ -26,8 +35,11 @@ bool        Config::Vio::showStereoTracking = false;
 std::string Config::Vio::lineTracker           = "none";
 bool        Config::Vio::frameTrackerSolvePose = false;
 
-std::string Config::Vio::solverType              = "SqrtLocalSolver";
 int         Config::Vio::initializeMapPointCount = 30;
+std::string Config::Vio::solverType              = "SqrtLocalSolver";
+int         Config::Vio::reprojectionME          = 1;
+double      Config::Vio::reprojectionMEConst     = 1.0;
+double      Config::Vio::standardFocalLength     = 640.0;
 
 int Config::Vio::mapFrameSize = 6;
 
@@ -72,14 +84,21 @@ void Config::parseConfig(const std::string& configFile) {
   Vio::frameTrackerSolvePose = frameTrackerJson["solvePose"];
 
   auto localTrackerJson        = json["vio"]["localTracker"];
-  Vio::solverType              = localTrackerJson["solver"];
   Vio::initializeMapPointCount = localTrackerJson["initializeMapPointCount"];
+  auto vioSolverJson           = localTrackerJson["vioSolver"];
+  Vio::solverType              = vioSolverJson["name"];
+  {
+    std::string me      = vioSolverJson["reprojectionME"];
+    Vio::reprojectionME = parseME(me);
+  }
+  Vio::reprojectionMEConst = vioSolverJson["reprojectionMEConst"];
+  Vio::standardFocalLength = vioSolverJson["standardFocalLength"];
 
   Vio::mapFrameSize = json["vio"]["localMap"]["frameSize"];
 
-  auto solverJson       = json["solver"];
-  Solver::basicMinDepth = solverJson["basic"]["minDepth"];
-  Solver::basicMaxDepth = solverJson["basic"]["maxDepth"];
+  auto basicSolverJson  = json["basicSolver"];
+  Solver::basicMinDepth = basicSolverJson["minDepth"];
+  Solver::basicMaxDepth = basicSolverJson["maxDepth"];
 
   int align_width = 10;
   ToyLogI("sync mode : {}", sync);

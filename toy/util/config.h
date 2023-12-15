@@ -28,8 +28,11 @@ public:
     static std::string lineTracker;
     static bool        frameTrackerSolvePose;
 
-    static std::string solverType;
     static int         initializeMapPointCount;
+    static std::string solverType;
+    static int         reprojectionME;
+    static double      reprojectionMEConst;
+    static double      standardFocalLength;
 
     static int mapFrameSize;
   };

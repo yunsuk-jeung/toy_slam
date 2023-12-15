@@ -21,8 +21,11 @@ PointTracker::~PointTracker() {}
 size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
   size_t trackedPtSize = track(prevFrame, currFrame);
 
-  auto  prevSize = prevFrame->getFeature(0)->getKeypoints().size();
-  float ratio    = float(trackedPtSize) / float(prevSize);
+  size_t prevSize = 1000000;
+  if (prevFrame)
+    prevSize = prevFrame->getFeature(0)->getKeypoints().size();
+
+  float ratio = float(trackedPtSize) / float(prevSize);
 
   if (ratio > Config::Vio::minTrackedRatio
       && trackedPtSize > Config::Vio::minTrackedPoint) {

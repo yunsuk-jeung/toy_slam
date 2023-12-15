@@ -44,6 +44,8 @@ public:
   const Status& status() const { return mStatus; }
   void          setState(Status status) { mStatus = status; }
 
+  std::vector<FrameFactorPair>& getFrameFactors() { return mFrameFactors; }
+
   const Eigen::Vector2d undist() const { return mUndist; }
   void                  setUndist(const Eigen::Vector2d& undist) { mUndist = undist; }
   Eigen::Vector2d&      getUndist() { return mUndist; }

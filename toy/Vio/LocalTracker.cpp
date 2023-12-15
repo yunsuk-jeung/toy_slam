@@ -71,6 +71,15 @@ void LocalTracker::process() {
     mLocalMap->getCurrentStates(frames, mapPoints);
     mVioSolver->solve(frames, mapPoints);
 
+    int id = getMarginalFrameId(frames);
+
+    if (id < 0) {
+      break;
+    }
+
+    mVioSolver->marginalize(id);
+    mLocalMap->removeFrame(id);
+
     break;
   }
   }
@@ -113,6 +122,11 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
     }
   }
   return successCount;
+}
+
+int LocalTracker::getMarginalFrameId(std::vector<db::Frame::Ptr>& frames) {
+  ToyLogE("NOT IMPLEMENTED YET");
+  return 0;
 }
 
 void LocalTracker::setDataToInfo() {

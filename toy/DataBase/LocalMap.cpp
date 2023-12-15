@@ -78,5 +78,7 @@ void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
   }
 }
 
+void LocalMap::removeFrame(int id) {}
+
 }  //namespace db
 }  //namespace toy

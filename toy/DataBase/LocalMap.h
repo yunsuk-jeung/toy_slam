@@ -18,6 +18,8 @@ public:
   void getCurrentStates(std::vector<std::shared_ptr<Frame>>&    frames,
                         std::vector<std::shared_ptr<MapPoint>>& mapPoints);
 
+  void removeFrame(int id);
+
 protected:
 
 protected:

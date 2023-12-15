@@ -26,6 +26,7 @@ private:
   using Thread<db::Frame, void>::mInQueue;
 
   int  initializeMapPoints(std::shared_ptr<db::Frame> currFrame);
+  int  getMarginalFrameId(std::vector<std::shared_ptr<db::Frame>>& frames);
   void setDataToInfo();
 
 private:

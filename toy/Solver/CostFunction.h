@@ -5,6 +5,7 @@
 #include "Frame.h"
 #include "MapPoint.h"
 #include "EigenUtil.h"
+#include "Parameter.h"
 #include "Factor.h"
 
 namespace toy {
@@ -81,8 +82,9 @@ public:
       std::tie(error, weight) = mME->computeError(cSq);
 
     double sqrtW = std::sqrt(weight);
-    //ToyLogD("error : {} - {} = {} -> norm : {} , sqrtW {}", ToyLogger::eigenVec(undist2d),
-    //ToyLogger::eigenVec(mZ), ToyLogger::eigenVec(mC), error, sqrtW);
+    //ToyLogD("error : {} - {} = {} -> norm : {} , sqrtW {}",
+    //ToyLogger::eigenVec(undist2d), ToyLogger::eigenVec(mZ), ToyLogger::eigenVec(mC),
+    //error, sqrtW);
 
     mC *= sqrtW;
     mJ *= sqrtW;
@@ -105,7 +107,60 @@ protected:
   MEstimator::Ptr mME;
   double          mScale;
 
-  public:
-  db::MapPoint::Ptr getMapPoint() {return mMapPoint;}
+public:
+  db::MapPoint::Ptr getMapPoint() { return mMapPoint; }
 };
+
+class ReprojectionCost {
+public:
+  USING_SMART_PTR(ReprojectionCost);
+  ReprojectionCost() = delete;
+  ReprojectionCost(FrameParameter*    fs0,
+                   Sophus::SE3d&      Tbc0,
+                   FrameParameter*    fs1,
+                   Sophus::SE3d&      Tbc1,
+                   MapPointParameter* ms,
+                   MEstimator::Ptr    ME,
+                   double             sqrtInfo = 640.0)
+    : mFs0{fs0}
+    , mFs1{fs1}
+    , mTbc0{Tbc0}
+    , mTbc1{Tbc1}
+    , mMs{ms}
+    , mME{ME}
+    , mSqrtInfo{sqrtInfo} {}
+
+protected:
+  FrameParameter*    mFs0;
+  Sophus::SE3d       mTbc0;
+  FrameParameter*    mFs1;
+  Sophus::SE3d       mTbc1;
+  MapPointParameter* mMs;
+
+  MEstimator::Ptr mME;
+  double          mSqrtInfo;
+
+  Eigen::Matrix26d mJ_f0;  //jacobian for host
+  Eigen::Matrix26d mJ_f1;  //jacobian for target
+  Eigen::Matrix23d mJ_mp;  //jacobian for mp
+
+  Eigen::Vector2d mC;  //cost
+  Eigen::Vector2d mZ;  //measurement
+};
+
+class StereoReprojectionCost : public ReprojectionCost {
+public:
+  StereoReprojectionCost() = delete;
+  StereoReprojectionCost(FrameParameter*    fs0,
+                         Sophus::SE3d&      Tbc0,
+                         FrameParameter*    fs1,
+                         Sophus::SE3d&      Tbc1,
+                         MapPointParameter* ms,
+                         MEstimator::Ptr    ME,
+                         double             sqrtInfo = 640.0)
+    : ReprojectionCost(fs0, Tbc0, fs1, Tbc1, ms, ME, sqrtInfo) {}
+
+protected:
+};
+
 }  //namespace toy

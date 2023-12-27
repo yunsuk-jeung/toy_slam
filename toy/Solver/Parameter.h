@@ -13,8 +13,14 @@ public:
   FrameParameter(std::shared_ptr<db::Frame> frame);
   ~FrameParameter() = default;
 
-  Sophus::SE3d         mTwb;
+  void backup();
+
+  int          mId;
+  Sophus::SE3d mTwb;
+  Sophus::SE3d mBackupTwb;
+
   Eigen::Vector6d      mDel;  //for marginalize
+  Eigen::Vector6d      mBackupDel;
   static constexpr int SIZE = 6;
 };
 
@@ -24,8 +30,15 @@ public:
   MapPointParameter(std::shared_ptr<db::MapPoint> mp);
   ~MapPointParameter() = default;
 
-  Eigen::Vector2d      mUndist;  //normalized uv
-  double               mInvD;    //invDepth
+  void backup();
+
+  int             mId;
+  Eigen::Vector2d mUndist;  //normalized uv
+  double          mInvD;    //invDepth
+
+  Eigen::Vector2d mBackupUndist;
+  double          mBackupInvD;
+
   static constexpr int SIZE = 3;
 };
 }  //namespace toy

@@ -66,7 +66,7 @@ public:
 
     std::stringstream ss;
     ss << std::fixed << std::setprecision(precision);  //Set the precision
-    ss << "\n " << mat.transpose().format(CleanMat);
+    ss << "\n" << mat.format(CleanMat);
     return ss.str();
   }
 };

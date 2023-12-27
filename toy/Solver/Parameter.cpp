@@ -5,12 +5,29 @@
 
 namespace toy {
 FrameParameter::FrameParameter(db::Frame::Ptr frame) {
-  mTwb = frame->getTwb();
+  mId = frame->id();
+
+  mTwb       = frame->getTwb();
+  mBackupTwb = mTwb;
+
   mDel.setZero();
+}
+void FrameParameter::backup() {
+  mBackupTwb = mTwb;
+  mBackupDel = mDel;
 }
 
 MapPointParameter::MapPointParameter(db::MapPoint::Ptr mp) {
-  mUndist = mp->undist();
-  mInvD   = mp->invDepth();
+  mId = mp->id();
+
+  mUndist       = mp->undist();
+  mBackupUndist = mUndist;
+
+  mInvD       = mp->invDepth();
+  mBackupInvD = mInvD;
+}
+void MapPointParameter::backup() {
+  mBackupUndist = mUndist;
+  mBackupInvD   = mInvD;
 }
 }  //namespace toy

@@ -51,7 +51,7 @@ void LocalTracker::process() {
     break;
   }
   case Status::TRACKING: {
-    //todo changed if imu exists;
+    //YSTODO: changed if imu exists;
     if (true) {
       auto& Twb = mLocalMap->getFrames().rbegin()->second->getTwb();
       currFrame->setTwb(Twb);

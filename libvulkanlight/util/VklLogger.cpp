@@ -9,7 +9,7 @@ void                            VklLogger::init() {
                                                                        true);
   auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
   std::vector<spdlog::sink_ptr> sinks{file_sink, console_sink};
-  logger = std::make_shared<spdlog::logger>("VKL", sinks.begin(), sinks.end());
+  logger = std::make_shared<spdlog::logger>("VK", sinks.begin(), sinks.end());
   logger->set_level(spdlog::level::debug);
 }
 

@@ -15,13 +15,19 @@ public:
 
   void backup();
 
+protected:
   int          mId;
   Sophus::SE3d mTwb;
   Sophus::SE3d mBackupTwb;
 
-  Eigen::Vector6d      mDel;  //for marginalize
-  Eigen::Vector6d      mBackupDel;
-  static constexpr int SIZE = 6;
+  Eigen::Vector6d mDel;  //for marginalize
+  Eigen::Vector6d mBackupDel;
+
+public:
+  const int& id() const { return mId; }
+  const Sophus::SE3d& Twb() const { return mTwb; }
+  
+  static constexpr size_t SIZE = 6;
 };
 
 class MapPointParameter {
@@ -39,6 +45,6 @@ public:
   Eigen::Vector2d mBackupUndist;
   double          mBackupInvD;
 
-  static constexpr int SIZE = 3;
+  static constexpr size_t SIZE = 3;
 };
 }  //namespace toy

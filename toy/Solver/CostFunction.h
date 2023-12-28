@@ -136,8 +136,8 @@ public:
   }
 
   virtual double linearlize(bool updateState) {
-    const Sophus::SE3d& Twb0 = mFP0->mTwb;
-    const Sophus::SE3d  Tb1w = mFP1->mTwb.inverse();
+    const Sophus::SE3d& Twb0 = mFP0->Twb();
+    const Sophus::SE3d  Tb1w = mFP1->Twb().inverse();
 
     const Eigen::Matrix3d Rwb0 = Twb0.rotationMatrix();
     const Eigen::Vector3d Pwb0 = Twb0.translation();
@@ -196,14 +196,8 @@ public:
     return errSq;
   }
 
-  FrameParameter*    getFrameParameter0() { return mFP0; }
-  FrameParameter*    getFrameParameter1() { return mFP1; }
-  MapPointParameter* getMapPointParameter() { return mMpP; }
-
-  Eigen::Vector2d&  get_cost() { return mC; }
-  Eigen::Matrix26d& get_J_f0() { return mJ_f0; }
-  Eigen::Matrix26d& get_J_f1() { return mJ_f1; }
-  Eigen::Matrix23d& get_J_mp() { return mJ_mp; }
+public:
+  static constexpr int SIZE = 2;
 
 protected:
   FrameParameter* mFP0;
@@ -225,6 +219,16 @@ protected:
   Eigen::Matrix26d mJ_f0;  //jacobian for host
   Eigen::Matrix26d mJ_f1;  //jacobian for target
   Eigen::Matrix23d mJ_mp;  //jacobian for mp
+
+public:
+  FrameParameter*    getFrameParameter0() { return mFP0; }
+  FrameParameter*    getFrameParameter1() { return mFP1; }
+  MapPointParameter* getMapPointParameter() { return mMpP; }
+
+  Eigen::Vector2d&  get_cost() { return mC; }
+  Eigen::Matrix26d& get_J_f0() { return mJ_f0; }
+  Eigen::Matrix26d& get_J_f1() { return mJ_f1; }
+  Eigen::Matrix23d& get_J_mp() { return mJ_mp; }
 };
 
 class StereoReprojectionCost : public ReprojectionCost {

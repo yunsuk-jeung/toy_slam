@@ -12,7 +12,7 @@ class ToyLogger {
 public:
   static std::shared_ptr<spdlog::logger> logger;
   static void                            init();
-
+  
   template <typename... Args>
   static void logI(const char* fmt, Args... args) {
     logger->info(fmt, args...);

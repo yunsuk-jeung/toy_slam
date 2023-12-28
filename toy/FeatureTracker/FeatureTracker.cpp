@@ -25,7 +25,7 @@ FeatureTracker::~FeatureTracker() {
 }
 
 bool FeatureTracker::process(db::Frame* prevFrame, db::Frame* currentFrame) {
-  //todo maybe extract from pyramid...
+  //YSTODO maybe extract from pyramid...
   mPointTracker->process(prevFrame, currentFrame);
 
   return true;

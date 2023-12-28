@@ -14,8 +14,8 @@ class MapPointLinearization;
 class SqrtProblem {
 public:
   USING_SMART_PTR(SqrtProblem);
-  SqrtProblem()  = default;
-  ~SqrtProblem() = default;
+  SqrtProblem();
+  ~SqrtProblem();
 
   void addReprojectionCost(std::shared_ptr<db::MapPoint>                  mp,
                            std::vector<std::shared_ptr<ReprojectionCost>> costs);
@@ -25,6 +25,7 @@ public:
 protected:
   double linearize(bool updateState);
   void   decomposeLinearization();
+  void   backupParameters();
 
 public:
   struct Option {
@@ -34,19 +35,23 @@ public:
     double mMaxLambda;
     double mMinLambda;
     double mMu;
+    double mMuFactor;
   } mOption;
 
 protected:
-  std::map<int, FrameParameter>*                        mFrameParameterMap;
-  std::map<int, MapPointParameter>*                     mMapPointParameterMap;
+  std::map<int, FrameParameter>*                        mRpFrameParameterMap;
+  std::map<int, MapPointParameter>*                     mRpMapPointParameterMap;
   std::map<int, std::shared_ptr<MapPointLinearization>> mMapPointLinearizationMap;
+
+  Eigen::MatrixXd mH;
+  Eigen::VectorXd mB;
 
 public:
   void setFrameSatatesMap(std::map<int, FrameParameter>* map) {
-    mFrameParameterMap = map;
+    mRpFrameParameterMap = map;
   }
   void setMapPointState(std::map<int, MapPointParameter>* map) {
-    mMapPointParameterMap = map;
+    mRpMapPointParameterMap = map;
   }
 };
 }  //namespace toy

@@ -173,6 +173,8 @@ public:
 
       mC = sqrtW * cost;
 
+      //ToyLogD("errSq : {} vs MC.norm() : {}", errSq, mC.norm());
+
       double           izSq = iz * iz;
       Eigen::Matrix23d reduce;
       reduce << iz, 0.0, -Pc1x.x() * izSq, 0.0, iz, -Pc1x.y() * izSq;
@@ -225,10 +227,10 @@ public:
   FrameParameter*    getFrameParameter1() { return mFP1; }
   MapPointParameter* getMapPointParameter() { return mMpP; }
 
-  Eigen::Vector2d&  get_cost() { return mC; }
-  Eigen::Matrix26d& get_J_f0() { return mJ_f0; }
-  Eigen::Matrix26d& get_J_f1() { return mJ_f1; }
-  Eigen::Matrix23d& get_J_mp() { return mJ_mp; }
+  const Eigen::Vector2d&  C() const { return mC; }
+  const Eigen::Matrix26d& J_f0() const { return mJ_f0; }
+  const Eigen::Matrix26d& J_f1() const { return mJ_f1; }
+  const Eigen::Matrix23d& J_mp() const { return mJ_mp; }
 };
 
 class StereoReprojectionCost : public ReprojectionCost {

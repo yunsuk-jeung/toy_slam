@@ -31,7 +31,8 @@
         "name": "SqrtLocalSolver",
         "reprojectionME": "huber",
         "reprojectionMEConst": 1.0,
-        "standardFocalLength": 640.0
+        "standardFocalLength": 640.0,
+        "compareLinearizedDiff": false
       }
     },
     "localMap": {

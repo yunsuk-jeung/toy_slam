@@ -12,7 +12,8 @@ class MapPointLinearization {
 public:
   USING_SMART_PTR(MapPointLinearization);
   MapPointLinearization() = delete;
-  MapPointLinearization(std::map<int, FrameParameter>* frameParametersMap,
+  MapPointLinearization(MapPointParameter*  rpMapPointParameter,
+                        std::map<int, int>* frameIdColMap,
                         std::vector<std::shared_ptr<ReprojectionCost>>& costs);
   MapPointLinearization(MapPointLinearization&& src) noexcept;
 
@@ -24,14 +25,14 @@ public:
   double backSubstitue(Eigen::VectorXd& frameDelta);
 
 protected:
-  std::map<int, FrameParameter>*                 mRpFrameParameterMap;
+  MapPointParameter*                             mRpMapPointParameter;
   std::vector<std::shared_ptr<ReprojectionCost>> mReprojectionCosts;
-  //YSTODO change to set from outside
-  std::map<int, int>                             mFrameIdColMap;
-  Eigen::MatrixXd                                mJ;
-  Eigen::VectorXd                                mC;
-  int                                            mRows;
-  int                                            mCols;
+
+  std::map<int, int>* mFrameIdColumnMapRp;
+  Eigen::MatrixXd     mJ;
+  Eigen::VectorXd     mC;
+  int                 mRows;
+  int                 mCols;
 
 public:
   const Eigen::MatrixXd& J() const { return mJ; };

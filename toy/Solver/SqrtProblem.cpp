@@ -14,25 +14,49 @@ SqrtProblem::Option::Option()
   , mMuFactor{2.0} {}
 
 SqrtProblem::SqrtProblem()
-  : mRpFrameParameterMap{nullptr}
-  , mRpMapPointParameterMap{nullptr} {}
+  : mFrameParameters{}
+  , mMapPointParameters{} {}
 
 SqrtProblem::~SqrtProblem() {}
 
-void SqrtProblem::addReprojectionCost(db::MapPoint::Ptr                  mp,
+void SqrtProblem::reset() {
+  mH.setZero();
+  mB.setZero();
+
+  mFrameIdColumnMap.clear();
+  mFrameParameters.clear();
+  mMapPointParameters.clear();
+  mMapPointLinearizations.clear();
+}
+
+void SqrtProblem::setFrameSatatesMap(std::map<int, FrameParameter>* map) {
+  mFrameParameters.reserve(map->size());
+  int column = 0;
+  for (auto& [key, val] : *map) {
+    mFrameParameters.push_back(&val);
+    mFrameIdColumnMap[val.id()] = column;
+    column += FrameParameter::SIZE;
+  }
+}
+void SqrtProblem::setMapPointState(std::map<int, MapPointParameter>* map) {
+  mMapPointParameters.reserve(map->size());
+  for (auto& [key, val] : *map) {
+    mMapPointParameters.push_back(&val);
+  }
+}
+
+void SqrtProblem::addReprojectionCost(MapPointParameter*                 rpMpP,
                                       std::vector<ReprojectionCost::Ptr> costs) {
-  TOY_ASSERT(mRpFrameParameterMap != nullptr);
-
-  const auto& id = mp->id();
-
-  mMapPointLinearizationMap[id] = std::make_shared<
-    MapPointLinearization>(mRpFrameParameterMap, costs);
+  mMapPointLinearizations.emplace_back(
+    std::make_shared<MapPointLinearization>(rpMpP, &mFrameIdColumnMap, costs));
 }
 
 bool SqrtProblem::solve() {
-  const int Hrows = mRpFrameParameterMap->size() * FrameParameter::SIZE;
+  const int Hrows = mFrameParameters.size() * FrameParameter::SIZE;
   mH.resize(Hrows, Hrows);
   mB.resize(Hrows);
+  mH.setZero();
+  mB.setZero();
 
   double err = linearize(true);
 
@@ -40,9 +64,9 @@ bool SqrtProblem::solve() {
 
   decomposeLinearization();
 
-  for (auto& [key, val] : mMapPointLinearizationMap) {
-    const Eigen::MatrixXd& vJ = val->J();
-    const Eigen::VectorXd& vC = val->C();
+  for (auto& mpL : mMapPointLinearizations) {
+    const Eigen::MatrixXd& vJ = mpL->J();
+    const Eigen::VectorXd& vC = mpL->C();
 
     const auto  rows = vJ.rows() - MapPointParameter::SIZE;
     const auto& cols = Hrows;
@@ -66,9 +90,8 @@ bool SqrtProblem::solve() {
   auto& muFactor  = mOption.mMuFactor;
 
   for (int i = 0; i < 3 && !deltaValid; ++i) {
-    Eigen::VectorXd lambdaVec = (mH.diagonal() * mOption.mLambda)
-                                  .cwiseMax(mOption.mMinLambda);
-    Eigen::MatrixXd H = mH;
+    Eigen::VectorXd lambdaVec = (mH.diagonal() * lambda).cwiseMax(minLambda);
+    Eigen::MatrixXd H         = mH;
     H.diagonal() += lambdaVec;
 
     frameDelta = H.ldlt().solve(mB);
@@ -88,23 +111,38 @@ bool SqrtProblem::solve() {
 
   backupParameters();
 
+  double linearizedDiff = 0.0;
+  for (auto& mpL : mMapPointLinearizations) {
+    linearizedDiff += mpL->backSubstitue(frameDelta);
+  }
+
+  int frameRow = 0;
+  for (auto& fp : mFrameParameters) {
+    fp->update(frameDelta.segment<FrameParameter::SIZE>(frameRow));
+    frameRow += FrameParameter::SIZE;
+  }
+
+  double newErr = linearize(false);
+
+  ToyLogD("frame delta : {}", ToyLogger::eigenVec(frameDelta));
+  ToyLogD("check err : {}  --> {}", err, newErr);
+
   return true;
 }
 
 double SqrtProblem::linearize(bool updateState) {
   double errSq = 0;
   //YSTODO: tbb
-  for (auto& [key, val] : mMapPointLinearizationMap) {
-    //errSq += val->linearize(updateState);
-    double err = val->linearize(updateState);
+  for (auto& mpL : mMapPointLinearizations) {
+    errSq += mpL->linearize(updateState);
   }
   return errSq;
 }
 
 void SqrtProblem::decomposeLinearization() {
   //YSTODO: tbb
-  for (auto& [key, val] : mMapPointLinearizationMap) {
-    val->decomposeWithQR();
+  for (auto& mpL : mMapPointLinearizations) {
+    mpL->decomposeWithQR();
   }
 #ifdef DEBUG_MATRIX0
   static int qridx = 0;
@@ -115,13 +153,14 @@ void SqrtProblem::decomposeLinearization() {
   qridx++;
 #endif
 }
+
 void SqrtProblem::backupParameters() {
-  for (auto& [key, val] : *mRpFrameParameterMap) {
-    val.backup();
+  for (auto* param : mFrameParameters) {
+    param->backup();
   }
 
-  for (auto& [key, val] : *mRpMapPointParameterMap) {
-    val.backup();
+  for (auto* param : mMapPointParameters) {
+    param->backup();
   }
 }
 }  //namespace toy

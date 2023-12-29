@@ -5,6 +5,7 @@
 #include "VioSolver.h"
 
 namespace toy {
+class SqrtProblem;
 class SqrtLocalSolver : public VioSolver {
 public:
   SqrtLocalSolver();
@@ -20,10 +21,8 @@ protected:
                     std::vector<std::shared_ptr<db::MapPoint>>& mapPoints);
 
 protected:
-  std::map<int, FrameParameter>      mFrameParameterMap;
-  std::map<int, std::pair<int, int>> mFrameRows;
-
-  std::map<int, MapPointParameter>   mMapPointParameterMap;
-  std::map<int, std::pair<int, int>> mMapPointRows;
+  std::unique_ptr<SqrtProblem>     mProblem;
+  std::map<int, FrameParameter>    mFrameParameterMap;
+  std::map<int, MapPointParameter> mMapPointParameterMap;
 };
 }  //namespace toy

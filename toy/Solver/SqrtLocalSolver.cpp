@@ -23,7 +23,9 @@ MEstimator::Ptr createReprojectionMEstimator() {
 }
 }  //namespace
 
-SqrtLocalSolver::SqrtLocalSolver() {}
+SqrtLocalSolver::SqrtLocalSolver() {
+  mProblem = std::make_unique<SqrtProblem>();
+}
 
 SqrtLocalSolver::~SqrtLocalSolver() {}
 
@@ -34,11 +36,10 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
 
   createStates(frames, mapPoints);
 
-  SqrtProblem::Uni problem = std::make_unique<SqrtProblem>();
   /*problem->mOption.mLambda;*/
-
-  problem->setFrameSatatesMap(&mFrameParameterMap);
-  problem->setMapPointState(&mMapPointParameterMap);
+  mProblem->reset();
+  mProblem->setFrameSatatesMap(&mFrameParameterMap);
+  mProblem->setMapPointState(&mMapPointParameterMap);
 
   MEstimator::Ptr reProjME    = createReprojectionMEstimator();
   const double&   focalLength = Config::Vio::standardFocalLength;
@@ -107,10 +108,10 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
       costs.push_back(cost2);
     }
 
-    problem->addReprojectionCost(mp, costs);
+    mProblem->addReprojectionCost(mpParam, costs);
   }
 
-  auto result = problem->solve();
+  auto result = mProblem->solve();
 
   return result;
 }

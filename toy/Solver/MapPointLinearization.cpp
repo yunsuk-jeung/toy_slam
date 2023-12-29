@@ -1,22 +1,17 @@
+#include "config.h"
 #include "ToyAssert.h"
 #include "CostFunction.h"
 #include "MapPointLinearization.h"
 
 namespace toy {
-MapPointLinearization::MapPointLinearization(
-  std::map<int, FrameParameter>*      rpFrameParametersMap,
-  std::vector<ReprojectionCost::Ptr>& costs)
-  : mRpFrameParameterMap{rpFrameParametersMap} {
+MapPointLinearization::MapPointLinearization(MapPointParameter*  rpMpP,
+                                             std::map<int, int>* frameIdColMap,
+                                             std::vector<ReprojectionCost::Ptr>& costs)
+  : mRpMapPointParameter{rpMpP}
+  , mFrameIdColumnMapRp{frameIdColMap} {
   mReprojectionCosts.swap(costs);
 
-  int cols = 0;
-
-  auto frameParamMapSize = mRpFrameParameterMap->size();
-  for (auto it = mRpFrameParameterMap->begin(); it != mRpFrameParameterMap->end(); ++it) {
-    const int& id      = it->second.id();
-    mFrameIdColMap[id] = cols;
-    cols += FrameParameter::SIZE;
-  }
+  int cols = mFrameIdColumnMapRp->size() * FrameParameter::SIZE;
 
   cols += MapPointParameter::SIZE;
 
@@ -48,18 +43,18 @@ double MapPointLinearization::linearize(bool updateState) {
       const int& id0 = cost->getFrameParameter0()->id();
       const int& id1 = cost->getFrameParameter1()->id();
 
-      TOY_ASSERT(mFrameIdColMap.find(id0) != mFrameIdColMap.end());
-      TOY_ASSERT(mFrameIdColMap.find(id1) != mFrameIdColMap.end());
+      TOY_ASSERT(mFrameIdColumnMapRp->find(id0) != mFrameIdColumnMapRp->end());
+      TOY_ASSERT(mFrameIdColumnMapRp->find(id1) != mFrameIdColumnMapRp->end());
 
-      auto idx0 = mFrameIdColMap[id0];
-      auto idx1 = mFrameIdColMap[id1];
+      const auto& idx0 = mFrameIdColumnMapRp->at(id0);
+      const auto& idx1 = mFrameIdColumnMapRp->at(id1);
 
-      auto& COST_SIZE = ReprojectionCost::SIZE;
+      constexpr auto COST_SIZE = ReprojectionCost::SIZE;
 
-      mJ.block<COST_SIZE, FrameParameter::SIZE>(row, idx0)     = cost->get_J_f0();
-      mJ.block<COST_SIZE, FrameParameter::SIZE>(row, idx1)     = cost->get_J_f1();
-      mJ.block<COST_SIZE, MapPointParameter::SIZE>(row, mpCol) = cost->get_J_mp();
-      mC.segment(row, COST_SIZE)                               = cost->get_cost();
+      mJ.block<COST_SIZE, FrameParameter::SIZE>(row, idx0)     = cost->J_f0();
+      mJ.block<COST_SIZE, FrameParameter::SIZE>(row, idx1)     = cost->J_f1();
+      mJ.block<COST_SIZE, MapPointParameter::SIZE>(row, mpCol) = cost->J_mp();
+      mC.segment(row, COST_SIZE)                               = cost->C();
       row += COST_SIZE;
     }
   }
@@ -90,9 +85,28 @@ void MapPointLinearization::decomposeWithQR() {
     //ToyLogD("house holder test C : {}", ToyLogger::eigenVec(mC));
     //ToyLogD("");
   }
+  //ToyLogD("house holder test J : {}", ToyLogger::eigenMat(mJ));
+  //ToyLogD("house holder test C : {}", ToyLogger::eigenVec(mC));
+  //ToyLogD("");
 }
+
 double MapPointLinearization::backSubstitue(Eigen::VectorXd& frameDelta) {
-  
+  constexpr size_t MP_SIZE  = MapPointParameter::SIZE;
+  const auto       mpColIdx = mCols - MP_SIZE;
+
+  const auto Q1t_C  = mC.head(MP_SIZE);
+  const auto Q1t_Jp = mJ.topLeftCorner(MP_SIZE, mpColIdx);
+  const auto Q1t_Jl = mJ.block<MP_SIZE, MP_SIZE>(0, mpColIdx)
+                        .triangularView<Eigen::Upper>();
+
+  Eigen::Vector<double, MP_SIZE> mpDelta = -Q1t_Jl.solve(Q1t_C + Q1t_Jp * frameDelta);
+  mRpMapPointParameter->update(mpDelta);
+
+  if (Config::Vio::compareLinearizedDiff) {
+    TOY_ASSERT_MESSAGE(false, "not implemented");
+    return 100.0;
+  }
+
   return 0.0;
 }
 }  //namespace toy

@@ -14,6 +14,7 @@ public:
   ~FrameParameter() = default;
 
   void backup();
+  void update(const Eigen::Vector6d& delta);
 
 protected:
   int          mId;
@@ -24,9 +25,9 @@ protected:
   Eigen::Vector6d mBackupDel;
 
 public:
-  const int& id() const { return mId; }
+  const int&          id() const { return mId; }
   const Sophus::SE3d& Twb() const { return mTwb; }
-  
+
   static constexpr size_t SIZE = 6;
 };
 
@@ -37,6 +38,7 @@ public:
   ~MapPointParameter() = default;
 
   void backup();
+  void update(const Eigen::Vector3d& delta);
 
   int             mId;
   Eigen::Vector2d mUndist;  //normalized uv

@@ -17,7 +17,11 @@ public:
   SqrtProblem();
   ~SqrtProblem();
 
-  void addReprojectionCost(std::shared_ptr<db::MapPoint>                  mp,
+  void reset();
+  void setFrameSatatesMap(std::map<int, FrameParameter>* map);
+  void setMapPointState(std::map<int, MapPointParameter>* map);
+
+  void addReprojectionCost(MapPointParameter*                             rpMpP,
                            std::vector<std::shared_ptr<ReprojectionCost>> costs);
 
   bool solve();
@@ -39,19 +43,17 @@ public:
   } mOption;
 
 protected:
-  std::map<int, FrameParameter>*                        mRpFrameParameterMap;
-  std::map<int, MapPointParameter>*                     mRpMapPointParameterMap;
-  std::map<int, std::shared_ptr<MapPointLinearization>> mMapPointLinearizationMap;
+  //std::map<int, FrameParameter>*                      mFrameParameterMapRpt;
+  //std::map<int, MapPointParameter>*                   mMapPointParameterMapRpt;
+  std::map<int, int>              mFrameIdColumnMap;
+  std::vector<FrameParameter*>    mFrameParameters;
+  std::vector<MapPointParameter*> mMapPointParameters;
+
+  std::vector<std::shared_ptr<MapPointLinearization>> mMapPointLinearizations;
 
   Eigen::MatrixXd mH;
   Eigen::VectorXd mB;
 
 public:
-  void setFrameSatatesMap(std::map<int, FrameParameter>* map) {
-    mRpFrameParameterMap = map;
-  }
-  void setMapPointState(std::map<int, MapPointParameter>* map) {
-    mRpMapPointParameterMap = map;
-  }
 };
 }  //namespace toy

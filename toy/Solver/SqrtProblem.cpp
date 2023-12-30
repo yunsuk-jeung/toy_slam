@@ -181,7 +181,7 @@ bool SqrtProblem::solve() {
       }
       else {
         // clang-format off
-        ToyLogD("iter : {:02d} {:<2} failed.   {:<4} {:03.4f}->{:03.4f}",
+        ToyLogD("iter : {:02d} {:<2} failed.   {:<4} {:03.5f}->{:03.5f}",
                 iter,
                 "",
                 "update lambda",

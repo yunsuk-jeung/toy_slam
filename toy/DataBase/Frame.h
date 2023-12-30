@@ -40,6 +40,8 @@ public:
   void restore();
   void update(const Eigen::Vector6d& delta);
 
+  void drawReprojectionView(int idx, std::string imshowName = "reproj view");
+
 protected:
 
 protected:

@@ -52,6 +52,8 @@ SLAMApp::SLAMApp()
 
   addShaderPath(dir);
   addAssetPath(dir);
+
+  mContinousMode = true;
 }
 
 SLAMApp ::~SLAMApp() {
@@ -70,12 +72,28 @@ bool SLAMApp::prepare() {
                                                               Eigen::Vector3f::UnitZ());
   mGraphicsCamera->cam.M.block<3, 3>(0, 0) = Qxz.toRotationMatrix();
 
-  ((io::Simulator*)mSensor)->setContinuosMode(false);
-  ImGui::Object::RenderImpl impl = [this]() {
+  auto* simulator = (io::Simulator*)mSensor;
+  simulator->setContinuosMode(true);
+
+  ImGui::Object::RenderImpl impl = [this, simulator]() {
     ImGui::Begin("Simulator");
+
+    if (ImGui::Button("change mode")) {
+      simulator->changeContinousMode();
+    }
+    ImGui::SameLine();
+
+    if (simulator->getContinuousMode()) {
+      ImGui::Text("mode : conitnuous");
+    }
+    else {
+      ImGui::Text("mode : one time submit");
+    }
+
     if (ImGui::Button("next image")) {
       ((io::Simulator*)mSensor)->sendImage();
     }
+
     ImGui::End();
   };
 

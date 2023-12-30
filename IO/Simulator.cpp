@@ -1,3 +1,4 @@
+#include "Logger.h"
 #include "DataReader.h"
 #include "Simulator.h"
 
@@ -27,9 +28,19 @@ void Simulator::getInfo(CameraInfo* info0, CameraInfo* info1) {
   *info1 = mCamInfo1;
 }
 
+void Simulator::setContinuosMode(bool sendImage) {
+  mContinuousMode = sendImage;
+}
+
+void Simulator::changeContinousMode() {
+  mContinuousMode = !mContinuousMode;
+  mImageCallbackCv.notify_one();
+}
+
 void Simulator::sendImage() {
-  if (mContinuousMode)
+  if (mContinuousMode) {
     return;
+  }
 
   std::unique_lock<std::mutex> ulock(mImageCallbackMutex);
   mSendImage = true;
@@ -66,7 +77,7 @@ void Simulator::start() {
 
         if (!mContinuousMode) {
           std::unique_lock<std::mutex> ulock(mImageCallbackMutex);
-          mImageCallbackCv.wait(ulock, [&]() { return mSendImage; });
+          mImageCallbackCv.wait(ulock, [&]() { return mSendImage || mContinuousMode; });
           mSendImage = false;
         }
 

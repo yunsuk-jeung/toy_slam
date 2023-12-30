@@ -16,7 +16,8 @@ public:
   void prepare() override;
   void getInfo(CameraInfo* info0, CameraInfo* info1) override;
 
-  void setContinuosMode(bool sendImage) { mContinuousMode = sendImage; }
+  void setContinuosMode(bool sendImage);
+  void changeContinousMode();
   void sendImage();
   void start() override;
   void stop() override;
@@ -38,5 +39,8 @@ protected:
 
   int mImageType0;
   int mImageType1;
+
+public:
+  bool& getContinuousMode() { return mContinuousMode; }
 };
 }  //namespace io

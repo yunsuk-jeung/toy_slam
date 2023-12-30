@@ -63,13 +63,23 @@ void LocalTracker::process() {
 
     int createMPCount = initializeMapPoints(currFrame);
 
-    BasicSolver::solveFramePose(currFrame);
-
     std::vector<db::Frame::Ptr>    frames;
     std::vector<db::MapPoint::Ptr> mapPoints;
-
     mLocalMap->getCurrentStates(frames, mapPoints);
+
+    int k = 0;
+    for (auto& f : frames) {
+      f->drawReprojectionView(0, "before " + std::to_string(k++));
+    }
+
+    //BasicSolver::solveFramePose(currFrame);
     mVioSolver->solve(frames, mapPoints);
+
+    k = 0;
+    for (auto& f : frames) {
+      f->drawReprojectionView(0, "after " + std::to_string(k++));
+    }
+    cv::waitKey();
 
     int id = getMarginalFrameId(frames);
 
@@ -96,7 +106,6 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
   Eigen::Vector3d Pc0x;
 
   int successCount = 0;
-
   for (auto& [mpWeak, factor] : mapPointFactorMap) {
     auto mpPtr = mpWeak.lock();
     if (mpPtr->status() != db::MapPoint::Status::INITIALING)
@@ -111,6 +120,8 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
         continue;
       }
       double invD = 1.0 / Pc0x.z();
+      Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
+      mpPtr->setUndist(nuv);
       mpPtr->setInvDepth(invD);
       mpPtr->setState(db::MapPoint::Status::TRACKING);
       ++successCount;

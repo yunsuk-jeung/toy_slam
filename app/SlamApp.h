@@ -44,6 +44,8 @@ protected:
   std::vector<Eigen::Matrix4f> mMWcs;
   std::vector<float>           mLocalPointClouds;
 
+  bool mContinousMode;
+
 public:
   void registerSensor(io::Sensor* sensor) { mSensor = sensor; }
 };

@@ -1,3 +1,4 @@
+#include <opencv2/opencv.hpp>
 #include "ToyLogger.h"
 #include "Camera.h"
 #include "Feature.h"
@@ -130,6 +131,58 @@ void Frame::update(const Eigen::Vector6d& delta) {
   so3wb *= Sophus::SO3d::exp(delta.tail(3));
 
   mDelta += delta;
+}
+
+void Frame::drawReprojectionView(int idx, std::string imshowName) {
+  auto img = mImagePyramids[idx]->getOrigin().clone();
+  cv::cvtColor(img, img, CV_GRAY2BGR);
+
+  auto Tcw = getTwc(idx).inverse();
+
+  for (auto& [mpw, factor] : mMapPointFactorMap) {
+    auto mp = mpw.lock();
+    if (!mp) {
+      continue;
+    }
+
+    factor.uv0();
+    cv::Point2f uv;
+
+    if (idx == 0) {
+      uv = cv::Point2f(factor.uv0().x(), factor.uv0().y());
+    }
+    else {
+      uv = cv::Point2f(factor.uv1().x(), factor.uv1().y());
+    }
+
+    cv::circle(img, uv, 6, {255, 0, 0}, -1);
+
+    Eigen::Vector3d Xcx  = Tcw * mp->getPwx();
+    Eigen::Vector3d nXcx = Xcx / Xcx.z();
+
+    auto proj = mCameras[idx]->project(nXcx);
+    cv::circle(img, proj, 3, {0, 0, 255}, -1);
+
+    cv::putText(img,
+                std::to_string(mp->id()),
+                uv + cv::Point2f(5, 5),
+                cv::FONT_HERSHEY_PLAIN,
+                1,
+                {255, 0, 0});
+  }
+
+  cv::putText(img,
+              std::to_string(this->id()),
+              cv::Point2f(50, 50),
+              cv::FONT_HERSHEY_SIMPLEX,
+              1,
+              cv::Scalar(0, 0, 0),
+              3);
+
+  auto half = cv::Size(img.cols / 2, img.rows / 2);
+  //cv::resize(img, img, half);
+  cv::imshow(imshowName, img);
+  cv::waitKey(1);
 }
 
 }  //namespace db

@@ -45,6 +45,7 @@ protected:
   double                       mInvDepth;
   Eigen::Vector2d              mBackupUndist;
   double                       mBackupInvD;
+  bool                         mFixed;
 
 public:
   const int     id() const { return mId; }
@@ -61,6 +62,9 @@ public:
   void            setInvDepth(double& invD) { mInvDepth = invD; }
   double&         getInvDepth() { return mInvDepth; }
   Eigen::Vector3d getPwx();
+
+  const bool fixed() const { return mFixed; }
+  void       setFixed(bool fixed) { mFixed = fixed; }
 
   static constexpr size_t UNDIST_SIZE   = 2;
   static constexpr size_t INVDEPTH_SIZE = 1;

@@ -13,7 +13,8 @@ Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   , mIsKeyFrame{false}
   , mImagePyramids{std::move(set->mImagePyramid0), std::move(set->mImagePyramid1)}
   , mCameras{nullptr, nullptr}
-  , mFeatures{std::make_unique<Feature>(), std::make_unique<Feature>()} {}
+  , mFeatures{std::make_unique<Feature>(), std::make_unique<Feature>()}
+  , mFixed{false} {}
 
 Frame::Frame(Frame* src) {
   this->mId         = src->mId;
@@ -34,8 +35,12 @@ Frame::Frame(Frame* src) {
   this->mFeatures[0] = std::unique_ptr<Feature>(feature0);
   this->mFeatures[1] = std::unique_ptr<Feature>(feature1);
 
-  this->mTwb  = src->mTwb;
-  this->mTbcs = src->mTbcs;
+  this->mTbcs        = src->mTbcs;
+  this->mTwb         = src->mTwb;
+  this->mBackupTwb   = src->mBackupTwb;
+  this->mDelta       = src->mDelta;
+  this->mBackupDelta = src->mBackupDelta;
+  this->mFixed       = src->mFixed;
 }
 
 Frame::~Frame() {
@@ -104,17 +109,17 @@ void Frame::addMapPointFactor(std::shared_ptr<db::MapPoint> mp,
 }
 
 void Frame::resetDelta() {
-  mDel.setZero();
+  mDelta.setZero();
 }
 
 void Frame::backup() {
-  mBackupTwb = mTwb;
-  mBackupDel = mDel;
+  mBackupTwb   = mTwb;
+  mBackupDelta = mDelta;
 }
 
 void Frame::restore() {
-  mDel = mBackupDel;
-  mTwb = mBackupTwb;
+  mDelta = mBackupDelta;
+  mTwb   = mBackupTwb;
 }
 
 void Frame::update(const Eigen::Vector6d& delta) {
@@ -123,6 +128,8 @@ void Frame::update(const Eigen::Vector6d& delta) {
 
   auto& so3wb = mTwb.so3();
   so3wb *= Sophus::SO3d::exp(delta.tail(3));
+
+  mDelta += delta;
 }
 
 }  //namespace db

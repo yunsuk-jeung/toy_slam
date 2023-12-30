@@ -182,19 +182,35 @@ public:
       Eigen::Matrix3d Rc1b0 = Rc1w * Rwb0;
 
       Eigen::Matrix36d J;
-      J.block<3, 3>(0, 0) = Rc1w;
-      J.block<3, 3>(0, 3) = -Rc1b0 * Eigen::skew(Pb0x);
-      mJ_f0               = totalSqrtInfo * reduce * J;
 
-      J.block<3, 3>(0, 0) = -Rc1w;
-      J.block<3, 3>(0, 3) = mRc1b1 * Eigen::skew(Pb1x);
-      mJ_f1               = totalSqrtInfo * reduce * J;
+      if (mFP0->fixed()) {
+        mJ_f0.setZero();
+      }
+      else {
+        J.block<3, 3>(0, 0) = Rc1w;
+        J.block<3, 3>(0, 3) = -Rc1b0 * Eigen::skew(Pb0x);
+        mJ_f0               = totalSqrtInfo * reduce * J;
+      }
 
-      Eigen::Matrix3d Rc1c0 = Rc1b0 * mRb0c0;
-      Eigen::Matrix3d Jmp;
-      Jmp.leftCols(2)  = Rc1c0.leftCols(2) * D;
-      Jmp.rightCols(1) = Rc1c0 * Pc0x * -D;
-      mJ_mp            = totalSqrtInfo * reduce * Jmp;
+      if (mFP1->fixed()) {
+        mJ_f1.setZero();
+      }
+      else {
+        J.block<3, 3>(0, 0) = -Rc1w;
+        J.block<3, 3>(0, 3) = mRc1b1 * Eigen::skew(Pb1x);
+        mJ_f1               = totalSqrtInfo * reduce * J;
+      }
+
+      if (mMp->fixed()) {
+        mJ_mp.setZero();
+      }
+      else {
+        Eigen::Matrix3d Rc1c0 = Rc1b0 * mRb0c0;
+        Eigen::Matrix3d Jmp;
+        Jmp.leftCols(2)  = Rc1c0.leftCols(2) * D;
+        Jmp.rightCols(1) = Rc1c0 * Pc0x * -D;
+        mJ_mp            = totalSqrtInfo * reduce * Jmp;
+      }
     }
     return errSq;
   }
@@ -282,14 +298,19 @@ public:
       mJ_f0.setZero();
       mJ_f1.setZero();
 
-      double           izSq = iz * iz;
-      Eigen::Matrix23d reduce;
-      reduce << iz, 0.0, -Pc1x.x() * izSq, 0.0, iz, -Pc1x.y() * izSq;
+      if (mMp->fixed()) {
+        mJ_mp.setZero();
+      }
+      else {
+        double           izSq = iz * iz;
+        Eigen::Matrix23d reduce;
+        reduce << iz, 0.0, -Pc1x.x() * izSq, 0.0, iz, -Pc1x.y() * izSq;
 
-      Eigen::Matrix3d Jmp;
-      Jmp.leftCols(2)  = Rc1c0.leftCols(2) * D;
-      Jmp.rightCols(1) = Rc1c0 * Pc0x * -D;
-      mJ_mp            = sqrtW * mSqrtInfo * reduce * Jmp;
+        Eigen::Matrix3d Jmp;
+        Jmp.leftCols(2)  = Rc1c0.leftCols(2) * D;
+        Jmp.rightCols(1) = Rc1c0 * Pc0x * -D;
+        mJ_mp            = sqrtW * mSqrtInfo * reduce * Jmp;
+      }
     }
     return errSq;
   }

@@ -70,7 +70,7 @@ bool SLAMApp::prepare() {
                                                               Eigen::Vector3f::UnitZ());
   mGraphicsCamera->cam.M.block<3, 3>(0, 0) = Qxz.toRotationMatrix();
 
-  //((io::Simulator*)mSensor)->setContinuosMode(false);
+  ((io::Simulator*)mSensor)->setContinuosMode(false);
   ImGui::Object::RenderImpl impl = [this]() {
     ImGui::Begin("Simulator");
     if (ImGui::Button("next image")) {
@@ -258,7 +258,7 @@ void SLAMApp::updateSLAMData() {
     mAxisRenderer->updateSyndId();
     //VklLogD("current local path size : {}", mMWcs.size());
     Eigen::Vector3f vec = mMWcs.back().block<3, 1>(0, 3);
-    //VklLogD("latest frame pose : {} ", eigenVec(vec));
+    VklLogD("latest frame pose : {} ", eigenVec(vec));
   }
 
   if (info->getLocalPoints(mLocalPointClouds)) {

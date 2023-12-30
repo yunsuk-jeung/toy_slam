@@ -31,8 +31,8 @@ SqrtLocalSolver::~SqrtLocalSolver() {}
 
 bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
                             std::vector<db::MapPoint::Ptr>& mapPoints) {
-  if (frames.size() < 4)
-    return false;
+  //if (frames.size() < 4)
+    //return false;
 
   mFrames    = &frames;
   mMapPoints = &mapPoints;
@@ -40,6 +40,7 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
   for (auto& f : *mFrames) {
     f->resetDelta();
   }
+  mFrames->front()->setFixed(true);
 
   /*problem->mOption.mLambda;*/
   mProblem->reset();

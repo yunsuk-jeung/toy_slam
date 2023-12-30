@@ -62,13 +62,15 @@ protected:
   //Eigen::Vector6d&   getLbc(int i) { return mLbcs[i]; }
 
   //S : se3
-  Sophus::SE3d                mTwb;
   std::array<Sophus::SE3d, 2> mTbcs;
 
+  Sophus::SE3d mTwb;
   Sophus::SE3d mBackupTwb;
 
-  Eigen::Vector6d mDel;  //for marginalize
-  Eigen::Vector6d mBackupDel;
+  Eigen::Vector6d mDelta;  //for marginalize
+  Eigen::Vector6d mBackupDelta;
+
+  bool mFixed;
 
 public:
   const int           id() const { return mId; }
@@ -83,6 +85,8 @@ public:
   Sophus::SE3d        getTwc(int i) { return mTwb * mTbcs[i]; }
   Sophus::SE3d&       getTbc(int i) { return mTbcs[i]; }
   MapPointFactorMap&  getMapPointFactorMap() { return mMapPointFactorMap; }
+  const bool          fixed() const { return mFixed; }
+  void                setFixed(bool fixed) { mFixed = fixed; }
 
   static constexpr size_t PARAMETER_SIZE = 6;
 };

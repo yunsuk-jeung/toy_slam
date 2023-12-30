@@ -9,7 +9,8 @@ MapPoint::MapPoint(int id, int hostFrameId)
   , mHostFrameId{hostFrameId}
   , mStatus{Status::INITIALING}
   , mInvDepth{1.0}
-  , mBackupInvD{1.0} {
+  , mBackupInvD{1.0}
+  , mFixed{false} {
   mFrameFactors.reserve(50);
 }
 

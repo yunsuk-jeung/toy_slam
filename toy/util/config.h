@@ -33,6 +33,7 @@ public:
     static int         reprojectionME;
     static double      reprojectionMEConst;
     static double      standardFocalLength;
+    static int         maxIteration;
     static bool        compareLinearizedDiff;
 
     static int mapFrameSize;

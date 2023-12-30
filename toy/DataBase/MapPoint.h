@@ -46,9 +46,9 @@ public:
 
   std::vector<FrameFactorPair>& getFrameFactors() { return mFrameFactors; }
 
-  const Eigen::Vector2d undist() const { return mUndist; }
-  void                  setUndist(const Eigen::Vector2d& undist) { mUndist = undist; }
-  Eigen::Vector2d&      getUndist() { return mUndist; }
+  const Eigen::Vector2d& undist() const { return mUndist; }
+  void                   setUndist(const Eigen::Vector2d& undist) { mUndist = undist; }
+  Eigen::Vector2d&       getUndist() { return mUndist; }
 
   const double    invDepth() const { return mInvDepth; }
   void            setInvDepth(double& invD) { mInvDepth = invD; }

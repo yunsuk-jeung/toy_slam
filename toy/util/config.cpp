@@ -40,6 +40,7 @@ std::string Config::Vio::solverType              = "SqrtLocalSolver";
 int         Config::Vio::reprojectionME          = 1;
 double      Config::Vio::reprojectionMEConst     = 1.0;
 double      Config::Vio::standardFocalLength     = 640.0;
+int         Config::Vio::maxIteration            = 10;
 bool        Config::Vio::compareLinearizedDiff   = false;
 
 int Config::Vio::mapFrameSize = 6;
@@ -94,6 +95,7 @@ void Config::parseConfig(const std::string& configFile) {
   }
   Vio::reprojectionMEConst   = vioSolverJson["reprojectionMEConst"];
   Vio::standardFocalLength   = vioSolverJson["standardFocalLength"];
+  Vio::maxIteration          = vioSolverJson["maxIteration"];
   Vio::compareLinearizedDiff = vioSolverJson["compareLinearizedDiff"];
 
   Vio::mapFrameSize = json["vio"]["localMap"]["frameSize"];

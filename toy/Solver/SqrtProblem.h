@@ -30,6 +30,7 @@ protected:
   double linearize(bool updateState);
   void   decomposeLinearization();
   void   backupParameters();
+  void   restoreParameters();
 
 public:
   struct Option {

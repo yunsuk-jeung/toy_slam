@@ -14,6 +14,7 @@ public:
   ~FrameParameter() = default;
 
   void backup();
+  void restore();
   void update(const Eigen::Vector6d& delta);
 
 protected:
@@ -23,6 +24,8 @@ protected:
 
   Eigen::Vector6d mDel;  //for marginalize
   Eigen::Vector6d mBackupDel;
+
+  std::shared_ptr<db::Frame> mFrame;
 
 public:
   const int&          id() const { return mId; }
@@ -38,14 +41,23 @@ public:
   ~MapPointParameter() = default;
 
   void backup();
+  void restore();
   void update(const Eigen::Vector3d& delta);
 
+protected:
   int             mId;
   Eigen::Vector2d mUndist;  //normalized uv
   double          mInvD;    //invDepth
 
-  Eigen::Vector2d mBackupUndist;
-  double          mBackupInvD;
+  Eigen::Vector2d               mBackupUndist;
+  double                        mBackupInvD;
+
+  std::shared_ptr<db::MapPoint> mMapPoint;
+
+public:
+  const int&             id() const { return mId; }
+  const Eigen::Vector2d& undist() const { return mUndist; }
+  const double&          invD() const { return mInvD; }
 
   static constexpr size_t SIZE = 3;
 };

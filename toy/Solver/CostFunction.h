@@ -144,9 +144,9 @@ public:
     const Eigen::Matrix3d Rb1w = Tb1w.rotationMatrix();
     const Eigen::Vector3d Pb1w = Tb1w.translation();
 
-    const double&         invD   = mMpP->mInvD;
+    const double&         invD   = mMpP->invD();
     const double          D      = 1.0 / invD;
-    auto&                 undist = mMpP->mUndist;
+    const auto&           undist = mMpP->undist();
     const Eigen::Vector3d undist3d(undist.x(), undist.y(), 1.0);
 
     Eigen::Vector3d Pc0x = undist3d * D;
@@ -173,28 +173,30 @@ public:
 
       mC = sqrtW * cost;
 
-      //ToyLogD("errSq : {} vs MC.norm() : {}", errSq, mC.norm());
-
       double           izSq = iz * iz;
       Eigen::Matrix23d reduce;
       reduce << iz, 0.0, -Pc1x.x() * izSq, 0.0, iz, -Pc1x.y() * izSq;
 
+      double totalSqrtInfo = sqrtW * mSqrtInfo;
+
+      Eigen::Matrix3d Rc1w  = mRc1b1 * Rb1w;
+      Eigen::Matrix3d Rc1b0 = Rc1w * Rwb0;
+
       Eigen::Matrix36d J;
+      J.block<3, 3>(0, 0) = Rc1w;
+      J.block<3, 3>(0, 3) = -Rc1b0 * Eigen::skew(Pb0x);
+      mJ_f0               = totalSqrtInfo * reduce * J;
 
-      J.block<3, 3>(0, 0) = mRc1b1 * Rb1w;
-      J.block<3, 3>(0, 3) = -mRc1b1 * Rb1w * Rwb0 * Eigen::skew(Pb0x);
-      mJ_f0               = sqrtW * mSqrtInfo * reduce * J;
-
-      J.block<3, 3>(0, 0) = -mRc1b1 * Rb1w;
+      J.block<3, 3>(0, 0) = -Rc1w;
       J.block<3, 3>(0, 3) = mRc1b1 * Eigen::skew(Pb1x);
-      mJ_f1               = sqrtW * mSqrtInfo * reduce * J;
+      mJ_f1               = totalSqrtInfo * reduce * J;
 
+      Eigen::Matrix3d Rc1c0 = Rc1b0 * mRb0c0;
       Eigen::Matrix3d Jmp;
-      Jmp.leftCols(2)  = (mRc1b1 * Rb1w * Rwb0 * mRb0c0).leftCols(2);
-      Jmp.rightCols(1) = mRc1b1 * Rb1w * Rwb0 * mRb0c0 * Pc0x * -D;
-      mJ_mp            = sqrtW * mSqrtInfo * reduce * Jmp;
+      Jmp.leftCols(2)  = Rc1c0.leftCols(2) * D;
+      Jmp.rightCols(1) = Rc1c0 * Pc0x * -D;
+      mJ_mp            = totalSqrtInfo * reduce * Jmp;
     }
-    double test = mC.squaredNorm();
     return errSq;
   }
 
@@ -245,6 +247,53 @@ public:
                          MEstimator::Ptr    ME,
                          double             sqrtInfo = 640.0)
     : ReprojectionCost(fs0, Tbc0, fs1, Tbc1, ms, maesurement, ME, sqrtInfo) {}
+
+  double linearlize(bool updateState) override {
+    const double&         invD   = mMpP->invD();
+    const double          D      = 1.0 / invD;
+    const auto&           undist = mMpP->undist();
+    const Eigen::Vector3d undist3d(undist.x(), undist.y(), 1.0);
+
+    Eigen::Vector3d Pc0x = undist3d * D;
+
+    Eigen::Matrix3d Rc1c0 = mRc1b1 * mRb0c0;
+    Eigen::Vector3d Pc1c0 = mRc1b1 * mPb0c0 + mPc1b1;
+
+    Eigen::Vector3d Pc1x = Rc1c0 * Pc0x + Pc1c0;
+
+    double z  = Pc1x.z();
+    double iz = 1.0 / z;
+
+    Eigen::Vector3d nPc1x = Pc1x * iz;
+    Eigen::Vector2d cost  = mSqrtInfo * (nPc1x - mZ).head(2);
+
+    double cSq    = cost.squaredNorm();
+    double errSq  = cSq;
+    double weight = 1.0;
+
+    if (mME) {
+      std::tie(errSq, weight) = mME->computeError(cSq);
+    }
+
+    if (updateState) {
+      double sqrtW = std::sqrt(weight);
+
+      mC = sqrtW * cost;
+
+      mJ_f0.setZero();
+      mJ_f1.setZero();
+
+      double           izSq = iz * iz;
+      Eigen::Matrix23d reduce;
+      reduce << iz, 0.0, -Pc1x.x() * izSq, 0.0, iz, -Pc1x.y() * izSq;
+
+      Eigen::Matrix3d Jmp;
+      Jmp.leftCols(2)  = Rc1c0.leftCols(2) * D;
+      Jmp.rightCols(1) = Rc1c0 * Pc0x * -D;
+      mJ_mp            = sqrtW * mSqrtInfo * reduce * Jmp;
+    }
+    return errSq;
+  }
 
 protected:
 };

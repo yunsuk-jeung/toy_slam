@@ -73,7 +73,7 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
                                                                             focalLength);
       costs.push_back(cost);
     }
-
+    
     ++it;
     for (; it != end; ++it) {
       db::Frame::Ptr   frame1   = (*it).first.lock();
@@ -112,6 +112,10 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
   }
 
   auto result = mProblem->solve();
+
+  if (result) {
+    
+  }
 
   return result;
 }

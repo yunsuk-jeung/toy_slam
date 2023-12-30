@@ -66,6 +66,7 @@ void MapPointLinearization::decomposeWithQR() {
   Eigen::VectorXd buffer1(mRows - MapPointParameter::SIZE);
   const auto      mpIdx = mCols - MapPointParameter::SIZE;
 
+  //ToyLogD("11111111111111111111111111");
   //ToyLogD("house holder test J : {}", ToyLogger::eigenMat(mJ));
   //ToyLogD("house holder test C : {}", ToyLogger::eigenVec(mC));
 
@@ -85,6 +86,7 @@ void MapPointLinearization::decomposeWithQR() {
     //ToyLogD("house holder test C : {}", ToyLogger::eigenVec(mC));
     //ToyLogD("");
   }
+  //ToyLogD("2222222222222222222222222222");
   //ToyLogD("house holder test J : {}", ToyLogger::eigenMat(mJ));
   //ToyLogD("house holder test C : {}", ToyLogger::eigenVec(mC));
   //ToyLogD("");

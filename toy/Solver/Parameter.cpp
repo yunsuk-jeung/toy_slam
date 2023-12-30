@@ -13,10 +13,17 @@ FrameParameter::FrameParameter(db::Frame::Ptr frame) {
   mBackupTwb = mTwb;
 
   mDel.setZero();
+
+  mFrame = frame;
 }
 void FrameParameter::backup() {
   mBackupTwb = mTwb;
   mBackupDel = mDel;
+}
+
+void FrameParameter::restore() {
+  mDel = mBackupDel;
+  mTwb = mBackupTwb;
 }
 
 void FrameParameter::update(const Eigen::Vector6d& delta) {
@@ -35,11 +42,18 @@ MapPointParameter::MapPointParameter(db::MapPoint::Ptr mp) {
 
   mInvD       = mp->invDepth();
   mBackupInvD = mInvD;
+
+  mMapPoint = mp;
 }
 
 void MapPointParameter::backup() {
   mBackupUndist = mUndist;
   mBackupInvD   = mInvD;
+}
+
+void MapPointParameter::restore() {
+  mUndist = mBackupUndist;
+  mInvD   = mBackupInvD;
 }
 
 void MapPointParameter::update(const Eigen::Vector3d& delta) {

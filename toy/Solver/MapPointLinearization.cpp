@@ -4,16 +4,20 @@
 #include "MapPointLinearization.h"
 
 namespace toy {
-MapPointLinearization::MapPointLinearization(MapPointParameter*  rpMpP,
+namespace {
+static constexpr auto COST_SIZE = ReprojectionCost::SIZE;
+static constexpr auto POSE_SIZE = db::Frame::PARAMETER_SIZE;
+static constexpr auto MP_SIZE   = db::MapPoint::PARAMETR_SIZE;
+}  //namespace
+MapPointLinearization::MapPointLinearization(db::MapPoint::Ptr   mp,
                                              std::map<int, int>* frameIdColMap,
                                              std::vector<ReprojectionCost::Ptr>& costs)
-  : mRpMapPointParameter{rpMpP}
+  : mMapPoint{mp}
   , mFrameIdColumnMapRp{frameIdColMap} {
   mReprojectionCosts.swap(costs);
 
-  int cols = mFrameIdColumnMapRp->size() * FrameParameter::SIZE;
-
-  cols += MapPointParameter::SIZE;
+  int cols = mFrameIdColumnMapRp->size() * db::Frame::PARAMETER_SIZE;
+  cols += db::MapPoint::PARAMETR_SIZE;
 
   auto costSize = mReprojectionCosts.size();
   mRows         = costSize << 1;  //uv
@@ -31,10 +35,12 @@ MapPointLinearization::MapPointLinearization(MapPointLinearization&& src) noexce
 }
 
 double MapPointLinearization::linearize(bool updateState) {
+
   double errSq = 0;
   size_t row   = 0;
 
-  size_t mpCol = mJ.cols() - MapPointParameter::SIZE;
+  const size_t mpCol = mJ.cols() - MP_SIZE;
+
   //YSTODO: tbb
   for (auto& cost : mReprojectionCosts) {
     errSq += cost->linearlize(updateState);
@@ -49,12 +55,10 @@ double MapPointLinearization::linearize(bool updateState) {
       const auto& idx0 = mFrameIdColumnMapRp->at(id0);
       const auto& idx1 = mFrameIdColumnMapRp->at(id1);
 
-      constexpr auto COST_SIZE = ReprojectionCost::SIZE;
-
-      mJ.block<COST_SIZE, FrameParameter::SIZE>(row, idx0)     = cost->J_f0();
-      mJ.block<COST_SIZE, FrameParameter::SIZE>(row, idx1)     = cost->J_f1();
-      mJ.block<COST_SIZE, MapPointParameter::SIZE>(row, mpCol) = cost->J_mp();
-      mC.segment(row, COST_SIZE)                               = cost->C();
+      mJ.block<COST_SIZE, POSE_SIZE>(row, idx0) = cost->J_f0();
+      mJ.block<COST_SIZE, POSE_SIZE>(row, idx1) = cost->J_f1();
+      mJ.block<COST_SIZE, MP_SIZE>(row, mpCol)  = cost->J_mp();
+      mC.segment(row, COST_SIZE)                = cost->C();
       row += COST_SIZE;
     }
   }
@@ -63,14 +67,14 @@ double MapPointLinearization::linearize(bool updateState) {
 
 void MapPointLinearization::decomposeWithQR() {
   Eigen::VectorXd buffer0(mCols);
-  Eigen::VectorXd buffer1(mRows - MapPointParameter::SIZE);
-  const auto      mpIdx = mCols - MapPointParameter::SIZE;
+  Eigen::VectorXd buffer1(mRows - MP_SIZE);
+  const auto      mpIdx = mCols - MP_SIZE;
 
   //ToyLogD("11111111111111111111111111");
   //ToyLogD("house holder test J : {}", ToyLogger::eigenMat(mJ));
   //ToyLogD("house holder test C : {}", ToyLogger::eigenVec(mC));
 
-  for (size_t k = 0u; k < MapPointParameter::SIZE; ++k) {
+  for (size_t k = 0u; k < MP_SIZE; ++k) {
     size_t remainingRows = mRows - k;
 
     double beta;
@@ -93,7 +97,6 @@ void MapPointLinearization::decomposeWithQR() {
 }
 
 double MapPointLinearization::backSubstitue(Eigen::VectorXd& frameDelta) {
-  constexpr size_t MP_SIZE  = MapPointParameter::SIZE;
   const auto       mpColIdx = mCols - MP_SIZE;
 
   const auto Q1t_C  = mC.head(MP_SIZE);
@@ -102,7 +105,7 @@ double MapPointLinearization::backSubstitue(Eigen::VectorXd& frameDelta) {
                         .triangularView<Eigen::Upper>();
 
   Eigen::Vector<double, MP_SIZE> mpDelta = -Q1t_Jl.solve(Q1t_C + Q1t_Jp * frameDelta);
-  mRpMapPointParameter->update(mpDelta);
+  mMapPoint->update(mpDelta);
 
   if (Config::Vio::compareLinearizedDiff) {
     TOY_ASSERT_MESSAGE(false, "not implemented");

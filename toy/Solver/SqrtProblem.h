@@ -1,8 +1,9 @@
 #pragma once
 #include <vector>
 #include <map>
+#include <Eigen/Dense>
+
 #include "macros.h"
-#include "Parameter.h"
 
 namespace toy {
 namespace db {
@@ -18,10 +19,10 @@ public:
   ~SqrtProblem();
 
   void reset();
-  void setFrameSatatesMap(std::map<int, FrameParameter>* map);
-  void setMapPointState(std::map<int, MapPointParameter>* map);
+  void setFrames(std::vector<std::shared_ptr<db::Frame>>* framesRp);
+  void setMapPoints(std::vector<std::shared_ptr<db::MapPoint>>* mapPointsRp);
 
-  void addReprojectionCost(MapPointParameter*                             rpMpP,
+  void addReprojectionCost(std::shared_ptr<db::MapPoint>                  mp,
                            std::vector<std::shared_ptr<ReprojectionCost>> costs);
 
   bool solve();
@@ -46,9 +47,9 @@ public:
 protected:
   //std::map<int, FrameParameter>*                      mFrameParameterMapRpt;
   //std::map<int, MapPointParameter>*                   mMapPointParameterMapRpt;
-  std::map<int, int>              mFrameIdColumnMap;
-  std::vector<FrameParameter*>    mFrameParameters;
-  std::vector<MapPointParameter*> mMapPointParameters;
+  std::map<int, int>                          mFrameIdColumnMap;
+  std::vector<std::shared_ptr<db::Frame>>*    mFrames;
+  std::vector<std::shared_ptr<db::MapPoint>>* mMapPoints;
 
   std::vector<std::shared_ptr<MapPointLinearization>> mMapPointLinearizations;
 

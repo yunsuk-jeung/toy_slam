@@ -3,17 +3,19 @@
 #include <vector>
 #include <map>
 #include <Eigen/Dense>
-#include "Parameter.h"
 #include "macros.h"
 
 namespace toy {
+namespace db {
+class MapPoint;
+}
 class ReprojectionCost;
 class MapPointLinearization {
 public:
   USING_SMART_PTR(MapPointLinearization);
   MapPointLinearization() = delete;
-  MapPointLinearization(MapPointParameter*  rpMapPointParameter,
-                        std::map<int, int>* frameIdColMap,
+  MapPointLinearization(std::shared_ptr<db::MapPoint>                   mp,
+                        std::map<int, int>*                             frameIdColMap,
                         std::vector<std::shared_ptr<ReprojectionCost>>& costs);
   MapPointLinearization(MapPointLinearization&& src) noexcept;
 
@@ -25,7 +27,7 @@ public:
   double backSubstitue(Eigen::VectorXd& frameDelta);
 
 protected:
-  MapPointParameter*                             mRpMapPointParameter;
+  std::shared_ptr<db::MapPoint>                  mMapPoint;
   std::vector<std::shared_ptr<ReprojectionCost>> mReprojectionCosts;
 
   std::map<int, int>* mFrameIdColumnMapRp;

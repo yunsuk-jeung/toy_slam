@@ -15,10 +15,12 @@ SqrtProblem::Option::Option()
   , mMuFactor{2.0} {}
 
 SqrtProblem::SqrtProblem()
-  : mFrameParameters{}
-  , mMapPointParameters{} {}
+  : mFrames{nullptr}
+  , mMapPoints{nullptr} {}
 
-SqrtProblem::~SqrtProblem() {}
+SqrtProblem::~SqrtProblem() {
+  reset();
+}
 
 void SqrtProblem::reset() {
   mOption = Option();
@@ -27,37 +29,37 @@ void SqrtProblem::reset() {
   mB.setZero();
 
   mFrameIdColumnMap.clear();
-  mFrameParameters.clear();
-  mMapPointParameters.clear();
+  mFrames    = nullptr;
+  mMapPoints = nullptr;
+
   mMapPointLinearizations.clear();
 }
 
-void SqrtProblem::setFrameSatatesMap(std::map<int, FrameParameter>* map) {
-  mFrameParameters.reserve(map->size());
+void SqrtProblem::setFrames(std::vector<db::Frame::Ptr>* framesRp) {
+  mFrames = framesRp;
+
   int column = 0;
-  for (auto& [key, val] : *map) {
-    mFrameParameters.push_back(&val);
-    mFrameIdColumnMap[val.id()] = column;
-    column += FrameParameter::SIZE;
+  for (auto& frame : *mFrames) {
+    mFrameIdColumnMap[frame->id()] = column;
+    column += db::Frame::PARAMETER_SIZE;
   }
 }
 
-void SqrtProblem::setMapPointState(std::map<int, MapPointParameter>* map) {
-  mMapPointParameters.reserve(map->size());
-  for (auto& [key, val] : *map) {
-    mMapPointParameters.push_back(&val);
-  }
+void SqrtProblem::setMapPoints(std::vector<std::shared_ptr<db::MapPoint>>* mapPointsRp) {
+  mMapPoints = mapPointsRp;
 }
 
-void SqrtProblem::addReprojectionCost(MapPointParameter*                 rpMpP,
+void SqrtProblem::addReprojectionCost(db::MapPoint::Ptr                  mp,
                                       std::vector<ReprojectionCost::Ptr> costs) {
   mMapPointLinearizations.emplace_back(
-    std::make_shared<MapPointLinearization>(rpMpP, &mFrameIdColumnMap, costs));
+    std::make_shared<MapPointLinearization>(mp, &mFrameIdColumnMap, costs));
 }
 
 bool SqrtProblem::solve() {
+  const auto& frames = *mFrames;
+
   //prepare solving
-  const int Hrows = mFrameParameters.size() * FrameParameter::SIZE;
+  const int Hrows = frames.size() * db::Frame::PARAMETER_SIZE;
   mH.resize(Hrows, Hrows);
   mB.resize(Hrows);
 
@@ -88,7 +90,7 @@ bool SqrtProblem::solve() {
       const Eigen::MatrixXd& vJ = mpL->J();
       const Eigen::VectorXd& vC = mpL->C();
 
-      const auto  rows = vJ.rows() - MapPointParameter::SIZE;
+      const auto  rows = vJ.rows() - db::MapPoint::PARAMETR_SIZE;
       const auto& cols = Hrows;
 
       const Eigen::MatrixXd J = vJ.bottomLeftCorner(rows, cols);
@@ -119,7 +121,7 @@ bool SqrtProblem::solve() {
           deltaValid = true;
         }
       }
-      
+
       if (!deltaValid) {
         ToyLogE("delta is unstable");
       }
@@ -132,9 +134,9 @@ bool SqrtProblem::solve() {
       }
 
       int frameRow = 0;
-      for (auto& fp : mFrameParameters) {
-        fp->update(frameDelta.segment<FrameParameter::SIZE>(frameRow));
-        frameRow += FrameParameter::SIZE;
+      for (auto& fp : frames) {
+        fp->update(frameDelta.segment<db::Frame::PARAMETER_SIZE>(frameRow));
+        frameRow += db::Frame::PARAMETER_SIZE;
       }
 
       double newErrSq = linearize(false);
@@ -229,22 +231,21 @@ void SqrtProblem::decomposeLinearization() {
 }
 
 void SqrtProblem::backupParameters() {
-  for (auto* param : mFrameParameters) {
-    param->backup();
+  for (auto& f : *mFrames) {
+    f->backup();
   }
 
-  for (auto* param : mMapPointParameters) {
-    param->backup();
+  for (auto& mp : *mMapPoints) {
+    mp->backup();
   }
 }
 
 void SqrtProblem::restoreParameters() {
-  for (auto* param : mFrameParameters) {
-    param->restore();
+  for (auto& f : *mFrames) {
+    f->restore();
   }
-
-  for (auto* param : mMapPointParameters) {
-    param->restore();
+  for (auto& mp : *mMapPoints) {
+    mp->restore();
   }
 }
 }  //namespace toy

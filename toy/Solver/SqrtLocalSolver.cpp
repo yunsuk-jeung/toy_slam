@@ -34,12 +34,17 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
   if (frames.size() < 4)
     return false;
 
-  createStates(frames, mapPoints);
+  mFrames    = &frames;
+  mMapPoints = &mapPoints;
+
+  for (auto& f : *mFrames) {
+    f->resetDelta();
+  }
 
   /*problem->mOption.mLambda;*/
   mProblem->reset();
-  mProblem->setFrameSatatesMap(&mFrameParameterMap);
-  mProblem->setMapPointState(&mMapPointParameterMap);
+  mProblem->setFrames(mFrames);
+  mProblem->setMapPoints(mMapPoints);
 
   MEstimator::Ptr reProjME    = createReprojectionMEstimator();
   const double&   focalLength = Config::Vio::standardFocalLength;
@@ -56,36 +61,32 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
     db::Frame::Ptr frame0 = (*it).first.lock();
     Sophus::SE3d&  Tbc0   = frame0->getTbc(0);
 
-    auto* mpParam  = &mMapPointParameterMap[mp->id()];
-    auto* frParam0 = &mFrameParameterMap[frame0->id()];
-
     if (it->second.getType() == db::ReprojectionFactor::Type::STEREO) {
       Sophus::SE3d&    Tbc1    = frame0->getTbc(1);
       Eigen::Vector3d& undist1 = it->second.undist1();
 
-      ReprojectionCost::Ptr cost = std::make_shared<StereoReprojectionCost>(frParam0,
+      ReprojectionCost::Ptr cost = std::make_shared<StereoReprojectionCost>(frame0,
                                                                             Tbc0,
-                                                                            frParam0,
+                                                                            frame0,
                                                                             Tbc1,
-                                                                            mpParam,
+                                                                            mp,
                                                                             undist1,
                                                                             reProjME,
                                                                             focalLength);
       costs.push_back(cost);
     }
-    
+
     ++it;
     for (; it != end; ++it) {
-      db::Frame::Ptr   frame1   = (*it).first.lock();
-      auto*            frParam1 = &mFrameParameterMap[frame1->id()];
-      Sophus::SE3d&    Tbc1     = frame1->getTbc(0);
-      Eigen::Vector3d& undist0  = it->second.undist0();
+      db::Frame::Ptr   frame1  = (*it).first.lock();
+      Sophus::SE3d&    Tbc1    = frame1->getTbc(0);
+      Eigen::Vector3d& undist0 = it->second.undist0();
 
-      ReprojectionCost::Ptr cost = std::make_shared<ReprojectionCost>(frParam0,
+      ReprojectionCost::Ptr cost = std::make_shared<ReprojectionCost>(frame0,
                                                                       Tbc0,
-                                                                      frParam1,
+                                                                      frame1,
                                                                       Tbc1,
-                                                                      mpParam,
+                                                                      mp,
                                                                       undist0,
                                                                       reProjME,
                                                                       focalLength);
@@ -97,24 +98,23 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
       Sophus::SE3d&    Tbc2    = frame1->getTbc(1);
       Eigen::Vector3d& undist1 = it->second.undist1();
 
-      ReprojectionCost::Ptr cost2 = std::make_shared<ReprojectionCost>(frParam0,
+      ReprojectionCost::Ptr cost2 = std::make_shared<ReprojectionCost>(frame0,
                                                                        Tbc0,
-                                                                       frParam1,
+                                                                       frame1,
                                                                        Tbc2,
-                                                                       mpParam,
+                                                                       mp,
                                                                        undist1,
                                                                        reProjME,
                                                                        focalLength);
       costs.push_back(cost2);
     }
 
-    mProblem->addReprojectionCost(mpParam, costs);
+    mProblem->addReprojectionCost(mp, costs);
   }
 
   auto result = mProblem->solve();
 
   if (result) {
-    
   }
 
   return result;
@@ -122,20 +122,6 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
 
 void SqrtLocalSolver::marginalize(int id) {
   ToyLogE("NOT IMPLEMENTED YET, {}", __FUNCTION__);
-}
-
-void SqrtLocalSolver::createStates(std::vector<db::Frame::Ptr>&    frames,
-                                   std::vector<db::MapPoint::Ptr>& mapPoints) {
-  mFrameParameterMap.clear();
-  mMapPointParameterMap.clear();
-
-  for (auto& f : frames) {
-    mFrameParameterMap.insert({f->id(), FrameParameter(f)});
-  }
-
-  for (auto& mp : mapPoints) {
-    mMapPointParameterMap.insert({mp->id(), MapPointParameter(mp)});
-  }
 }
 
 }  //namespace toy

@@ -20,6 +20,11 @@ public:
 
   void addFrameFactor(std::shared_ptr<db::Frame> frame, ReprojectionFactor factor);
 
+  void backup();
+  void restore();
+  void update(const Eigen::Vector3d& delta);
+  void update(const double& delta);
+
 protected:
 
 public:
@@ -38,6 +43,8 @@ protected:
   std::vector<FrameFactorPair> mFrameFactors;
   Eigen::Vector2d              mUndist;
   double                       mInvDepth;
+  Eigen::Vector2d              mBackupUndist;
+  double                       mBackupInvD;
 
 public:
   const int     id() const { return mId; }
@@ -54,6 +61,10 @@ public:
   void            setInvDepth(double& invD) { mInvDepth = invD; }
   double&         getInvDepth() { return mInvDepth; }
   Eigen::Vector3d getPwx();
+
+  static constexpr size_t UNDIST_SIZE   = 2;
+  static constexpr size_t INVDEPTH_SIZE = 1;
+  static constexpr size_t PARAMETR_SIZE = 3;
 };
 
 }  //namespace db

@@ -5,7 +5,6 @@
 #include "Frame.h"
 #include "MapPoint.h"
 #include "EigenUtil.h"
-#include "Parameter.h"
 #include "Factor.h"
 
 namespace toy {
@@ -113,17 +112,17 @@ class ReprojectionCost {
 public:
   USING_SMART_PTR(ReprojectionCost);
   ReprojectionCost() = delete;
-  ReprojectionCost(FrameParameter*    fs0,
-                   Sophus::SE3d&      Tb0c0,
-                   FrameParameter*    fs1,
-                   Sophus::SE3d&      Tb1c1,
-                   MapPointParameter* ms,
-                   Eigen::Vector3d&   maesurement,
-                   MEstimator::Ptr    ME,
-                   double             sqrtInfo = 640.0)
+  ReprojectionCost(db::Frame::Ptr    fs0,
+                   Sophus::SE3d&     Tb0c0,
+                   db::Frame::Ptr    fs1,
+                   Sophus::SE3d&     Tb1c1,
+                   db::MapPoint::Ptr mp,
+                   Eigen::Vector3d&  maesurement,
+                   MEstimator::Ptr   ME,
+                   double            sqrtInfo = 640.0)
     : mFP0{fs0}
     , mFP1{fs1}
-    , mMpP{ms}
+    , mMp{mp}
     , mZ{maesurement}
     , mME{ME}
     , mSqrtInfo{sqrtInfo} {
@@ -144,9 +143,9 @@ public:
     const Eigen::Matrix3d Rb1w = Tb1w.rotationMatrix();
     const Eigen::Vector3d Pb1w = Tb1w.translation();
 
-    const double&         invD   = mMpP->invD();
+    const double&         invD   = mMp->invDepth();
     const double          D      = 1.0 / invD;
-    const auto&           undist = mMpP->undist();
+    const auto&           undist = mMp->undist();
     const Eigen::Vector3d undist3d(undist.x(), undist.y(), 1.0);
 
     Eigen::Vector3d Pc0x = undist3d * D;
@@ -204,15 +203,15 @@ public:
   static constexpr int SIZE = 2;
 
 protected:
-  FrameParameter* mFP0;
-  FrameParameter* mFP1;
+  db::Frame::Ptr mFP0;
+  db::Frame::Ptr mFP1;
 
   Eigen::Matrix3d mRb0c0;
   Eigen::Vector3d mPb0c0;
   Eigen::Matrix3d mRc1b1;
   Eigen::Vector3d mPc1b1;
 
-  MapPointParameter* mMpP;
+  db::MapPoint::Ptr mMp;
 
   Eigen::Vector3d mZ;  //measurement
 
@@ -225,9 +224,9 @@ protected:
   Eigen::Matrix23d mJ_mp;  //jacobian for mp
 
 public:
-  FrameParameter*    getFrameParameter0() { return mFP0; }
-  FrameParameter*    getFrameParameter1() { return mFP1; }
-  MapPointParameter* getMapPointParameter() { return mMpP; }
+  db::Frame::Ptr    getFrameParameter0() { return mFP0; }
+  db::Frame::Ptr    getFrameParameter1() { return mFP1; }
+  db::MapPoint::Ptr getMapPointParameter() { return mMp; }
 
   const Eigen::Vector2d&  C() const { return mC; }
   const Eigen::Matrix26d& J_f0() const { return mJ_f0; }
@@ -238,20 +237,20 @@ public:
 class StereoReprojectionCost : public ReprojectionCost {
 public:
   StereoReprojectionCost() = delete;
-  StereoReprojectionCost(FrameParameter*    fs0,
-                         Sophus::SE3d&      Tbc0,
-                         FrameParameter*    fs1,
-                         Sophus::SE3d&      Tbc1,
-                         MapPointParameter* ms,
-                         Eigen::Vector3d&   maesurement,
-                         MEstimator::Ptr    ME,
-                         double             sqrtInfo = 640.0)
-    : ReprojectionCost(fs0, Tbc0, fs1, Tbc1, ms, maesurement, ME, sqrtInfo) {}
+  StereoReprojectionCost(db::Frame::Ptr    fs0,
+                         Sophus::SE3d&     Tbc0,
+                         db::Frame::Ptr    fs1,
+                         Sophus::SE3d&     Tbc1,
+                         db::MapPoint::Ptr mp,
+                         Eigen::Vector3d&  maesurement,
+                         MEstimator::Ptr   ME,
+                         double            sqrtInfo = 640.0)
+    : ReprojectionCost(fs0, Tbc0, fs1, Tbc1, mp, maesurement, ME, sqrtInfo) {}
 
   double linearlize(bool updateState) override {
-    const double&         invD   = mMpP->invD();
+    const double&         invD   = mMp->invDepth();
     const double          D      = 1.0 / invD;
-    const auto&           undist = mMpP->undist();
+    const auto&           undist = mMp->undist();
     const Eigen::Vector3d undist3d(undist.x(), undist.y(), 1.0);
 
     Eigen::Vector3d Pc0x = undist3d * D;

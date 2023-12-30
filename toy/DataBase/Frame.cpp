@@ -103,5 +103,27 @@ void Frame::addMapPointFactor(std::shared_ptr<db::MapPoint> mp,
   mMapPointFactorMap.insert({mp, factor});
 }
 
+void Frame::resetDelta() {
+  mDel.setZero();
+}
+
+void Frame::backup() {
+  mBackupTwb = mTwb;
+  mBackupDel = mDel;
+}
+
+void Frame::restore() {
+  mDel = mBackupDel;
+  mTwb = mBackupTwb;
+}
+
+void Frame::update(const Eigen::Vector6d& delta) {
+  auto& Pwb = mTwb.translation();
+  Pwb += delta.head(3);
+
+  auto& so3wb = mTwb.so3();
+  so3wb *= Sophus::SO3d::exp(delta.tail(3));
+}
+
 }  //namespace db
 }  //namespace toy

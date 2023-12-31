@@ -20,6 +20,7 @@ CameraInfo Config::Vio::camInfo0;
 CameraInfo Config::Vio::camInfo1;
 ImuInfo    Config::Vio::imuInfo;
 
+bool        Config::Vio::debug              = false;
 int         Config::Vio::pyramidLevel       = 3;
 int         Config::Vio::patchSize          = 52;
 int         Config::Vio::rowGridCount       = 12;
@@ -61,8 +62,9 @@ void Config::parseConfig(const std::string& configFile) {
   file >> json;
   file.close();
 
-  sync        = json["sync"];
-  bool vio_on = json["vio"]["on"];
+  sync               = json["sync"];
+  bool vio_on        = json["vio"]["on"];
+  Config::Vio::debug = json["vio"]["debug"];
 
   auto frameTrackerJson = json["vio"]["frameTracker"];
   Vio::pyramidLevel     = frameTrackerJson["pyramidLevel"];

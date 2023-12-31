@@ -29,6 +29,8 @@ private:
   int  getMarginalFrameId(std::vector<std::shared_ptr<db::Frame>>& frames);
   void setDataToInfo();
 
+  void drawDebugView(int tag, int offset = 0);
+
 private:
   enum class Status { NONE = -1, INITIALIZING = 0, TRACKING = 1 };
   Status                        mStatus;

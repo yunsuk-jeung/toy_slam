@@ -145,27 +145,43 @@ void Frame::drawReprojectionView(int idx, std::string imshowName) {
       continue;
     }
 
-    factor.uv0();
-    cv::Point2f uv;
+    Eigen::Vector3d undist;
 
     if (idx == 0) {
-      uv = cv::Point2f(factor.uv0().x(), factor.uv0().y());
+      undist = factor.undist0();
     }
     else {
-      uv = cv::Point2f(factor.uv1().x(), factor.uv1().y());
+      undist = factor.undist1();
     }
 
-    cv::circle(img, uv, 6, {255, 0, 0}, -1);
+    auto meaUV = mCameras[idx]->project(undist);
+    cv::circle(img, meaUV, 6, {255, 0, 0}, -1);
 
     Eigen::Vector3d Xcx  = Tcw * mp->getPwx();
     Eigen::Vector3d nXcx = Xcx / Xcx.z();
 
     auto proj = mCameras[idx]->project(nXcx);
-    cv::circle(img, proj, 3, {0, 0, 255}, -1);
+
+    cv::Scalar color;
+    switch (mp->status()) {
+    case db::MapPoint::Status::DELETING: {
+      color = {0, 0, 0};
+      break;
+    }
+    case db::MapPoint::Status::INITIALING: {
+      color = {0, 255, 0};
+      break;
+    }
+    case db::MapPoint::Status::TRACKING: {
+      color = {0, 0, 255};
+      break;
+    }
+    }
+    cv::circle(img, proj, 3, color, -1);
 
     cv::putText(img,
                 std::to_string(mp->id()),
-                uv + cv::Point2f(5, 5),
+                meaUV + cv::Point2d(5, 5),
                 cv::FONT_HERSHEY_PLAIN,
                 1,
                 {255, 0, 0});
@@ -179,7 +195,7 @@ void Frame::drawReprojectionView(int idx, std::string imshowName) {
               cv::Scalar(0, 0, 0),
               3);
 
-  auto half = cv::Size(img.cols / 2, img.rows / 2);
+  //auto half = cv::Size(img.cols / 2, img.rows / 2);
   //cv::resize(img, img, half);
   cv::imshow(imshowName, img);
   cv::waitKey(1);

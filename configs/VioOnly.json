@@ -1,50 +1,51 @@
 {
-  "sync": true,
+	"sync": true,
 
-  "vio": {
-    "on": true,
-    "frameTracker": {
-      "pyramidLevel": 3,
-      "feature": {
-        "point": {
-          "patchSize": 31,
-          "rowGridCount": 10,
-          "colGridCount": 14,
-          "on": true,
-          "tracker": "Fast.OpticalflowLK",
-          "minTrackedPoint": 30,
-          "minTrackedRatio": 0.7,
-          "epipolarThreashold": 0.005,
-          "showExtraction": false,
-          "showMonoTracking": false,
-          "showStereoTracking": false
-        },
-        "line": {
-          "on": false
-        }
-      },
-      "solvePose": false
-    },
-    "localTracker": {
-      "initializeMapPointCount": 30,
-      "vioSolver": {
-        "name": "SqrtLocalSolver",
-        "reprojectionME": "huber",
-        "reprojectionMEConst": 1.0,
-        "standardFocalLength": 640.0,
-        "maxIteration": 10,
-        "compareLinearizedDiff": false
-      }
-    },
-    "localMap": {
-      "frameSize": 8
-    }
-  },
-  "mapper": {
-    "on": false
-  },
-  "basicSolver": {
-    "minDepth": 0.05,
-    "maxDepth": 140
-  }
+	"vio": {
+		"on": true,
+		"debug": true,
+		"frameTracker": {
+			"pyramidLevel": 3,
+			"feature": {
+				"point": {
+					"patchSize": 31,
+					"rowGridCount": 10,
+					"colGridCount": 14,
+					"on": true,
+					"tracker": "Fast.OpticalflowLK",
+					"minTrackedPoint": 30,
+					"minTrackedRatio": 0.7,
+					"epipolarThreashold": 0.005,
+					"showExtraction": false,
+					"showMonoTracking": false,
+					"showStereoTracking": false
+				},
+				"line": {
+					"on": false
+				}
+			},
+			"solvePose": false
+		},
+		"localTracker": {
+			"initializeMapPointCount": 30,
+			"vioSolver": {
+				"name": "SqrtLocalSolver",
+				"reprojectionME": "huber",
+				"reprojectionMEConst": 1.0,
+				"standardFocalLength": 640.0,
+				"maxIteration": 10,
+				"compareLinearizedDiff": false
+			}
+		},
+		"localMap": {
+			"frameSize": 8
+		}
+	},
+	"mapper": {
+		"on": false
+	},
+	"basicSolver": {
+		"minDepth": 0.05,
+		"maxDepth": 140
+	}
 }

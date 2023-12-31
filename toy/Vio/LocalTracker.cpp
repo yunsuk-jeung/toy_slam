@@ -59,26 +59,20 @@ void LocalTracker::process() {
 
     if (mLocalMap->addFrame(currFrame)) {
       currFrame->setKeyFrame();
+      int createMPCount = initializeMapPoints(currFrame);
     }
 
-    int createMPCount = initializeMapPoints(currFrame);
-
+    //YSTODO: check quality with createdMPCount
     std::vector<db::Frame::Ptr>    frames;
     std::vector<db::MapPoint::Ptr> mapPoints;
     mLocalMap->getCurrentStates(frames, mapPoints);
 
-    int k = 0;
-    for (auto& f : frames) {
-      f->drawReprojectionView(0, "before " + std::to_string(k++));
-    }
+    drawDebugView(100);
 
-    //BasicSolver::solveFramePose(currFrame);
     mVioSolver->solve(frames, mapPoints);
 
-    k = 0;
-    for (auto& f : frames) {
-      f->drawReprojectionView(0, "after " + std::to_string(k++));
-    }
+    drawDebugView(101, 520);
+
     cv::waitKey();
 
     int id = getMarginalFrameId(frames);
@@ -107,8 +101,8 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
 
   int successCount = 0;
   for (auto& [mpWeak, factor] : mapPointFactorMap) {
-    auto mpPtr = mpWeak.lock();
-    if (mpPtr->status() != db::MapPoint::Status::INITIALING)
+    auto mp = mpWeak.lock();
+    if (mp->status() != db::MapPoint::Status::INITIALING)
       continue;
 
     switch (factor.getType()) {
@@ -119,11 +113,12 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
       if (!BasicSolver::triangulate(factor.undist0(), factor.undist1(), Tc1c0, Pc0x)) {
         continue;
       }
-      double invD = 1.0 / Pc0x.z();
+
+      double          invD = 1.0 / Pc0x.z();
       Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
-      mpPtr->setUndist(nuv);
-      mpPtr->setInvDepth(invD);
-      mpPtr->setState(db::MapPoint::Status::TRACKING);
+      mp->setUndist(nuv);
+      mp->setInvDepth(invD);
+      mp->setState(db::MapPoint::Status::TRACKING);
       ++successCount;
       break;
     }
@@ -132,6 +127,11 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
     }
     }
   }
+
+  if (Config::Vio::debug) {
+    ToyLogD("triangulation successed {} / {}", successCount, mapPointFactorMap.size());
+  }
+
   return successCount;
 }
 
@@ -173,4 +173,29 @@ void LocalTracker::setDataToInfo() {
   info->setLocalPoints(outmp);
 }
 
+void LocalTracker::drawDebugView(int tag, int offset) {
+  int                            id = 0;
+  std::vector<db::Frame::Ptr>    frames;
+  std::vector<db::MapPoint::Ptr> mapPoints;
+  mLocalMap->getCurrentStates(frames, mapPoints);
+
+  if (frames.empty()) {
+    return;
+  }
+
+  int xOffset = frames.front()->getImagePyramid(0)->getOrigin().cols;
+  int yOffset = frames.front()->getImagePyramid(0)->getOrigin().rows;
+
+  int k = 0;
+  for (auto f : frames) {
+    std::string name = std::to_string(tag) + "_" + std::to_string(k++);
+    f->drawReprojectionView(0, name);
+
+    if (id < 5)
+      cv::moveWindow(name, xOffset * id, offset + yOffset);
+    else
+      cv::moveWindow(name, xOffset * (id - 4), offset + yOffset + 40 + yOffset);
+    ++id;
+  }
+}
 }  //namespace toy

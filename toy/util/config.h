@@ -13,6 +13,7 @@ public:
     static CameraInfo camInfo1;
     static ImuInfo    imuInfo;
 
+    static bool        debug;
     static int         pyramidLevel;
     static int         patchSize;
     static int         rowGridCount;

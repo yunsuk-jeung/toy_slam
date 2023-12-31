@@ -23,8 +23,8 @@ public:
                      MapPoint*       mapPoint,
                      Eigen::Vector2d uv0,
                      Eigen::Vector3d unidst0,
-                     Eigen::Vector2d uv1     = Eigen::Vector2d(0.0, -1.0),
-                     Eigen::Vector3d undist1 = Eigen::Vector3d(0.0, 0.0, -1.0))
+                     Eigen::Vector2d uv1     = Eigen::Vector2d(-1.0, -1.0),
+                     Eigen::Vector3d undist1 = Eigen::Vector3d(-1.0, -1.0, -1.0))
     : mType{Type::MONO}
     , mFrame{frame}
     , mMapPoint{mapPoint}

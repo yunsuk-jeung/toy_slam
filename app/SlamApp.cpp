@@ -275,8 +275,8 @@ void SLAMApp::updateSLAMData() {
   if (info->getLocalPath(mMWcs)) {
     mAxisRenderer->updateSyndId();
     //VklLogD("current local path size : {}", mMWcs.size());
-    Eigen::Vector3f vec = mMWcs.back().block<3, 1>(0, 3);
-    VklLogD("latest frame pose : {} ", eigenVec(vec));
+    //Eigen::Vector3f vec = mMWcs.back().block<3, 1>(0, 3);
+    //VklLogD("latest frame pose : {} ", eigenVec(vec));
   }
 
   if (info->getLocalPoints(mLocalPointClouds)) {

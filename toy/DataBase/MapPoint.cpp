@@ -1,4 +1,5 @@
 #include <sophus/se3.hpp>
+#include "ToyLogger.h"
 #include "Frame.h"
 #include "MapPoint.h"
 namespace toy {
@@ -42,9 +43,8 @@ Eigen::Vector3d MapPoint::getPwx() {
   auto& [frameW, factor] = mFrameFactors.front();
   auto fPtr              = frameW.lock();
 
-  Eigen::Vector3d undist(mUndist.x(), mUndist.y(), 1.0);
-
-  return fPtr->getTwc(0) * undist / mInvDepth;
+  Eigen::Vector3d Pc0x = Eigen::Vector3d(mUndist.x(), mUndist.y(), 1.0) / mInvDepth;
+  return fPtr->getTwc(0) * Pc0x;
 }
 
 }  //namespace db

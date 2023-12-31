@@ -31,8 +31,8 @@ SqrtLocalSolver::~SqrtLocalSolver() {}
 
 bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
                             std::vector<db::MapPoint::Ptr>& mapPoints) {
-  //if (frames.size() < 4)
-    //return false;
+  if (frames.size() < 4)
+    return false;
 
   mFrames    = &frames;
   mMapPoints = &mapPoints;
@@ -40,7 +40,6 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
   for (auto& f : *mFrames) {
     f->resetDelta();
   }
-  mFrames->front()->setFixed(true);
 
   /*problem->mOption.mLambda;*/
   mProblem->reset();
@@ -61,7 +60,22 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
 
     db::Frame::Ptr frame0 = (*it).first.lock();
     Sophus::SE3d&  Tbc0   = frame0->getTbc(0);
+    
+    //add prior for uv
+    {
+      Eigen::Vector3d undist0 = it->second.undist0();
 
+      ReprojectionCost::Ptr cost = std::make_shared<ReprojectionPriorCost>(frame0,
+                                                                           Tbc0,
+                                                                           frame0,
+                                                                           Tbc0,
+                                                                           mp,
+                                                                           undist0,
+                                                                           reProjME,
+                                                                           focalLength);
+      costs.push_back(cost);
+    }
+    //add stereo reprojection cost for sub cam
     if (it->second.getType() == db::ReprojectionFactor::Type::STEREO) {
       Sophus::SE3d&    Tbc1    = frame0->getTbc(1);
       Eigen::Vector3d& undist1 = it->second.undist1();
@@ -77,6 +91,7 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
       costs.push_back(cost);
     }
 
+    //add other reporjection cost
     ++it;
     for (; it != end; ++it) {
       db::Frame::Ptr   frame1  = (*it).first.lock();

@@ -69,6 +69,9 @@ void LocalTracker::process() {
 
     drawDebugView(100);
 
+    BasicSolver::solveFramePose(currFrame);
+
+    frames.front()->setFixed(true);
     mVioSolver->solve(frames, mapPoints);
 
     drawDebugView(101, 520);
@@ -131,7 +134,8 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
   if (Config::Vio::debug) {
     ToyLogD("triangulation successed {} / {}", successCount, mapPointFactorMap.size());
   }
-
+  currFrame->drawReprojectionView(0, "tri0");
+  currFrame->drawReprojectionView(1, "tri1");
   return successCount;
 }
 

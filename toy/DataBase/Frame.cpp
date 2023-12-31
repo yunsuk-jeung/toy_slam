@@ -178,6 +178,9 @@ void Frame::drawReprojectionView(int idx, std::string imshowName) {
     }
     }
     cv::circle(img, proj, 3, color, -1);
+    if (undist.z() > 0) {
+      cv::line(img, meaUV, proj, color);
+    }
 
     cv::putText(img,
                 std::to_string(mp->id()),

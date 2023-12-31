@@ -112,14 +112,14 @@ class ReprojectionCost {
 public:
   USING_SMART_PTR(ReprojectionCost);
   ReprojectionCost() = delete;
-  ReprojectionCost(db::Frame::Ptr    fs0,
-                   Sophus::SE3d&     Tb0c0,
-                   db::Frame::Ptr    fs1,
-                   Sophus::SE3d&     Tb1c1,
-                   db::MapPoint::Ptr mp,
-                   Eigen::Vector3d&  maesurement,
-                   MEstimator::Ptr   ME,
-                   double            sqrtInfo = 640.0)
+  ReprojectionCost(db::Frame::Ptr         fs0,
+                   Sophus::SE3d&          Tb0c0,
+                   db::Frame::Ptr         fs1,
+                   Sophus::SE3d&          Tb1c1,
+                   db::MapPoint::Ptr      mp,
+                   const Eigen::Vector3d& maesurement,
+                   MEstimator::Ptr        ME,
+                   double                 sqrtInfo = 640.0)
     : mFP0{fs0}
     , mFP1{fs1}
     , mMp{mp}
@@ -253,14 +253,14 @@ public:
 class StereoReprojectionCost : public ReprojectionCost {
 public:
   StereoReprojectionCost() = delete;
-  StereoReprojectionCost(db::Frame::Ptr    fs0,
-                         Sophus::SE3d&     Tbc0,
-                         db::Frame::Ptr    fs1,
-                         Sophus::SE3d&     Tbc1,
-                         db::MapPoint::Ptr mp,
-                         Eigen::Vector3d&  maesurement,
-                         MEstimator::Ptr   ME,
-                         double            sqrtInfo = 640.0)
+  StereoReprojectionCost(db::Frame::Ptr         fs0,
+                         Sophus::SE3d&          Tbc0,
+                         db::Frame::Ptr         fs1,
+                         Sophus::SE3d&          Tbc1,
+                         db::MapPoint::Ptr      mp,
+                         const Eigen::Vector3d& maesurement,
+                         MEstimator::Ptr        ME,
+                         double                 sqrtInfo = 640.0)
     : ReprojectionCost(fs0, Tbc0, fs1, Tbc1, mp, maesurement, ME, sqrtInfo) {}
 
   double linearlize(bool updateState) override {
@@ -316,6 +316,49 @@ public:
   }
 
 protected:
+};
+
+class ReprojectionPriorCost : public ReprojectionCost {
+public:
+  ReprojectionPriorCost() = delete;
+  ReprojectionPriorCost(db::Frame::Ptr         fs0,
+                        Sophus::SE3d&          Tbc0,
+                        db::Frame::Ptr         fs1,
+                        Sophus::SE3d&          Tbc1,
+                        db::MapPoint::Ptr      mp,
+                        const Eigen::Vector3d& maesurement,
+                        MEstimator::Ptr        ME,
+                        double                 sqrtInfo = 640.0)
+    : ReprojectionCost(fs0, Tbc0, fs1, Tbc1, mp, maesurement, ME, sqrtInfo) {}
+
+  double linearlize(bool updateState) override {
+    Eigen::Vector2d cost = mSqrtInfo * (mMp->undist() - mZ.head(2));
+
+    double cSq    = cost.squaredNorm();
+    double errSq  = cSq;
+    double weight = 1.0;
+
+    if (mME) {
+      std::tie(errSq, weight) = mME->computeError(cSq);
+    }
+
+    if (updateState) {
+      double sqrtW = std::sqrt(weight);
+
+      mC = sqrtW * cost;
+
+      mJ_f0.setZero();
+      mJ_f1.setZero();
+
+      if (mMp->fixed()) {
+        mJ_mp.setZero();
+      }
+      else {
+        mJ_mp = sqrtW * mSqrtInfo * Eigen::Matrix23d::Identity();
+      }
+    }
+    return errSq;
+  }
 };
 
 }  //namespace toy

@@ -78,7 +78,7 @@ void LocalTracker::process() {
 
     cv::waitKey();
 
-    int id = getMarginalFrameId(frames);
+    int id = selectMarginalFrame(frames);
 
     if (id < 0) {
       break;
@@ -139,8 +139,68 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
   return successCount;
 }
 
-int LocalTracker::getMarginalFrameId(std::vector<db::Frame::Ptr>& frames) {
-  ToyLogE("NOT IMPLEMENTED YET");
+int LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
+  if (allFrames.size() < Config::Vio::totalFrameSize) {
+    return -1;
+  }
+
+  std::vector<db::Frame::Ptr> keyFrames;
+  std::vector<db::Frame::Ptr> frames;
+  for (auto& frame : allFrames) {
+    keyFrames.push_back(frame);
+    frames.push_back(frame);
+  }
+
+  if (keyFrames.size() > Config::Vio::maxKeyFrameSize) {
+    return keyFrames.front()->id();
+  }
+
+  if (keyFrames.size() < Config::Vio::minKeyFrameSize) {
+    return frames.front()->id();
+  }
+
+  //check parallex
+  // if prevOfLast-> keyFrame....? 
+  // collect candidate... oldest keyframe , oldest frame
+  // or prevLast!
+  // fail-> margi prevOfLast
+
+
+  bool marginalizeKeyFrame = true;
+
+  if (keyFrames.size() < Config::Vio::minKeyFrameSize) {
+    marginalizeKeyFrame = false;
+  }
+
+  {
+    auto prevLast = std::prev(keyFrames.end(), 2);
+
+    for (auto it = keyFrames.begin(); it != prevLast; ++it) {
+      auto& frame = *it;
+
+      if (!frame->isKeyFrame()) {
+        continue;
+      }
+
+      auto& mpFactorMap0 = frame->getMapPointFactorMap();
+      auto& mpFactorMap1 = (*prevLast)->getMapPointFactorMap();
+
+      int  count = 0;
+      auto endIt = mpFactorMap1.end();
+      for (auto& [key, val] : mpFactorMap0) {
+        if (mpFactorMap1.find(key) == endIt) {
+          continue;
+        }
+        ++count;
+      }
+
+      if (count / mpFactorMap0.size() < (1.0 - Config::Vio::minTrackedRatio)) {
+        id = frame->id();
+      }
+      break;
+    }
+  }
+
   return 0;
 }
 

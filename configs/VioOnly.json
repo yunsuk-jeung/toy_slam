@@ -38,7 +38,9 @@
 			}
 		},
 		"localMap": {
-			"frameSize": 8
+			"totalFrameSize": 10,
+			"maxKeyFrameSize": 6,
+			"minKeyFrameSize": 3
 		}
 	},
 	"mapper": {

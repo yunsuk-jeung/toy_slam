@@ -37,7 +37,9 @@ public:
     static int         maxIteration;
     static bool        compareLinearizedDiff;
 
-    static int mapFrameSize;
+    static int totalFrameSize;
+    static int maxKeyFrameSize;
+    static int minKeyFrameSize;
   };
 
   struct Solver {

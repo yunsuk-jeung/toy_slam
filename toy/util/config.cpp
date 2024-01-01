@@ -44,7 +44,9 @@ double      Config::Vio::standardFocalLength     = 640.0;
 int         Config::Vio::maxIteration            = 10;
 bool        Config::Vio::compareLinearizedDiff   = false;
 
-int Config::Vio::mapFrameSize = 6;
+int Config::Vio::totalFrameSize  = 10;
+int Config::Vio::maxKeyFrameSize = 7;
+int Config::Vio::minKeyFrameSize = 3;
 
 double Config::Solver::basicMinDepth = 0.005;
 double Config::Solver::basicMaxDepth = 140;
@@ -100,7 +102,9 @@ void Config::parseConfig(const std::string& configFile) {
   Vio::maxIteration          = vioSolverJson["maxIteration"];
   Vio::compareLinearizedDiff = vioSolverJson["compareLinearizedDiff"];
 
-  Vio::mapFrameSize = json["vio"]["localMap"]["frameSize"];
+  Vio::totalFrameSize  = json["vio"]["localMap"]["maxFrameSize"];
+  Vio::maxKeyFrameSize = json["vio"]["localMap"]["maxKeyFrameSize"];
+  Vio::minKeyFrameSize = json["vio"]["localMap"]["minKeyFrameSize"];
 
   auto basicSolverJson  = json["basicSolver"];
   Solver::basicMinDepth = basicSolverJson["minDepth"];

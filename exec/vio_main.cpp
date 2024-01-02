@@ -24,6 +24,7 @@ void setupSensor() {
     dataReader = io::DataReader::createDataReader(io::DataReader::Type::EUROC);
     dataReader->openDirectory(sensorConfigFile, dataPath);
     ((io::Simulator*)sensor)->registerDataReader(dataReader);
+    ((io::Simulator*)sensor)->setSkip(80);
   }
   sensor->prepare();
 }

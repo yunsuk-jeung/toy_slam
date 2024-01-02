@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <set>
 #include <opencv2/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
@@ -38,5 +39,6 @@ protected:
   int                    mFeatureId;
   std::string            mType;
   cv::Ptr<cv::Feature2D> mFeature2D;
+  std::set<int>          mPrevIds;
 };
 }  //namespace toy

@@ -39,6 +39,24 @@ void MapPoint::update(const double& delta) {
   mInvDepth = std::max(1e-5, mInvDepth + delta);
 }
 
+bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
+  for (auto it = mFrameFactors.begin(); it != mFrameFactors.end(); ++it) {
+    if (it->first.lock() != frame) {
+      continue;
+    }
+
+    mFrameFactors.erase(it);
+    break;
+  }
+
+  constexpr bool removeThis = true;
+
+  if (mFrameFactors.empty())
+    return removeThis;
+
+  return !removeThis;
+}
+
 Eigen::Vector3d MapPoint::getPwx() {
   auto& [frameW, factor] = mFrameFactors.front();
   auto fPtr              = frameW.lock();

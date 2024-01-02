@@ -1,5 +1,5 @@
 #include "config.h"
-#include "ToyLogger.h"
+#include "ToyAssert.h"
 #include "Feature.h"
 #include "Frame.h"
 #include "MapPoint.h"
@@ -76,11 +76,31 @@ void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
     if (static_cast<int>(mp->status()) < static_cast<int>(MapPoint::Status::TRACKING)) {
       continue;
     }
+    if (mp->getFrameFactors().size() < 2) {
+      continue;
+    }
+
     mapPoints.push_back(mp);
   }
 }
 
-void LocalMap::removeFrame(int id) {}
+void LocalMap::removeFrame(int id) {
+  auto it = mFrames.find(id);
+  TOY_ASSERT(it != mFrames.end());
+
+  Frame::Ptr& f = it->second;
+  for (auto it = mMapPoints.begin(); it != mMapPoints.end();) {
+    bool eraseMapPoint = it->second->eraseFrame(f);
+    if (eraseMapPoint) {
+      it = mMapPoints.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
+
+  mFrames.erase(it);
+}
 
 }  //namespace db
 }  //namespace toy

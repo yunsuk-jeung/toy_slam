@@ -20,12 +20,17 @@ PointTracker::~PointTracker() {}
 
 size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
   size_t trackedPtSize = track(prevFrame, currFrame);
+  size_t prevSize      = mPrevIds.size() + 1;
 
-  size_t prevSize = 1000000;
-  if (prevFrame)
-    prevSize = prevFrame->getFeature(0)->getKeypoints().size();
+  int   found  = 0;
+  auto& kptIds = currFrame->getFeature(0)->getKeypoints().mIds;
+  for (auto& id : kptIds) {
+    if (mPrevIds.count(id)) {
+      ++found;
+    }
+  }
 
-  float ratio = float(trackedPtSize) / float(prevSize);
+  float ratio = float(found) / float(prevSize);
 
   if (ratio > Config::Vio::minTrackedRatio
       && trackedPtSize > Config::Vio::minTrackedPoint) {
@@ -33,6 +38,12 @@ size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
   }
 
   auto newKptSize = extract(currFrame);
+  //auto& kptIds     = currFrame->getFeature(0)->getKeypoints().mIds;
+  mPrevIds.clear();
+
+  for (auto& id : kptIds) {
+    mPrevIds.insert(id);
+  }
 
   if (trackedPtSize + newKptSize == 0)
     return 0;

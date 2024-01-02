@@ -21,7 +21,6 @@ public:
   void sendImage();
   void start() override;
   void stop() override;
-
   void spinOnce();
 
   void registerDataReader(DataReader* dataReader);
@@ -39,8 +38,10 @@ protected:
 
   int mImageType0;
   int mImageType1;
+  int mSkip;
 
 public:
   bool& getContinuousMode() { return mContinuousMode; }
+  void  setSkip(int skip) { mSkip = skip; }
 };
 }  //namespace io

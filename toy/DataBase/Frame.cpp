@@ -133,7 +133,7 @@ void Frame::update(const Eigen::Vector6d& delta) {
   mDelta += delta;
 }
 
-void Frame::drawReprojectionView(int idx, std::string imshowName) {
+void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
   auto img = mImagePyramids[idx]->getOrigin().clone();
   cv::cvtColor(img, img, CV_GRAY2BGR);
 
@@ -190,16 +190,28 @@ void Frame::drawReprojectionView(int idx, std::string imshowName) {
                 {255, 0, 0});
   }
 
-  cv::putText(img,
-              std::to_string(this->id()),
-              cv::Point2f(50, 50),
-              cv::FONT_HERSHEY_SIMPLEX,
-              1,
-              cv::Scalar(0, 0, 0),
-              3);
-
-  //auto half = cv::Size(img.cols / 2, img.rows / 2);
-  //cv::resize(img, img, half);
+  if (this->isKeyFrame()) {
+    cv::putText(img,
+                std::to_string(this->id()),
+                cv::Point2f(50, 50),
+                cv::FONT_HERSHEY_SIMPLEX,
+                1,
+                cv::Scalar(0, 0, 255),
+                3);
+  }
+  else {
+    cv::putText(img,
+                std::to_string(this->id()),
+                cv::Point2f(50, 50),
+                cv::FONT_HERSHEY_SIMPLEX,
+                1,
+                cv::Scalar(0, 0, 0),
+                3);
+  }
+  if (half) {
+    auto halfSize = cv::Size(img.cols / 2, img.rows / 2);
+    cv::resize(img, img, halfSize);
+  }
   cv::imshow(imshowName, img);
   cv::waitKey(1);
 }

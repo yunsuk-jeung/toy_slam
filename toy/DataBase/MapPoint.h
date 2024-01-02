@@ -25,6 +25,8 @@ public:
   void update(const Eigen::Vector3d& delta);
   void update(const double& delta);
 
+  bool eraseFrame(std::shared_ptr<db::Frame> frame);
+
 protected:
 
 public:

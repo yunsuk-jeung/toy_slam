@@ -37,9 +37,10 @@ public:
     static int         maxIteration;
     static bool        compareLinearizedDiff;
 
-    static int totalFrameSize;
-    static int maxKeyFrameSize;
-    static int minKeyFrameSize;
+    static int    totalFrameSize;
+    static int    maxKeyFrameSize;
+    static int    minKeyFrameSize;
+    static double minParallaxSqNorm;
   };
 
   struct Solver {

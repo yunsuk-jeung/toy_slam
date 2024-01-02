@@ -67,16 +67,17 @@ void LocalTracker::process() {
     std::vector<db::MapPoint::Ptr> mapPoints;
     mLocalMap->getCurrentStates(frames, mapPoints);
 
-    drawDebugView(100);
+    //drawDebugView(100, 0);
 
-    BasicSolver::solveFramePose(currFrame);
+    //BasicSolver::solveFramePose(currFrame);
 
     frames.front()->setFixed(true);
-    mVioSolver->solve(frames, mapPoints);
+    //mVioSolver->solve(frames, mapPoints);
 
-    drawDebugView(101, 520);
+    //drawDebugView(101, 1040);
+    drawDebugView(101, 1040);
 
-    cv::waitKey();
+    //cv::waitKey();
 
     int id = selectMarginalFrame(frames);
 
@@ -146,9 +147,16 @@ int LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
 
   std::vector<db::Frame::Ptr> keyFrames;
   std::vector<db::Frame::Ptr> frames;
+  keyFrames.reserve(Config::Vio::maxKeyFrameSize);
+  frames.reserve(Config::Vio::maxKeyFrameSize);
+
   for (auto& frame : allFrames) {
-    keyFrames.push_back(frame);
-    frames.push_back(frame);
+    if (frame->isKeyFrame()) {
+      keyFrames.push_back(frame);
+    }
+    else {
+      frames.push_back(frame);
+    }
   }
 
   if (keyFrames.size() > Config::Vio::maxKeyFrameSize) {
@@ -159,49 +167,65 @@ int LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
     return frames.front()->id();
   }
 
-  //check parallex
-  // if prevOfLast-> keyFrame....? 
-  // collect candidate... oldest keyframe , oldest frame
-  // or prevLast!
-  // fail-> margi prevOfLast
+  std::vector<db::Frame::Ptr> cands;
+  cands.reserve(3);
+  cands.push_back(keyFrames.front());
+  cands.push_back(frames.front());
 
+  auto secondLastFrameIt = std::prev(allFrames.end(), 2);
 
-  bool marginalizeKeyFrame = true;
+  auto& secondLast     = *secondLastFrameIt;
+  auto& prevSecondLast = *(--secondLastFrameIt);
 
-  if (keyFrames.size() < Config::Vio::minKeyFrameSize) {
-    marginalizeKeyFrame = false;
-  }
+  if (!secondLast->isKeyFrame()) {
+    auto& lastKeyFrame = keyFrames.back();
 
-  {
-    auto prevLast = std::prev(keyFrames.end(), 2);
+    auto& mpFactorMap0 = prevSecondLast->getMapPointFactorMap();
+    auto& mpFactorMap1 = secondLast->getMapPointFactorMap();
 
-    for (auto it = keyFrames.begin(); it != prevLast; ++it) {
-      auto& frame = *it;
+    int    count      = 0;
+    double parallaxSq = 0;
 
-      if (!frame->isKeyFrame()) {
+    auto endIt = mpFactorMap1.end();
+    for (auto& [key, val] : mpFactorMap0) {
+      auto targetIt = mpFactorMap1.find(key);
+      if (targetIt == endIt) {
         continue;
       }
+      ++count;
+      parallaxSq += (val.uv0() - targetIt->second.uv0()).squaredNorm();
+    }
 
-      auto& mpFactorMap0 = frame->getMapPointFactorMap();
-      auto& mpFactorMap1 = (*prevLast)->getMapPointFactorMap();
-
-      int  count = 0;
-      auto endIt = mpFactorMap1.end();
-      for (auto& [key, val] : mpFactorMap0) {
-        if (mpFactorMap1.find(key) == endIt) {
-          continue;
-        }
-        ++count;
-      }
-
-      if (count / mpFactorMap0.size() < (1.0 - Config::Vio::minTrackedRatio)) {
-        id = frame->id();
-      }
-      break;
+    if (parallaxSq / count < Config::Vio::minParallaxSqNorm) {
+      return secondLast->id();
     }
   }
+  else {
+    return frames.front()->id();
+  }
 
-  return 0;
+  auto& keyFrame = keyFrames.back();
+
+  auto& mpFactorMap0 = keyFrame->getMapPointFactorMap();
+  auto& mpFactorMap1 = secondLast->getMapPointFactorMap();
+
+  int  count = 0;
+  auto endIt = mpFactorMap1.end();
+  for (auto& [key, val] : mpFactorMap0) {
+    if (mpFactorMap1.find(key) == endIt) {
+      continue;
+    }
+    ++count;
+  }
+
+  if (count / mpFactorMap0.size() < (1.0 - Config::Vio::minTrackedRatio)) {
+    return keyFrame->id();
+  }
+  else {
+    return frames.front()->id();
+  }
+
+  return -1;
 }
 
 void LocalTracker::setDataToInfo() {
@@ -253,12 +277,12 @@ void LocalTracker::drawDebugView(int tag, int offset) {
   int k = 0;
   for (auto f : frames) {
     std::string name = std::to_string(tag) + "_" + std::to_string(k++);
-    f->drawReprojectionView(0, name);
+    f->drawReprojectionView(0, name, false);
 
     if (id < 5)
-      cv::moveWindow(name, xOffset * id, offset + yOffset);
+      cv::moveWindow(name, (xOffset * id), (offset));
     else
-      cv::moveWindow(name, xOffset * (id - 4), offset + yOffset + 40 + yOffset);
+      cv::moveWindow(name, (xOffset * (id - 5)), (offset + 40 + yOffset));
     ++id;
   }
 }

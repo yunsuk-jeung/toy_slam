@@ -9,7 +9,8 @@ Simulator::Simulator()
   , mImageType1{0}
   , mContinuousMode{true}
   , mSendImage{false}
-  , mWorking{false} {
+  , mWorking{false}
+  , mSkip{0} {
   mIsSimulator = true;
 }
 
@@ -58,9 +59,14 @@ void Simulator::start() {
     int      type1;
     uint64_t ns1;
     cv::Mat  image1;
+    int      skipCount = 0;
 
     while (mWorking) {
       if (mDataReader->getImages(type0, ns0, image0, type1, ns1, image1)) {
+        if (skipCount++ < mSkip) {
+          continue;
+        }
+
         ImageData imageData0{type0,
                              image0.type(),
                              ns0,

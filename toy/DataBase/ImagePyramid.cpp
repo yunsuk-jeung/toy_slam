@@ -4,6 +4,7 @@
 #include "config.h"
 namespace toy {
 namespace db {
+cv::Ptr<cv::CLAHE> ImagePyramid::clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
 
 ImagePyramid::ImagePyramid(const ImageData& imageData)
   : mType{imageData.type}
@@ -55,6 +56,8 @@ ImagePyramid* ImagePyramid::clone() {
 }
 
 void ImagePyramid::createImagePyrmid() {
+  clahe->apply(mOrigin, mOrigin);
+
   const cv::Point2i patch(Config::Vio::patchSize, Config::Vio::patchSize);
   const int&        level = Config::Vio::pyramidLevel;
   cv::buildOpticalFlowPyramid(mOrigin,

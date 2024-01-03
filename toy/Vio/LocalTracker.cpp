@@ -1,5 +1,6 @@
 #include "ToyLogger.h"
 #include "SLAMInfo.h"
+#include "Feature.h"
 #include "MapPoint.h"
 #include "Frame.h"
 #include "Factor.h"
@@ -11,7 +12,8 @@
 namespace toy {
 LocalTracker::LocalTracker()
   : mStatus{Status::NONE}
-  , mLocalMap{nullptr} {}
+  , mLocalMap{nullptr}
+  , mKeyFrameInterval{0} {}
 
 LocalTracker::~LocalTracker() {
   mLocalMap.reset();
@@ -51,6 +53,8 @@ void LocalTracker::process() {
     break;
   }
   case Status::TRACKING: {
+    ++mKeyFrameInterval;
+
     //YSTODO: changed if imu exists;
     if (true) {
       auto& Twb = mLocalMap->getFrames().rbegin()->second->getTwb();
@@ -59,8 +63,29 @@ void LocalTracker::process() {
 
     if (mLocalMap->addFrame(currFrame)) {
       currFrame->setKeyFrame();
+      mKeyFrameInterval = 0;
+
       int createMPCount = initializeMapPoints(currFrame);
     }
+
+    //if (!currFrame->isKeyFrame()) {
+      //auto& mapPointMap = mLocalMap->getMapPoints();
+      //auto& ids         = currFrame->getFeature(0)->getKeypoints().mIds;
+      //int   count       = 0;
+
+      //for (auto& id : ids) {
+      //  if (mapPointMap.count(id))
+      //    count++;
+      //}
+
+      //float ratio = float(count) / mapPointMap.size();
+
+      //if (float(count) / mapPointMap.size() < Config::Vio::newKeframeFeatureRatio
+      //    && mKeyFrameInterval > Config::Vio::minKeyFrameCount) {
+      //  currFrame->setKeyFrame();
+      //  mKeyFrameInterval = 0;
+      //}
+    //}
 
     //YSTODO: check quality with createdMPCount
     std::vector<db::Frame::Ptr>    frames;
@@ -135,16 +160,17 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
   if (Config::Vio::debug) {
     ToyLogD("triangulation successed {} / {}", successCount, mapPointFactorMap.size());
   }
-  currFrame->drawReprojectionView(0, "tri0");
-  currFrame->drawReprojectionView(1, "tri1");
+
+  if (Config::Vio::showStereoTracking) {
+    currFrame->drawReprojectionView(0, "tri0");
+    currFrame->drawReprojectionView(1, "tri1");
+    cv::waitKey();
+  }
+
   return successCount;
 }
 
 int LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
-  if (allFrames.size() < Config::Vio::totalFrameSize) {
-    return -1;
-  }
-
   std::vector<db::Frame::Ptr> keyFrames;
   std::vector<db::Frame::Ptr> frames;
   keyFrames.reserve(Config::Vio::maxKeyFrameSize);
@@ -159,13 +185,15 @@ int LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
     }
   }
 
+  if (frames.size() > Config::Vio::maxFrameSize) {
+    return frames.front()->id();
+  }
+
   if (keyFrames.size() > Config::Vio::maxKeyFrameSize) {
     return keyFrames.front()->id();
   }
 
-  if (keyFrames.size() < Config::Vio::minKeyFrameSize) {
-    return frames.front()->id();
-  }
+  return -1;
 
   std::vector<db::Frame::Ptr> cands;
   cands.reserve(3);
@@ -200,9 +228,9 @@ int LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
       return secondLast->id();
     }
   }
-  else {
-    return frames.front()->id();
-  }
+  //else {
+  return frames.front()->id();
+  //}
 
   auto& keyFrame = keyFrames.back();
 

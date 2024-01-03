@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <opencv2/core.hpp>
+#include <opencv2/opencv.hpp>
 #include "types.h"
 #include "macros.h"
 
@@ -25,12 +25,13 @@ protected:
   static void convertToGray(cv::Mat& src, cv::Mat& dst);
 
 protected:
-  int                  mType;
-  cv::Mat              mOrigin;
-  int                  mW;
-  int                  mH;
-  int                  mL;
-  std::vector<cv::Mat> mPyramids;
+  int                       mType;
+  cv::Mat                   mOrigin;
+  int                       mW;
+  int                       mH;
+  int                       mL;
+  std::vector<cv::Mat>      mPyramids;
+  static cv::Ptr<cv::CLAHE> clahe;
 
 public:
   int                   type() { return mType; }

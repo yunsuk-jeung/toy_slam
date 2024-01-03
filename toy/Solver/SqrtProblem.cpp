@@ -160,7 +160,7 @@ bool SqrtProblem::solve() {
         ++iter;
 
         double stepSize = frameDelta.array().abs().maxCoeff();
-        //ToyLogD("frame delta : {}", ToyLogger::eigenVec(frameDelta, 4));
+        ToyLogD("frame delta : {}", ToyLogger::eigenVec(frameDelta, 4));
         // clang-format off
         ToyLogD("iter : {:02d} {:<2} sucessed. {:<4}  {:03.2f}->{:03.2f}, frame step size : {:.5f}",
                 iter,

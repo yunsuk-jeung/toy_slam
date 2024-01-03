@@ -29,18 +29,19 @@ public:
     static std::string lineTracker;
     static bool        frameTrackerSolvePose;
 
-    static int         initializeMapPointCount;
+    static int   initializeMapPointCount;
+    static int   minKeyFrameCount;
+    static float newKeframeFeatureRatio;
+    static int   maxFrameSize;
+    static int   maxKeyFrameSize;
+
+    static double      minParallaxSqNorm;
     static std::string solverType;
     static int         reprojectionME;
     static double      reprojectionMEConst;
     static double      standardFocalLength;
     static int         maxIteration;
     static bool        compareLinearizedDiff;
-
-    static int    totalFrameSize;
-    static int    maxKeyFrameSize;
-    static int    minKeyFrameSize;
-    static double minParallaxSqNorm;
   };
 
   struct Solver {

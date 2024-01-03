@@ -36,6 +36,7 @@ private:
   Status                        mStatus;
   std::unique_ptr<db::LocalMap> mLocalMap;
   std::unique_ptr<VioSolver>    mVioSolver;
+  int                           mKeyFrameInterval;
 };
 
 }  //namespace toy

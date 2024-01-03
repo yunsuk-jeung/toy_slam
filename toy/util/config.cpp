@@ -36,18 +36,19 @@ bool        Config::Vio::showStereoTracking = false;
 std::string Config::Vio::lineTracker           = "none";
 bool        Config::Vio::frameTrackerSolvePose = false;
 
-int         Config::Vio::initializeMapPointCount = 30;
-std::string Config::Vio::solverType              = "SqrtLocalSolver";
-int         Config::Vio::reprojectionME          = 1;
-double      Config::Vio::reprojectionMEConst     = 1.0;
-double      Config::Vio::standardFocalLength     = 640.0;
-int         Config::Vio::maxIteration            = 10;
-bool        Config::Vio::compareLinearizedDiff   = false;
+int    Config::Vio::initializeMapPointCount = 30;
+float  Config::Vio::newKeframeFeatureRatio  = 0.8;
+int    Config::Vio::minKeyFrameCount        = 5;
+int    Config::Vio::maxKeyFrameSize         = 7;
+int    Config::Vio::maxFrameSize            = 10;
+double Config::Vio::minParallaxSqNorm       = 20;
 
-int    Config::Vio::totalFrameSize    = 10;
-int    Config::Vio::maxKeyFrameSize   = 7;
-int    Config::Vio::minKeyFrameSize   = 3;
-double Config::Vio::minParallaxSqNorm = 20;
+std::string Config::Vio::solverType            = "SqrtLocalSolver";
+int         Config::Vio::reprojectionME        = 1;
+double      Config::Vio::reprojectionMEConst   = 1.0;
+double      Config::Vio::standardFocalLength   = 640.0;
+int         Config::Vio::maxIteration          = 10;
+bool        Config::Vio::compareLinearizedDiff = false;
 
 double Config::Solver::basicMinDepth = 0.005;
 double Config::Solver::basicMaxDepth = 140;
@@ -92,8 +93,14 @@ void Config::parseConfig(const std::string& configFile) {
 
   auto localTrackerJson        = json["vio"]["localTracker"];
   Vio::initializeMapPointCount = localTrackerJson["initializeMapPointCount"];
-  auto vioSolverJson           = localTrackerJson["vioSolver"];
-  Vio::solverType              = vioSolverJson["name"];
+  Vio::newKeframeFeatureRatio  = localTrackerJson["newKeframeFeatureRatio"];
+  Vio::minKeyFrameCount        = localTrackerJson["minKeyFrameCount"];
+  Vio::maxFrameSize            = localTrackerJson["maxFrameSize"];
+  Vio::maxKeyFrameSize         = localTrackerJson["maxKeyFrameSize"];
+  Vio::minParallaxSqNorm       = localTrackerJson["minParallaxSqNorm"];
+
+  auto vioSolverJson = localTrackerJson["vioSolver"];
+  Vio::solverType    = vioSolverJson["name"];
   {
     std::string me      = vioSolverJson["reprojectionME"];
     Vio::reprojectionME = parseME(me);
@@ -102,11 +109,6 @@ void Config::parseConfig(const std::string& configFile) {
   Vio::standardFocalLength   = vioSolverJson["standardFocalLength"];
   Vio::maxIteration          = vioSolverJson["maxIteration"];
   Vio::compareLinearizedDiff = vioSolverJson["compareLinearizedDiff"];
-
-  Vio::totalFrameSize    = json["vio"]["localMap"]["totalFrameSize"];
-  Vio::maxKeyFrameSize   = json["vio"]["localMap"]["maxKeyFrameSize"];
-  Vio::minKeyFrameSize   = json["vio"]["localMap"]["minKeyFrameSize"];
-  Vio::minParallaxSqNorm = json["vio"]["localMap"]["minParallaxSqNorm"];
 
   auto basicSolverJson  = json["basicSolver"];
   Solver::basicMinDepth = basicSolverJson["minDepth"];

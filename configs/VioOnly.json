@@ -28,6 +28,11 @@
     },
     "localTracker": {
       "initializeMapPointCount": 30,
+      "minKeyFrameCount": 4,
+      "newKeframeFeatureRatio": 0.7,
+      "maxFrameSize": 3,
+      "maxKeyFrameSize": 6,
+      "minParallaxSqNorm": 400,
       "vioSolver": {
         "name": "SqrtLocalSolver",
         "reprojectionME": "huber",
@@ -36,12 +41,6 @@
         "maxIteration": 10,
         "compareLinearizedDiff": false
       }
-    },
-    "localMap": {
-      "totalFrameSize": 10,
-      "maxKeyFrameSize": 6,
-      "minKeyFrameSize": 3,
-      "minParallaxSqNorm": 400
     }
   },
   "mapper": {

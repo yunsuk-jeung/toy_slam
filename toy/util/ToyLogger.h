@@ -12,7 +12,7 @@ class ToyLogger {
 public:
   static std::shared_ptr<spdlog::logger> logger;
   static void                            init();
-  
+
   template <typename... Args>
   static void logI(const char* fmt, Args... args) {
     logger->info(fmt, args...);
@@ -51,7 +51,7 @@ public:
   }
   template <typename Type, int Row>
   static std::string eigenVec(const Eigen::Matrix<Type, Row, 1>& vec, int precision = 4) {
-    Eigen::IOFormat CleanVec(precision, 0, ", ", "\n", "[", "]");
+    static Eigen::IOFormat CleanVec(precision, 0, ", ", "\n", "[", "]");
 
     std::stringstream ss;
     ss << std::fixed << std::setprecision(precision);  //Set the precision
@@ -62,7 +62,7 @@ public:
   template <typename Type, int Row, int Col>
   static std::string eigenMat(const Eigen::Matrix<Type, Row, Col>& mat,
                               int                                  precision = 4) {
-    Eigen::IOFormat CleanMat(precision, 0, ", ", "\n", "[", "]");
+    static Eigen::IOFormat CleanMat(precision, 0, ", ", "\n", "[", "]");
 
     std::stringstream ss;
     ss << std::fixed << std::setprecision(precision);  //Set the precision

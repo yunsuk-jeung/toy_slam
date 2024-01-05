@@ -39,7 +39,8 @@
         "reprojectionMEConst": 1.0,
         "standardFocalLength": 640.0,
         "maxIteration": 10,
-        "compareLinearizedDiff": false
+        "compareLinearizedDiff": false,
+        "marginalizeAllMapPointInFrame": true
       }
     }
   },

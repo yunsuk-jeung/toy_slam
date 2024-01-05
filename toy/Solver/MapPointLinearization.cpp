@@ -7,7 +7,7 @@ namespace toy {
 namespace {
 static constexpr auto COST_SIZE = ReprojectionCost::SIZE;
 static constexpr auto POSE_SIZE = db::Frame::PARAMETER_SIZE;
-static constexpr auto MP_SIZE   = db::MapPoint::PARAMETR_SIZE;
+static constexpr auto MP_SIZE   = db::MapPoint::PARAMETER_SIZE;
 }  //namespace
 MapPointLinearization::MapPointLinearization(db::MapPoint::Ptr   mp,
                                              std::map<int, int>* frameIdColMap,
@@ -17,7 +17,7 @@ MapPointLinearization::MapPointLinearization(db::MapPoint::Ptr   mp,
   mReprojectionCosts.swap(costs);
 
   int cols = mFrameIdColumnMapRp->size() * db::Frame::PARAMETER_SIZE;
-  cols += db::MapPoint::PARAMETR_SIZE;
+  cols += db::MapPoint::PARAMETER_SIZE;
 
   auto costSize = mReprojectionCosts.size();
   mRows         = costSize << 1;  //uv

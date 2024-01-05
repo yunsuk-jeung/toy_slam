@@ -70,7 +70,7 @@ public:
 
   static constexpr size_t UNDIST_SIZE   = 2;
   static constexpr size_t INVDEPTH_SIZE = 1;
-  static constexpr size_t PARAMETR_SIZE = 3;
+  static constexpr size_t PARAMETER_SIZE = 3;
 };
 
 }  //namespace db

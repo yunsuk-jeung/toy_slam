@@ -58,6 +58,7 @@ void LocalTracker::process() {
     //YSTODO: changed if imu exists;
     if (true) {
       auto& Twb = mLocalMap->getFrames().rbegin()->second->getTwb();
+
       currFrame->setTwb(Twb);
     }
 
@@ -69,22 +70,22 @@ void LocalTracker::process() {
     }
 
     //if (!currFrame->isKeyFrame()) {
-      //auto& mapPointMap = mLocalMap->getMapPoints();
-      //auto& ids         = currFrame->getFeature(0)->getKeypoints().mIds;
-      //int   count       = 0;
+    //auto& mapPointMap = mLocalMap->getMapPoints();
+    //auto& ids         = currFrame->getFeature(0)->getKeypoints().mIds;
+    //int   count       = 0;
 
-      //for (auto& id : ids) {
-      //  if (mapPointMap.count(id))
-      //    count++;
-      //}
+    //for (auto& id : ids) {
+    //  if (mapPointMap.count(id))
+    //    count++;
+    //}
 
-      //float ratio = float(count) / mapPointMap.size();
+    //float ratio = float(count) / mapPointMap.size();
 
-      //if (float(count) / mapPointMap.size() < Config::Vio::newKeframeFeatureRatio
-      //    && mKeyFrameInterval > Config::Vio::minKeyFrameCount) {
-      //  currFrame->setKeyFrame();
-      //  mKeyFrameInterval = 0;
-      //}
+    //if (float(count) / mapPointMap.size() < Config::Vio::newKeframeFeatureRatio
+    //    && mKeyFrameInterval > Config::Vio::minKeyFrameCount) {
+    //  currFrame->setKeyFrame();
+    //  mKeyFrameInterval = 0;
+    //}
     //}
 
     //YSTODO: check quality with createdMPCount
@@ -97,21 +98,21 @@ void LocalTracker::process() {
     //BasicSolver::solveFramePose(currFrame);
 
     frames.front()->setFixed(true);
-    //mVioSolver->solve(frames, mapPoints);
+    mVioSolver->solve(frames, mapPoints);
 
     //drawDebugView(101, 1040);
     drawDebugView(101, 1040);
 
     //cv::waitKey();
 
-    int id = selectMarginalFrame(frames);
+    db::Frame::Ptr marginalFrame = selectMarginalFrame(frames);
 
-    if (id < 0) {
+    if (!marginalFrame) {
       break;
     }
 
-    mVioSolver->marginalize(id);
-    mLocalMap->removeFrame(id);
+    mVioSolver->marginalize(marginalFrame);
+    mLocalMap->removeFrame(marginalFrame->id());
 
     break;
   }
@@ -170,7 +171,7 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
   return successCount;
 }
 
-int LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
+db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
   std::vector<db::Frame::Ptr> keyFrames;
   std::vector<db::Frame::Ptr> frames;
   keyFrames.reserve(Config::Vio::maxKeyFrameSize);
@@ -186,14 +187,14 @@ int LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
   }
 
   if (frames.size() > Config::Vio::maxFrameSize) {
-    return frames.front()->id();
+    return frames.front();
   }
 
   if (keyFrames.size() > Config::Vio::maxKeyFrameSize) {
-    return keyFrames.front()->id();
+    return keyFrames.front();
   }
 
-  return -1;
+  return nullptr;
 
   std::vector<db::Frame::Ptr> cands;
   cands.reserve(3);
@@ -225,11 +226,11 @@ int LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
     }
 
     if (parallaxSq / count < Config::Vio::minParallaxSqNorm) {
-      return secondLast->id();
+      return secondLast;
     }
   }
   //else {
-  return frames.front()->id();
+  return frames.front();
   //}
 
   auto& keyFrame = keyFrames.back();
@@ -247,13 +248,13 @@ int LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
   }
 
   if (count / mpFactorMap0.size() < (1.0 - Config::Vio::minTrackedRatio)) {
-    return keyFrame->id();
+    return keyFrame;
   }
   else {
-    return frames.front()->id();
+    return frames.front();
   }
 
-  return -1;
+  return nullptr;
 }
 
 void LocalTracker::setDataToInfo() {

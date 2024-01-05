@@ -17,7 +17,7 @@ public:
   virtual bool solve(std::vector<std::shared_ptr<db::Frame>>&    frames,
                      std::vector<std::shared_ptr<db::MapPoint>>& mapPoints) = 0;
 
-  virtual void marginalize(int frameId) = 0;
+  virtual void marginalize(std::shared_ptr<db::Frame> frame) = 0;
 
 protected:
 };

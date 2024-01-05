@@ -25,6 +25,9 @@ public:
   void addReprojectionCost(std::shared_ptr<db::MapPoint>                  mp,
                            std::vector<std::shared_ptr<ReprojectionCost>> costs);
 
+  std::vector<std::shared_ptr<MapPointLinearization>> getMaPointLinearizations(
+    std::vector<std::shared_ptr<db::MapPoint>>& mps);
+
   bool solve();
 
 protected:

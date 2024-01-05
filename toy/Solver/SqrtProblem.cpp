@@ -55,6 +55,26 @@ void SqrtProblem::addReprojectionCost(db::MapPoint::Ptr                  mp,
     std::make_shared<MapPointLinearization>(mp, &mFrameIdColumnMap, costs));
 }
 
+std::vector<MapPointLinearization::Ptr> SqrtProblem::getMaPointLinearizations(
+  std::vector<db::MapPoint::Ptr>& mps) {
+  if (mps.empty())
+    return {};
+
+  auto it = mps.begin();
+
+  std::vector<MapPointLinearization::Ptr> outs;
+  outs.reserve(mMapPointLinearizations.size());
+
+  for (auto& linearization : mMapPointLinearizations) {
+    if (linearization->mp() == *it) {
+      outs.push_back(linearization);
+    }
+    ++it;
+  }
+
+  return outs;
+}
+
 bool SqrtProblem::solve() {
   const auto& frames = *mFrames;
 
@@ -90,7 +110,7 @@ bool SqrtProblem::solve() {
       const Eigen::MatrixXd& vJ = mpL->J();
       const Eigen::VectorXd& vC = mpL->C();
 
-      const auto  rows = vJ.rows() - db::MapPoint::PARAMETR_SIZE;
+      const auto  rows = vJ.rows() - db::MapPoint::PARAMETER_SIZE;
       const auto& cols = Hrows;
 
       const Eigen::MatrixXd J = vJ.bottomLeftCorner(rows, cols);

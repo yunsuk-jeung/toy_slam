@@ -10,13 +10,17 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # add_executable(sample_optflow sample_optflow.cpp)
 # target_link_libraries(sample_optflow PRIVATE toy::toy)
 # target_link_libraries(sample_optflow PRIVATE io)
-add_executable(sample_vulkan sample_vulkan.cpp)
+add_executable(sample_vulkan sample_vulkan.cpp )
+
+add_executable(sample_custom_fmt "sample_custom_fmt.cpp")
+
 target_compile_options(sample_vulkan PUBLIC
   $<$<CONFIG:Debug>:/MDd>
   $<$<NOT:$<CONFIG:Debug>>:/MD>
 )
-target_link_libraries(sample_vulkan PRIVATE libs vulkanLight::vulkanLight)
 
+target_link_libraries(sample_vulkan PRIVATE libs vulkanLight::vulkanLight)
+target_link_libraries(sample_custom_fmt PRIVATE libs)
 # target_link_libraries(sample_optflow PRIVATE io)
 # if(WIN32)
 # set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../lib)

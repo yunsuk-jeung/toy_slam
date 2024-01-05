@@ -8,6 +8,55 @@
 
 namespace toy {
 
+template <typename T, int Rows, int Cols>
+struct fmt::formatter<Eigen::Matrix<T, Rows, Cols>> {
+  static constexpr int eigenPrecision = 5;
+
+  constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+    return ctx.end();
+  }
+
+  template <typename FormatContext>
+  auto format(const Eigen::Matrix<T, Rows, Cols>& mat, FormatContext& ctx)
+    -> decltype(ctx.out()) {
+    static Eigen::IOFormat CleanMat(eigenPrecision,
+                                    0,
+                                    ", ",
+                                    ",\n",
+                                    "                                         [",
+                                    "]",
+                                    "-------------------------------------------\n",
+                                    ",\n");
+
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(eigenPrecision);
+    ss << mat.format(CleanMat);
+
+    return format_to(ctx.out(), "{}", ss.str());
+  }
+};
+
+template <typename T, int Rows>
+struct fmt::formatter<Eigen::Vector<T, Rows>> {
+  static constexpr int eigenPrecision = 5;
+
+  constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+    return ctx.end();
+  }
+
+  template <typename FormatContext>
+  auto format(const Eigen::Vector<T, Rows>& vec, FormatContext& ctx)
+    -> decltype(ctx.out()) {
+    static Eigen::IOFormat CleanVec(eigenPrecision, 0, ", ", "\n", "[", "]");
+
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(eigenPrecision);  //Set the precision
+    ss << vec.transpose().format(CleanVec);
+
+    return format_to(ctx.out(), "{}", ss.str());
+  }
+};
+
 class ToyLogger {
 public:
   static std::shared_ptr<spdlog::logger> logger;
@@ -41,6 +90,7 @@ public:
        << se3.translation().transpose().format(CleanVec);
     return ss.str();
   }
+
   static std::string se3String(const Sophus::SE3d& se3, int precision = 4) {
     Eigen::IOFormat CleanVec(precision, 0, ", ", "\n", "[", "]");
 
@@ -69,6 +119,8 @@ public:
     ss << "\n" << mat.format(CleanMat);
     return ss.str();
   }
+
+private:
 };
 }  //namespace toy
 

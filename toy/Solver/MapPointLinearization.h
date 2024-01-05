@@ -37,8 +37,9 @@ protected:
   int                 mCols;
 
 public:
-  const Eigen::MatrixXd& J() const { return mJ; };
-  Eigen::MatrixXd&       getJ() { return mJ; }
+  const std::shared_ptr<db::MapPoint>& mp() const { return mMapPoint; }
+  const Eigen::MatrixXd&               J() const { return mJ; };
+  Eigen::MatrixXd&                     getJ() { return mJ; }
 
   const Eigen::VectorXd& C() const { return mC; };
 };

@@ -10,6 +10,7 @@ namespace db {
 class Frame;
 class MapPoint;
 }  //namespace db
+class SqrtMarginalizationCost;
 class ReprojectionCost;
 class MapPointLinearization;
 class SqrtProblem {
@@ -24,6 +25,8 @@ public:
 
   void addReprojectionCost(std::shared_ptr<db::MapPoint>                  mp,
                            std::vector<std::shared_ptr<ReprojectionCost>> costs);
+
+  void addMarginalizationCost(std::shared_ptr<SqrtMarginalizationCost> cost);
 
   std::vector<std::shared_ptr<MapPointLinearization>> getMaPointLinearizations(
     std::vector<std::shared_ptr<db::MapPoint>>& mps);
@@ -56,9 +59,16 @@ protected:
 
   std::vector<std::shared_ptr<MapPointLinearization>> mMapPointLinearizations;
 
+  std::shared_ptr<SqrtMarginalizationCost> mSqrtMarginalizationCost;
+
   Eigen::MatrixXd mH;
   Eigen::VectorXd mB;
 
 public:
+  std::shared_ptr<SqrtMarginalizationCost> getSqrtMarginalizationCost() {
+    return mSqrtMarginalizationCost;
+  }
+
+  std::map<int, int>& getFrameIdColumnMap() { return mFrameIdColumnMap; };
 };
 }  //namespace toy

@@ -4,6 +4,7 @@
 #include "SqrtProblem.h"
 #include "MapPoint.h"
 #include "CostFunction.h"
+#include "SqrtMarginalizationCost.h"
 #include "MapPointLinearization.h"
 namespace toy {
 SqrtProblem::Option::Option()
@@ -53,6 +54,10 @@ void SqrtProblem::addReprojectionCost(db::MapPoint::Ptr                  mp,
                                       std::vector<ReprojectionCost::Ptr> costs) {
   mMapPointLinearizations.emplace_back(
     std::make_shared<MapPointLinearization>(mp, &mFrameIdColumnMap, costs));
+}
+
+void SqrtProblem::addMarginalizationCost(SqrtMarginalizationCost::Ptr cost) {
+  mSqrtMarginalizationCost = cost;
 }
 
 std::vector<MapPointLinearization::Ptr> SqrtProblem::getMaPointLinearizations(
@@ -105,22 +110,25 @@ bool SqrtProblem::solve() {
     mH.setZero();
     mB.setZero();
 
-    //construct hessian for frames
+    //construct hessian for frames from mapPoints
     for (auto& mpL : mMapPointLinearizations) {
       const Eigen::MatrixXd& vJ = mpL->J();
-      const Eigen::VectorXd& vC = mpL->C();
+      const Eigen::VectorXd& vRes = mpL->Res();
 
       const auto  rows = vJ.rows() - db::MapPoint::PARAMETER_SIZE;
       const auto& cols = Hrows;
 
       const Eigen::MatrixXd J = vJ.bottomLeftCorner(rows, cols);
-      const Eigen::VectorXd C = vC.bottomRows(rows);
+      const Eigen::VectorXd Res = vRes.bottomRows(rows);
 
       Eigen::MatrixXd Jt = J.transpose();
 
       mH += Jt * J;
-      mB -= Jt * C;
+      mB -= Jt * Res;
     }
+
+    //construct hessian for frames from marginCost
+    mSqrtMarginalizationCost->addToHessian(mH, mB);
 
     while (iter <= Config::Vio::maxIteration && !terminated) {
       bool            deltaValid = false;
@@ -232,6 +240,9 @@ double SqrtProblem::linearize(bool updateState) {
   for (auto& mpL : mMapPointLinearizations) {
     errSq += mpL->linearize(updateState);
   }
+
+  errSq += mSqrtMarginalizationCost->linearize();
+
   return errSq;
 }
 

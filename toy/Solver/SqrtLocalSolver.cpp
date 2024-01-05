@@ -4,8 +4,9 @@
 #include "MapPoint.h"
 #include "Frame.h"
 #include "Factor.h"
-#include "SqrtMarginalizer.h"
+#include "SqrtMarginalizationCost.h"
 #include "CostFunction.h"
+#include "SqrtMarginalizationCost.h"
 #include "MapPointLinearization.h"
 #include "SqrtProblem.h"
 #include "SqrtLocalSolver.h"
@@ -30,19 +31,22 @@ MEstimator::Ptr createReprojectionMEstimator() {
 }  //namespace
 
 SqrtLocalSolver::SqrtLocalSolver() {
-  mProblem      = std::make_unique<SqrtProblem>();
-  mMarginalizer = std::make_unique<SqrtMarginalizer>();
+  mProblem    = std::make_unique<SqrtProblem>();
+  mMarginCost = std::make_shared<SqrtMarginalizationCost>();
 
-  Eigen::MatrixXd& J = mMarginalizer->getJ();
-  Eigen::VectorXd& C = mMarginalizer->getC();
+  Eigen::MatrixXd& J   = mMarginCost->getJ();
+  Eigen::VectorXd& Res = mMarginCost->getRes();
 
   J.resize(FRAME_SIZE, FRAME_SIZE);
-  C.resize(FRAME_SIZE);
+  Res.resize(FRAME_SIZE);
 
   J.setIdentity();
   J *= 100.0;
 
-  C.setZero();
+  Res.setZero();
+  std::vector<size_t> initRemainId{0};
+
+  mMarginCost->setRemainIds(initRemainId);
 }
 
 SqrtLocalSolver::~SqrtLocalSolver() {}
@@ -64,6 +68,7 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
   mProblem->setFrames(mFrames);
   mProblem->setMapPoints(mMapPoints);
 
+  //reprojection cost
   MEstimator::Ptr reProjME    = createReprojectionMEstimator();
   const double&   focalLength = Config::Vio::standardFocalLength;
 
@@ -146,6 +151,10 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
     mProblem->addReprojectionCost(mp, costs);
   }
 
+  mMarginCost->setFrames(frames);
+
+  mProblem->addMarginalizationCost(mMarginCost);
+
   auto result = mProblem->solve();
 
   return result;
@@ -155,11 +164,19 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
   std::vector<db::MapPoint::Ptr> marginMps;
   marginMps.reserve(marginalFrame->getFeature(0)->getKeypoints().size());
 
+  const size_t marginFrameId = marginalFrame->id();
+
+  //size_t finalFrameId;
   //greb mp which host frame is marginalFrame
   for (auto& mp : *mMapPoints) {
-    auto& frameFactor = mp->getFrameFactors();
-    if (frameFactor.front().first.lock() == marginalFrame) {
+    auto frameId = mp->getFrameFactors().front().first.lock()->id();
+    if (frameId == marginFrameId) {
       marginMps.push_back(mp);
+
+      //size_t newId = mp->getFrameFactors().back().first.lock()->id();
+      //if (newId > finalFrameId) {
+      //  finalFrameId = newId;
+      //}
     }
   }
 
@@ -181,6 +198,7 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
   }
 
   //marginal factor
+  rows += mMarginCost->J().rows();
 
   //imu factor
 
@@ -198,11 +216,50 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
     auto blockRow = linearization->J().rows() - MP_SIZE;
     // clang-format off
     Q2t_J.block(currRow, 0, blockRow, cols) = linearization->J().bottomLeftCorner(blockRow, cols);
-    Q2t_C.segment(currRow, blockRow) = linearization->C().tail(blockRow);
+    Q2t_C.segment(currRow, blockRow) = linearization->Res().tail(blockRow);
     // clang-format on
     currRow += blockRow;
-    ToyLogD("testing marginalize {}", ToyLogger::eigenMat(Q2t_J));
   }
+
+  {
+    auto& J   = mMarginCost->getJ();
+    auto& Res = mMarginCost->getRes();
+
+    Q2t_J.block(currRow, 0, J.rows(), J.cols()) = J;
+    Q2t_C.segment(currRow, J.rows())            = Res;
+    currRow += J.rows();
+  }
+
+  ToyLogD("testing marginalize {}", ToyLogger::eigenMat(Q2t_J));
+
+  std::map<int, int>& frameColumnMap = mProblem->getFrameIdColumnMap();
+
+  std::vector<size_t> remainIds;
+  remainIds.reserve(frameColumnMap.size() - 1);
+
+  Eigen::VectorXi indices(cols);
+  int*            indexPtr = indices.data();
+
+  auto marginColStart = frameColumnMap[marginFrameId];
+
+  ToyLogD("start to reordering {}", marginColStart);
+  for (size_t i = 0u; i < db::Frame::PARAMETER_SIZE; ++i) {
+    *indexPtr++ = marginColStart++;
+  }
+
+  frameColumnMap.erase(marginFrameId);
+
+  for (auto& [id, startCol] : frameColumnMap) {
+    auto col = startCol;
+    for (size_t i = 0u; i < db::Frame::PARAMETER_SIZE; ++i) {
+      *indexPtr++ = col++;
+    }
+    remainIds.push_back(id);
+  }
+  ToyLogD("start to reordering {}", ToyLogger::eigenVec(indices));
+
+  mMarginCost->marginalize(indices, Q2t_J, Q2t_C);
+  mMarginCost->setRemainIds(remainIds);
 }
 
 }  //namespace toy

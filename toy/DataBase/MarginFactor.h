@@ -8,7 +8,7 @@ public:
 
 protected:
   Eigen::MatrixXd mJ;
-  Eigen::MatrixXd mC;
+  Eigen::MatrixXd mRes;
 };
 
 }  //namespace db

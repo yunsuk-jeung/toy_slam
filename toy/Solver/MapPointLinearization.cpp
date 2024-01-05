@@ -26,8 +26,8 @@ MapPointLinearization::MapPointLinearization(db::MapPoint::Ptr   mp,
   mJ.resize(mRows, mCols);
   mJ.setZero();
 
-  mC.resize(mRows);
-  mC.setZero();
+  mRes.resize(mRows);
+  mRes.setZero();
 }
 
 MapPointLinearization::MapPointLinearization(MapPointLinearization&& src) noexcept {
@@ -58,7 +58,7 @@ double MapPointLinearization::linearize(bool updateState) {
       mJ.block<COST_SIZE, POSE_SIZE>(row, idx0) = cost->J_f0();
       mJ.block<COST_SIZE, POSE_SIZE>(row, idx1) = cost->J_f1();
       mJ.block<COST_SIZE, MP_SIZE>(row, mpCol)  = cost->J_mp();
-      mC.segment(row, COST_SIZE)                = cost->C();
+      mRes.segment(row, COST_SIZE)                = cost->Res();
       row += COST_SIZE;
     }
   }
@@ -72,7 +72,7 @@ void MapPointLinearization::decomposeWithQR() {
 
   //ToyLogD("11111111111111111111111111");
   //ToyLogD("house holder test J : {}", ToyLogger::eigenMat(mJ));
-  //ToyLogD("house holder test C : {}", ToyLogger::eigenVec(mC));
+  //ToyLogD("house holder test Res : {}", ToyLogger::eigenVec(mRes));
 
   for (size_t k = 0u; k < MP_SIZE; ++k) {
     size_t remainingRows = mRows - k;
@@ -84,22 +84,22 @@ void MapPointLinearization::decomposeWithQR() {
     mJ.block(k, 0, remainingRows, mCols)
       .applyHouseholderOnTheLeft(buffer1, tau, buffer0.data());
 
-    mC.segment(k, remainingRows).applyHouseholderOnTheLeft(buffer1, tau, buffer0.data());
+    mRes.segment(k, remainingRows).applyHouseholderOnTheLeft(buffer1, tau, buffer0.data());
 
     //ToyLogD("house holder test J : {}", ToyLogger::eigenMat(mJ));
-    //ToyLogD("house holder test C : {}", ToyLogger::eigenVec(mC));
+    //ToyLogD("house holder test Res : {}", ToyLogger::eigenVec(mRes));
     //ToyLogD("");
   }
   //ToyLogD("2222222222222222222222222222");
   //ToyLogD("house holder test J : {}", ToyLogger::eigenMat(mJ));
-  //ToyLogD("house holder test C : {}", ToyLogger::eigenVec(mC));
+  //ToyLogD("house holder test Res : {}", ToyLogger::eigenVec(mRes));
   //ToyLogD("");
 }
 
 double MapPointLinearization::backSubstitue(Eigen::VectorXd& frameDelta) {
   const auto       mpColIdx = mCols - MP_SIZE;
 
-  const auto Q1t_C  = mC.head(MP_SIZE);
+  const auto Q1t_C  = mRes.head(MP_SIZE);
   const auto Q1t_Jp = mJ.topLeftCorner(MP_SIZE, mpColIdx);
   const auto Q1t_Jl = mJ.block<MP_SIZE, MP_SIZE>(0, mpColIdx)
                         .triangularView<Eigen::Upper>();

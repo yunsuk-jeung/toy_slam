@@ -4,7 +4,7 @@
 #include "VioSolver.h"
 
 namespace toy {
-class SqrtMarginalizer;
+class SqrtMarginalizationCost;
 class SqrtProblem;
 class SqrtLocalSolver : public VioSolver {
 public:
@@ -20,7 +20,7 @@ protected:
 
 protected:
   std::unique_ptr<SqrtProblem>                mProblem;
-  std::unique_ptr<SqrtMarginalizer>           mMarginalizer;
+  std::shared_ptr<SqrtMarginalizationCost>    mMarginCost;
   std::vector<std::shared_ptr<db::Frame>>*    mFrames;
   std::vector<std::shared_ptr<db::MapPoint>>* mMapPoints;
 

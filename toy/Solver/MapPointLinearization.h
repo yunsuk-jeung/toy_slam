@@ -32,7 +32,7 @@ protected:
 
   std::map<int, int>* mFrameIdColumnMapRp;
   Eigen::MatrixXd     mJ;
-  Eigen::VectorXd     mC;
+  Eigen::VectorXd     mRes;
   int                 mRows;
   int                 mCols;
 
@@ -41,6 +41,6 @@ public:
   const Eigen::MatrixXd&               J() const { return mJ; };
   Eigen::MatrixXd&                     getJ() { return mJ; }
 
-  const Eigen::VectorXd& C() const { return mC; };
+  const Eigen::VectorXd& Res() const { return mRes; };
 };
 }  //namespace toy

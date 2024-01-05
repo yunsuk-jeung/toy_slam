@@ -13,12 +13,12 @@ public:
   USING_SMART_PTR(MEstimator);
   MEstimator() = delete;
   MEstimator(double c = 1.0)
-    : mC{c} {}
+    : mRes{c} {}
 
   virtual std::tuple<double, double> computeError(double errorSq) = 0;
 
 protected:
-  double mC;  //constant
+  double mRes;  //constant
 };
 
 class Huber : public MEstimator {
@@ -28,7 +28,7 @@ public:
     : MEstimator(c) {}
 
   std::tuple<double, double> computeError(double errorSq) {
-    const double weight = errorSq <= mC * mC ? 1.0 : mC / std::sqrt(errorSq);
+    const double weight = errorSq <= mRes * mRes ? 1.0 : mRes / std::sqrt(errorSq);
     const double error  = 0.5 * (2 - weight) * weight * errorSq;
     return {error, weight};
   }
@@ -44,7 +44,7 @@ public:
     : mSwc{Swc}
     , mMapPoint{mp}
     , mJ{Eigen::Matrix26d::Zero()}
-    , mC{Eigen::Vector2d::Zero()}
+    , mRes{Eigen::Vector2d::Zero()}
     , mZ{undist}
     , mME{ME}
     , mScale{scale} {}
@@ -60,7 +60,7 @@ public:
     double          izSq = iz * iz;
 
     Eigen::Vector3d undist = Pcx * iz;
-    mC                     = mScale * (undist.head(2) - mZ);
+    mRes                   = mScale * (undist.head(2) - mZ);
 
     Eigen::Matrix23d reduce;
     reduce << iz, 0.0, -Pcx.x() * izSq, 0.0, iz, -Pcx.y() * izSq;
@@ -71,7 +71,7 @@ public:
 
     mJ = mScale * reduce * J;
 
-    double cSq    = mC.squaredNorm();
+    double cSq    = mRes.squaredNorm();
     double error  = cSq;
     double weight = 1.0;
 
@@ -80,10 +80,10 @@ public:
 
     double sqrtW = std::sqrt(weight);
     //ToyLogD("error : {} - {} = {} -> norm : {} , sqrtW {}",
-    //ToyLogger::eigenVec(undist2d), ToyLogger::eigenVec(mZ), ToyLogger::eigenVec(mC),
+    //ToyLogger::eigenVec(undist2d), ToyLogger::eigenVec(mZ), ToyLogger::eigenVec(mRes),
     //error, sqrtW);
 
-    mC *= sqrtW;
+    mRes *= sqrtW;
     mJ *= sqrtW;
 
     return error;
@@ -91,15 +91,15 @@ public:
 
   void addToHessian(Eigen::Matrix66d& H, Eigen::Vector6d& b) {
     H += mJ.transpose() * mJ;
-    b += mJ.transpose() * mC;
+    b += mJ.transpose() * mRes;
   }
 
 protected:
   db::MapPoint::Ptr mMapPoint;
   Sophus::SE3d*     mSwc;
-  Eigen::Matrix26d  mJ;  //jacobian
-  Eigen::Vector2d   mC;  //cost
-  Eigen::Vector2d   mZ;  //measurement
+  Eigen::Matrix26d  mJ;    //jacobian
+  Eigen::Vector2d   mRes;  //cost
+  Eigen::Vector2d   mZ;    //measurement
 
   MEstimator::Ptr mME;
   double          mScale;
@@ -170,7 +170,7 @@ public:
     if (updateState) {
       double sqrtW = std::sqrt(weight);
 
-      mC = sqrtW * cost;
+      mRes = sqrtW * cost;
 
       double           izSq = iz * iz;
       Eigen::Matrix23d reduce;
@@ -234,7 +234,7 @@ protected:
   MEstimator::Ptr mME;
   double          mSqrtInfo;
 
-  Eigen::Vector2d  mC;     //cost
+  Eigen::Vector2d  mRes;   //cost
   Eigen::Matrix26d mJ_f0;  //jacobian for host
   Eigen::Matrix26d mJ_f1;  //jacobian for target
   Eigen::Matrix23d mJ_mp;  //jacobian for mp
@@ -244,7 +244,7 @@ public:
   db::Frame::Ptr    getFrameParameter1() { return mFP1; }
   db::MapPoint::Ptr getMapPointParameter() { return mMp; }
 
-  const Eigen::Vector2d&  C() const { return mC; }
+  const Eigen::Vector2d&  Res() const { return mRes; }
   const Eigen::Matrix26d& J_f0() const { return mJ_f0; }
   const Eigen::Matrix26d& J_f1() const { return mJ_f1; }
   const Eigen::Matrix23d& J_mp() const { return mJ_mp; }
@@ -293,7 +293,7 @@ public:
     if (updateState) {
       double sqrtW = std::sqrt(weight);
 
-      mC = sqrtW * cost;
+      mRes = sqrtW * cost;
 
       mJ_f0.setZero();
       mJ_f1.setZero();
@@ -345,7 +345,7 @@ public:
     if (updateState) {
       double sqrtW = std::sqrt(weight);
 
-      mC = sqrtW * cost;
+      mRes = sqrtW * cost;
 
       mJ_f0.setZero();
       mJ_f1.setZero();

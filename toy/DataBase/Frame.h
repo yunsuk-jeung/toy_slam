@@ -21,6 +21,7 @@ class Frame {
 public:
   USING_SMART_PTR(Frame);
   DELETE_COPY_CONSTRUCTORS(Frame);
+  static constexpr size_t PARAMETER_SIZE = 6;
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Frame(std::shared_ptr<ImagePyramidSet> set);
@@ -43,6 +44,13 @@ public:
   void drawReprojectionView(int         idx,
                             std::string imshowName = "reproj view",
                             bool        half       = false);
+
+  Eigen::Vector<double, PARAMETER_SIZE> toParameter() const {
+    Eigen::Vector<double, PARAMETER_SIZE> out;
+    out.head(3) = this->Twb().translation();
+    out.tail(3) = this->Twb().so3().log();
+    return out;
+  }
 
 protected:
 
@@ -91,8 +99,6 @@ public:
   MapPointFactorMap&  getMapPointFactorMap() { return mMapPointFactorMap; }
   const bool          fixed() const { return mFixed; }
   void                setFixed(bool fixed) { mFixed = fixed; }
-
-  static constexpr size_t PARAMETER_SIZE = 6;
 };
 
 }  //namespace db

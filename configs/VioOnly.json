@@ -35,6 +35,7 @@
       "minParallaxSqNorm": 400,
       "vioSolver": {
         "name": "SqrtLocalSolver",
+        "solverMinimumFrames": 4,
         "reprojectionME": "huber",
         "reprojectionMEConst": 1.0,
         "standardFocalLength": 640.0,

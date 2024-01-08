@@ -37,6 +37,7 @@ public:
 
     static double      minParallaxSqNorm;
     static std::string solverType;
+    static size_t      solverMinimumFrames;
     static int         reprojectionME;
     static double      reprojectionMEConst;
     static double      standardFocalLength;

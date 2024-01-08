@@ -45,7 +45,7 @@ void SqrtProblem::setFrames(std::vector<db::Frame::Ptr>* framesRp) {
     column += db::Frame::PARAMETER_SIZE;
   }
 }
-
+   
 void SqrtProblem::setMapPoints(std::vector<std::shared_ptr<db::MapPoint>>* mapPointsRp) {
   mMapPoints = mapPointsRp;
 }

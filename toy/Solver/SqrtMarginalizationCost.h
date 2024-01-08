@@ -1,33 +1,34 @@
 #pragma once
+
 #include <vector>
 #include <Eigen/Dense>
 #include "macros.h"
 #include "Frame.h"
-#include "ToyAssert.h"
 
 namespace toy {
 class SqrtMarginalizationCost {
 public:
   USING_SMART_PTR(SqrtMarginalizationCost);
 
-  SqrtMarginalizationCost()  = default;
-  ~SqrtMarginalizationCost() = default;
-
-  void setRemainIds(std::vector<size_t>& ids) { mRemainIds.swap(ids); }
-
-  void setFrames(std::vector<std::shared_ptr<db::Frame>>& frames) {
-    mFrames = frames;
-    auto rows     = mFrames.size() * db::Frame::PARAMETER_SIZE;
-
-    mInitialParameters.resize(rows);
+  SqrtMarginalizationCost() = delete;
+  SqrtMarginalizationCost(const std::vector<db::Frame::Ptr>& frames,
+                          const Eigen::MatrixXd&             J,
+                          const Eigen::VectorXd&             Res)
+    : mFrames{frames}
+    , mJ{J}
+    , mRes{Res} {
+    
+    auto rows = frames.size() * db::Frame::PARAMETER_SIZE;
     mCurrentParameters.resize(rows);
+    mInitialParameters.resize(rows);
 
     updateParameters();
-    mInitialParameters = mCurrentParameters;
   }
 
+  ~SqrtMarginalizationCost() = default;
+
   double linearize() {
-    auto rows     = mRemainIds.size() * db::Frame::PARAMETER_SIZE;
+    auto rows = mFrames.size() * db::Frame::PARAMETER_SIZE;
 
     Eigen::VectorXd delta = (mCurrentParameters - mInitialParameters).head(rows);
     return delta.transpose() * mJ.transpose() * (0.5 * mJ * delta + mRes);
@@ -40,25 +41,6 @@ public:
     B.segment(0, cols) -= mJ.transpose() * mRes;
   }
 
-  void marginalize(Eigen::VectorXi& indices, Eigen::MatrixXd& J, Eigen::VectorXd& Res) {
-    const Eigen::PermutationWrapper<Eigen::Matrix<int, Eigen::Dynamic, 1>> permutation(
-      indices);
-
-    J.applyOnTheRight(permutation);
-    size_t margRank       = 0;
-    size_t validBlockRows = 0;
-
-    decomposeWithQR(J, Res, db::Frame::PARAMETER_SIZE, margRank, validBlockRows);
-
-    ToyLogD("after qr {}", J);
-
-    mJ   = J.block(margRank,
-                 db::Frame::PARAMETER_SIZE,
-                 validBlockRows,
-                 indices.cols() - db::Frame::PARAMETER_SIZE);
-    mRes = Res.segment(margRank, validBlockRows);
-  }
-
 protected:
   void updateParameters() {
     Eigen::Index row = 0;
@@ -68,27 +50,12 @@ protected:
     }
   }
 
-  void decomposeWithQR(Eigen::MatrixXd& J,
-                       Eigen::VectorXd& Res,
-                       const size_t&    marginBlockSize,
-                       size_t&          marginRank,
-                       size_t&          validBlockRows) {}
-
 protected:
-  std::vector<db::Frame::Ptr> mFrames;
-  Eigen::VectorXd             mInitialParameters;
-  Eigen::VectorXd             mCurrentParameters;
+  const std::vector<db::Frame::Ptr>& mFrames;
+  Eigen::VectorXd                    mInitialParameters;
+  Eigen::VectorXd                    mCurrentParameters;
 
-  Eigen::MatrixXd mJ;
-  Eigen::VectorXd mRes;
-
-  std::vector<size_t> mRemainIds;
-
-public:
-  const Eigen::MatrixXd& J() const { return mJ; }
-  Eigen::MatrixXd&       getJ() { return mJ; }
-  const Eigen::VectorXd& Res() const { return mRes; }
-  Eigen::VectorXd&       getRes() { return mRes; }
-  std::vector<size_t>&   getRemainIds() { return mRemainIds; }
+  const Eigen::MatrixXd& mJ;
+  const Eigen::VectorXd& mRes;
 };
 }  //namespace toy

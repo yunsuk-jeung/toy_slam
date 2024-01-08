@@ -102,6 +102,7 @@ public:
   template <typename Type, int Row>
   static std::string eigenVec(const Eigen::Matrix<Type, Row, 1>& vec, int precision = 4) {
     static Eigen::IOFormat CleanVec(precision, 0, ", ", "\n", "[", "]");
+    CleanVec.precision = precision;
 
     std::stringstream ss;
     ss << std::fixed << std::setprecision(precision);  //Set the precision
@@ -113,6 +114,7 @@ public:
   static std::string eigenMat(const Eigen::Matrix<Type, Row, Col>& mat,
                               int                                  precision = 4) {
     static Eigen::IOFormat CleanMat(precision, 0, ", ", "\n", "[", "]");
+    CleanMat.precision = precision;
 
     std::stringstream ss;
     ss << std::fixed << std::setprecision(precision);  //Set the precision

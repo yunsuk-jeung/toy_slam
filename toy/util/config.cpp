@@ -44,6 +44,7 @@ int    Config::Vio::maxFrameSize            = 10;
 double Config::Vio::minParallaxSqNorm       = 20;
 
 std::string Config::Vio::solverType            = "SqrtLocalSolver";
+size_t      Config::Vio::solverMinimumFrames   = 4;
 int         Config::Vio::reprojectionME        = 1;
 double      Config::Vio::reprojectionMEConst   = 1.0;
 double      Config::Vio::standardFocalLength   = 640.0;
@@ -105,6 +106,7 @@ void Config::parseConfig(const std::string& configFile) {
     std::string me      = vioSolverJson["reprojectionME"];
     Vio::reprojectionME = parseME(me);
   }
+  Vio::solverMinimumFrames   = vioSolverJson["solverMinimumFrames"];
   Vio::reprojectionMEConst   = vioSolverJson["reprojectionMEConst"];
   Vio::standardFocalLength   = vioSolverJson["standardFocalLength"];
   Vio::maxIteration          = vioSolverJson["maxIteration"];
@@ -119,7 +121,7 @@ void Config::parseConfig(const std::string& configFile) {
   ToyLogI("################  vio  ################");
   if (vio_on) {
     ToyLogI("----------- tracker point ----------");
-    ToyLogI("- k{:<{}} :   {}", "On", align_width, point_on);
+    ToyLogI("- {:<{}} :   {}", "On", align_width, point_on);
     ToyLogI("- {:<{}} :   {}", "Tracker", align_width, Vio::pointTracker);
     ToyLogI("");
 

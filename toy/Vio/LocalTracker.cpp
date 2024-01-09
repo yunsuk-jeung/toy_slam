@@ -10,6 +10,9 @@
 #include "VioSolver.h"
 
 namespace toy {
+namespace {
+constexpr bool NO_IMU = true;
+}
 LocalTracker::LocalTracker()
   : mStatus{Status::NONE}
   , mLocalMap{nullptr}
@@ -38,6 +41,16 @@ void LocalTracker::process() {
     break;
   }
   case Status::INITIALIZING: {
+    if (NO_IMU) {
+      auto  Tc0b         = currFrame->getTbc(0).inverse();
+      auto& Twb          = currFrame->getTwb();
+      Twb                = Tc0b;
+
+      Eigen::Vector3d X = Eigen::Vector3d::UnitY();
+      X *= -3.14 / 180 * 20;
+      Twb.so3() *= Sophus::SO3d::exp(X);
+    }
+
     mLocalMap->addFrame(currFrame);
     int  createMPCount = initializeMapPoints(currFrame);
     bool OK            = createMPCount > Config::Vio::initializeMapPointCount;
@@ -56,9 +69,8 @@ void LocalTracker::process() {
     ++mKeyFrameInterval;
 
     //YSTODO: changed if imu exists;
-    if (true) {
+    if (NO_IMU) {
       auto& Twb = mLocalMap->getFrames().rbegin()->second->getTwb();
-
       currFrame->setTwb(Twb);
     }
 
@@ -97,7 +109,7 @@ void LocalTracker::process() {
 
     //BasicSolver::solveFramePose(currFrame);
 
-    frames.front()->setFixed(true);
+    //frames.front()->setFixed(true);
     mVioSolver->solve(frames, mapPoints);
 
     //drawDebugView(101, 1040);
@@ -134,6 +146,10 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
     auto mp = mpWeak.lock();
     if (mp->status() != db::MapPoint::Status::INITIALING)
       continue;
+
+    if (mp->id() == 0) {
+      ToyLogD("");
+    }
 
     switch (factor.getType()) {
     case db::ReprojectionFactor::Type::MONO: {

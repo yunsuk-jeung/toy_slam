@@ -15,13 +15,12 @@ void SqrtMarginalizer::setFrames(std::vector<db::Frame::Ptr>& frames) {
 std::shared_ptr<SqrtMarginalizationCost> SqrtMarginalizer::createMarginCost() {
   return std::make_shared<SqrtMarginalizationCost>(mFrames, mJ, mRes);
 }
+
 void SqrtMarginalizer::marginalize(Eigen::VectorXi& indices,
                                    Eigen::MatrixXd& J,
                                    Eigen::VectorXd& Res) {
   using PermutationWrapper = Eigen::PermutationWrapper<
     Eigen::Matrix<int, Eigen::Dynamic, 1>>;
-
-  ToyLogD("before QR {}", J);
 
   const PermutationWrapper permutation(indices);
   J.applyOnTheRight(permutation);
@@ -29,7 +28,6 @@ void SqrtMarginalizer::marginalize(Eigen::VectorXi& indices,
   size_t margRank       = 0;
   size_t validBlockRows = 0;
   decomposeWithQR(J, Res, db::Frame::PARAMETER_SIZE, margRank, validBlockRows);
-  ToyLogD("after QR {}", J);
 
   size_t& rows = validBlockRows;
   size_t  cols = indices.rows() - db::Frame::PARAMETER_SIZE;
@@ -37,12 +35,11 @@ void SqrtMarginalizer::marginalize(Eigen::VectorXi& indices,
   mJ.resize(rows, cols);
   mRes.resize(rows);
 
-  mJ = J.block(margRank, db::Frame::PARAMETER_SIZE, rows, cols);
+  mJ   = J.block(margRank, db::Frame::PARAMETER_SIZE, rows, cols);
   mRes = Res.segment(margRank, rows);
 
-  ToyLogD("final QR {}", mJ);
-  ToyLogD("final QR {}", mRes);
-  ToyLogD("asdf");
+  ToyLogD("final QR {}", ToyLogger::eigenMat(mJ));
+  ToyLogD("=============================================================");
 }
 
 void SqrtMarginalizer::decomposeWithQR(Eigen::MatrixXd& J,

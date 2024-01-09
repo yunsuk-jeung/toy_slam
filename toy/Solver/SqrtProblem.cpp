@@ -45,7 +45,7 @@ void SqrtProblem::setFrames(std::vector<db::Frame::Ptr>* framesRp) {
     column += db::Frame::PARAMETER_SIZE;
   }
 }
-   
+
 void SqrtProblem::setMapPoints(std::vector<std::shared_ptr<db::MapPoint>>* mapPointsRp) {
   mMapPoints = mapPointsRp;
 }
@@ -65,16 +65,18 @@ std::vector<MapPointLinearization::Ptr> SqrtProblem::getMaPointLinearizations(
   if (mps.empty())
     return {};
 
-  auto it = mps.begin();
-
   std::vector<MapPointLinearization::Ptr> outs;
   outs.reserve(mMapPointLinearizations.size());
+  auto linearizationIt = mMapPointLinearizations.begin();
 
-  for (auto& linearization : mMapPointLinearizations) {
-    if (linearization->mp() == *it) {
-      outs.push_back(linearization);
+  for (auto it = mps.begin(); it != mps.end(); ++it) {
+    for (; linearizationIt != mMapPointLinearizations.end(); ++linearizationIt) {
+      if (*it == (*linearizationIt)->mp()) {
+        outs.push_back(*linearizationIt);
+        linearizationIt++;
+        break;
+      }
     }
-    ++it;
   }
 
   return outs;
@@ -112,13 +114,13 @@ bool SqrtProblem::solve() {
 
     //construct hessian for frames from mapPoints
     for (auto& mpL : mMapPointLinearizations) {
-      const Eigen::MatrixXd& vJ = mpL->J();
+      const Eigen::MatrixXd& vJ   = mpL->J();
       const Eigen::VectorXd& vRes = mpL->Res();
 
       const auto  rows = vJ.rows() - db::MapPoint::PARAMETER_SIZE;
       const auto& cols = Hrows;
 
-      const Eigen::MatrixXd J = vJ.bottomLeftCorner(rows, cols);
+      const Eigen::MatrixXd J   = vJ.bottomLeftCorner(rows, cols);
       const Eigen::VectorXd Res = vRes.bottomRows(rows);
 
       Eigen::MatrixXd Jt = J.transpose();

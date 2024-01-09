@@ -28,8 +28,6 @@ protected:
                        size_t&          validBlockRows);
 
 protected:
-  Eigen::VectorXd mInitialParameters;
-  Eigen::VectorXd mCurrentParameters;
 
   Eigen::MatrixXd mJ;
   Eigen::VectorXd mRes;

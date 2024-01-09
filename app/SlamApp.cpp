@@ -68,12 +68,12 @@ bool SLAMApp::prepare() {
     return false;
   }
 
-  Eigen::Quaternionf Qxz = Eigen::Quaternionf::FromTwoVectors(Eigen::Vector3f::UnitX(),
+  Eigen::Quaternionf Qyz = Eigen::Quaternionf::FromTwoVectors(-Eigen::Vector3f::UnitY(),
                                                               Eigen::Vector3f::UnitZ());
-  mGraphicsCamera->cam.M.block<3, 3>(0, 0) = Qxz.toRotationMatrix();
+  mGraphicsCamera->cam.M.block<3, 3>(0, 0) = Qyz.toRotationMatrix();
 
   auto* simulator = (io::Simulator*)mSensor;
-  simulator->setContinuosMode(true);
+  simulator->setContinuosMode(false);
 
   ImGui::Object::RenderImpl impl = [this, simulator]() {
     ImGui::Begin("Simulator");
@@ -99,6 +99,22 @@ bool SLAMApp::prepare() {
 
   ImGui::Object::Ptr obj = std::make_shared<ImGui::Object>(impl);
   mGUI->addImGuiObjects(obj);
+
+  mSlamKeyCallback = std::make_unique<InputCallback>();
+  auto keyCallback = [&](int key) {
+    switch (key) {
+    case 524: {
+      ((io::Simulator*)mSensor)->sendImage();
+      break;
+    }
+    default:
+      break;
+    }
+  };
+
+  mSlamKeyCallback->registerKeyPressed(std::move(keyCallback));
+
+  mGUI->addInputCallback(mSlamKeyCallback.get());
 
   return true;
 }

@@ -274,7 +274,7 @@ void GUI::handleInputCallbacks() {
         continue;
 
       if (ImGui::IsKeyDown(key)) {
-        //VklLogI("key  is down");
+        //VklLogI("key  is down {}",(int)key );
       }
       if (ImGui::IsKeyReleased(key)) {
         ImVec2 pos = ImGui::GetCursorScreenPos();

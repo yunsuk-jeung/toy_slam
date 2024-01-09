@@ -6,6 +6,7 @@ class Sensor;
 }
 
 namespace vkl {
+class InputCallback;
 class AxisRenderer;
 class PathRenderer;
 class PointCloudRenderer;
@@ -45,6 +46,7 @@ protected:
   std::vector<float>           mLocalPointClouds;
 
   bool mContinousMode;
+  std::unique_ptr<InputCallback> mSlamKeyCallback;
 
 public:
   void registerSensor(io::Sensor* sensor) { mSensor = sensor; }

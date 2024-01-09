@@ -46,7 +46,7 @@ SqrtLocalSolver::SqrtLocalSolver() {
   Res.resize(FRAME_SIZE);
 
   J.setIdentity();
-  J *= 100.0;
+  J *= 100000.0;
 
   Res.setZero();
 }
@@ -177,10 +177,15 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
   }
 
   if (Config::Vio::debug) {
-    ToyLogD("MarginalFrame ID : {}, margin mapPoints : {} ", marginMps.size());
+    ToyLogD("MarginalFrame ID : {}, margin mapPoints : {} ",
+            marginalFrame->id(),
+            marginMps.size());
+    if (!marginMps.empty() > 0)
+      ToyLogD("here");
   }
 
-  //get linearized and decomposed mappoint blocks
+  /*  get linearized and decomposed mappoint blocks  */
+
   //YSTODO: TBB
   size_t     rows             = 0u;
   const auto cols             = mFrames->size() * db::Frame::PARAMETER_SIZE;

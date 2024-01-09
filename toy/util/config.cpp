@@ -40,7 +40,7 @@ int    Config::Vio::initializeMapPointCount = 30;
 float  Config::Vio::newKeframeFeatureRatio  = 0.8;
 int    Config::Vio::minKeyFrameCount        = 5;
 int    Config::Vio::maxKeyFrameSize         = 7;
-int    Config::Vio::maxFrameSize            = 10;
+int    Config::Vio::maxFrameSize            = 3;
 double Config::Vio::minParallaxSqNorm       = 20;
 
 std::string Config::Vio::solverType            = "SqrtLocalSolver";

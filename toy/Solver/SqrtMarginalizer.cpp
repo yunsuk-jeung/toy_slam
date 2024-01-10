@@ -38,7 +38,7 @@ void SqrtMarginalizer::marginalize(Eigen::VectorXi& indices,
   mJ   = J.block(margRank, db::Frame::PARAMETER_SIZE, rows, cols);
   mRes = Res.segment(margRank, rows);
 
-  ToyLogD("final QR {}", ToyLogger::eigenMat(mJ));
+  ToyLogD("final QR {}", ToyLogger::eigenMat(mJ, 2));
   ToyLogD("=============================================================");
 }
 

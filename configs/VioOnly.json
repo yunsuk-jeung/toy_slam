@@ -31,7 +31,7 @@
       "newKeframeFeatureRatio": 0.7,
       "margFeatureConnectionRatio": 0.2,
       "minKeyFrameCount": 3,
-      "maxFrameSize": 1,
+      "maxFrameSize": 2,
       "maxKeyFrameSize": 4,
       "minParallaxSqNorm": 400,
       "vioSolver": {

@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <string>
 #include <fmt/format.h>
+#include <Eigen/Dense>
+#include <opencv2/opencv.hpp>
 #include "IoUtil.h"
 #include "ToyLogger.h"
 
@@ -22,9 +24,12 @@ void saveMatrix(const std::string& name,
                 const std::string& folder = "default") {
   namespace fs = std::filesystem;
   fs::path currDir(std::string(__FILE__));
-  fs::path
-    saveDir = currDir.parent_path().parent_path().parent_path().append("python").append(
-      "data").append(folder);
+  fs::path saveDir = currDir.parent_path()
+                       .parent_path()
+                       .parent_path()
+                       .append("python")
+                       .append("data")
+                       .append(folder);
 
   io::util::createDirectory(saveDir);
 
@@ -40,6 +45,35 @@ void saveMatrix(const std::string& name,
 
   ToyLogD("saved {}, {} x {}", saveDir.string(), mat.rows(), mat.cols());
 };
+
+template <typename Matrix>
+void darwSparseMatrix(const std::string& name, const Matrix& mat, const int key = 0) {
+  cv::Mat matrix;
+
+  matrix = cv::Mat::zeros(cv::Size(mat.cols(), mat.rows()), CV_8UC3);
+
+  for (int i = 0; i < mat.rows(); ++i) {
+    for (int j = 0; j < mat.cols(); ++j) {
+      if (abs(mat(i, j)) > 1e-4 ) {
+        matrix.at<cv::Vec3b>(i, j) = cv::Vec3b(188, 0, 0);  //Èò»öÀ¸·Î »öÄ¥
+      }
+    }
+  }
+
+  if (matrix.cols < 100 || matrix.rows < 100) {
+    int a = 640 / matrix.cols;
+    int b = 640 / matrix.rows;
+
+    auto c = a > b ? a : b;
+
+    cv::Size2i size = cv::Size2i(matrix.cols * c, matrix.rows * c);
+    cv::resize(matrix, matrix, size);
+  }
+
+  cv::imshow(name, matrix);
+  cv::waitKey(key);
+}
+
 }  //namespace debug
 }  //namespace toy
 #endif

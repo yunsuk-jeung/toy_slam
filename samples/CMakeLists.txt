@@ -13,6 +13,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_executable(sample_vulkan sample_vulkan.cpp )
 
 add_executable(sample_custom_fmt "sample_custom_fmt.cpp")
+add_executable(sample_sparse_matrix_draw "sample_sparse_matrix_draw.cpp")
 
 target_compile_options(sample_vulkan PUBLIC
   $<$<CONFIG:Debug>:/MDd>
@@ -21,6 +22,8 @@ target_compile_options(sample_vulkan PUBLIC
 
 target_link_libraries(sample_vulkan PRIVATE libs vulkanLight::vulkanLight)
 target_link_libraries(sample_custom_fmt PRIVATE libs)
+target_link_libraries(sample_sparse_matrix_draw PRIVATE libs toy::toy)
+
 # target_link_libraries(sample_optflow PRIVATE io)
 # if(WIN32)
 # set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../lib)
@@ -31,6 +34,7 @@ target_link_libraries(sample_custom_fmt PRIVATE libs)
 if(WIN32)
   set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../lib)
   include(${EXTERNAL_LIB_DIR}/copyDLL.cmake)
+
   copy_tbb_dlls(sample_vulkan ${EXTERNAL_LIB_DIR})
   copy_cv34_dlls(sample_vulkan ${EXTERNAL_LIB_DIR})
 endif()

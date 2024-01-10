@@ -7,7 +7,9 @@
 auto main() -> int {
   Eigen::Matrix3d I = Eigen::Matrix3d::Identity();
 
-  toy::debug::darwSparseMatrix("test", I);
+  Eigen::MatrixXd I2(100, 100);
+  I2.setIdentity();
 
+  toy::debug::drawSparseMatrix("test", I2);
   return 0;
 }

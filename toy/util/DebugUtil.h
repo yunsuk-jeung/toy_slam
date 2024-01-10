@@ -47,27 +47,27 @@ void saveMatrix(const std::string& name,
 };
 
 template <typename Matrix>
-void darwSparseMatrix(const std::string& name, const Matrix& mat, const int key = 0) {
+void drawSparseMatrix(const std::string& name, const Matrix& mat, const int key = 0) {
   cv::Mat matrix;
 
-  matrix = cv::Mat::zeros(cv::Size(mat.cols(), mat.rows()), CV_8UC3);
+  matrix = cv::Mat::zeros(cv::Size(mat.cols(), mat.rows()), CV_8UC1);
 
   for (int i = 0; i < mat.rows(); ++i) {
     for (int j = 0; j < mat.cols(); ++j) {
       if (abs(mat(i, j)) > 1e-4 ) {
-        matrix.at<cv::Vec3b>(i, j) = cv::Vec3b(188, 0, 0);  //避事生稽 事張
+        matrix.at<cv::uint8_t>(i, j) = cv::uint8_t(188);  //避事生稽 事張
       }
     }
   }
 
-  if (matrix.cols < 100 || matrix.rows < 100) {
+  if (matrix.cols < 640 || matrix.rows < 640) {
     int a = 640 / matrix.cols;
     int b = 640 / matrix.rows;
 
     auto c = a > b ? a : b;
 
     cv::Size2i size = cv::Size2i(matrix.cols * c, matrix.rows * c);
-    cv::resize(matrix, matrix, size);
+    cv::resize(matrix, matrix, size, 0, 0, cv::INTER_NEAREST_EXACT);
   }
 
   cv::imshow(name, matrix);

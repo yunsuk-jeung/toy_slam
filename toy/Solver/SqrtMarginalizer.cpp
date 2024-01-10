@@ -4,6 +4,8 @@
 #include "Frame.h"
 #include "SqrtMarginalizationCost.h"
 #include "SqrtMarginalizer.h"
+#include "DebugUtil.h"
+
 
 namespace toy {
 void SqrtMarginalizer::setFrames(std::vector<db::Frame::Ptr>& frames) {
@@ -38,8 +40,10 @@ void SqrtMarginalizer::marginalize(Eigen::VectorXi& indices,
   mJ   = J.block(margRank, db::Frame::PARAMETER_SIZE, rows, cols);
   mRes = Res.segment(margRank, rows);
 
-  ToyLogD("final QR {}", ToyLogger::eigenMat(mJ, 2));
-  ToyLogD("=============================================================");
+  //debug::drawSparseMatrix("after QR", mJ , 1);
+
+  //ToyLogD("final QR {}", ToyLogger::eigenMat(mJ, 2));
+  //ToyLogD("=============================================================");
 }
 
 void SqrtMarginalizer::decomposeWithQR(Eigen::MatrixXd& J,

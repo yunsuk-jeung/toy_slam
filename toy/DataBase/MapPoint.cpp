@@ -1,5 +1,5 @@
 #include <sophus/se3.hpp>
-#include "ToyLogger.h"
+#include "ToyAssert.h"
 #include "Frame.h"
 #include "MapPoint.h"
 namespace toy {
@@ -40,6 +40,14 @@ void MapPoint::update(const double& delta) {
 }
 
 bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
+  TOY_ASSERT(!mFrameFactors.empty());
+
+  constexpr bool REMOVE_THIS = true;
+
+  if (mFrameFactors.front().first.lock() == frame) {
+    return REMOVE_THIS;
+  }
+
   for (auto it = mFrameFactors.begin(); it != mFrameFactors.end(); ++it) {
     if (it->first.lock() != frame) {
       continue;
@@ -48,13 +56,10 @@ bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
     mFrameFactors.erase(it);
     break;
   }
+  //if (mFrameFactors.empty())
+  //  return REMOVE_THIS;
 
-  constexpr bool removeThis = true;
-
-  if (mFrameFactors.empty())
-    return removeThis;
-
-  return !removeThis;
+  return !REMOVE_THIS;
 }
 
 Eigen::Vector3d MapPoint::getPwx() {

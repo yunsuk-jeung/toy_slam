@@ -309,9 +309,6 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
 
   //#####################################################################
   if (Config::Vio::showStereoTracking) {
-    cv::Mat image0 = pyramid0[0].clone();
-    cv::cvtColor(image0, image0, cv::COLOR_GRAY2BGR);
-
     cv::Mat image1 = pyramid1[0].clone();
     cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);
 
@@ -325,7 +322,6 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
         cv::circle(image1, uvs1[i], 2, {255.0, 0.0, 0.0}, -1);
       }
     }
-    cv::imshow("stereo opticalflow0", image0);
     cv::imshow("stereo opticalflow1", image1);
     cv::waitKey(1);
   }

@@ -168,8 +168,13 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
       color = {0, 0, 0};
       break;
     }
+
     case db::MapPoint::Status::INITIALING: {
       color = {0, 255, 0};
+      break;
+    }
+    case db::MapPoint::Status::WAITING: {
+      color = {0, 255, 255};
       break;
     }
     case db::MapPoint::Status::TRACKING: {

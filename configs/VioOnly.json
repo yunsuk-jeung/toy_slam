@@ -29,9 +29,10 @@
     "localTracker": {
       "initializeMapPointCount": 30,
       "newKeframeFeatureRatio": 0.7,
-      "minKeyFrameCount": 4,
-      "maxFrameSize": 3,
-      "maxKeyFrameSize": 7,
+      "margFeatureConnectionRatio": 0.2,
+      "minKeyFrameCount": 3,
+      "maxFrameSize": 1,
+      "maxKeyFrameSize": 4,
       "minParallaxSqNorm": 400,
       "vioSolver": {
         "name": "SqrtLocalSolver",

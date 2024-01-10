@@ -46,7 +46,7 @@ SqrtLocalSolver::SqrtLocalSolver() {
   Res.resize(FRAME_SIZE);
 
   J.setIdentity();
-  J *= 100000.0;
+  J *= 10000.0;
 
   Res.setZero();
 }

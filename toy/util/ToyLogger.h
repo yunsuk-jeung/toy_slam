@@ -131,3 +131,5 @@ private:
 #define ToyLogD(fmt, ...) ToyLogger::logD(fmt, ##__VA_ARGS__);
 #define ToyLogE(fmt, ...)                                                                \
   ToyLogger::logE(LogUtil::extractFileName(__FILE__), __LINE__, fmt, ##__VA_ARGS__);
+#define DEBUG_POINT() \
+  ToyLogE("THIS Line is for debugging") ;

@@ -44,6 +44,9 @@ bool LocalMap::addFrame(std::shared_ptr<Frame> frame) {
     }
     else {
       mp = it->second;
+      if (mp->status() == db::MapPoint::Status::WAITING) {
+        mp->setState(db::MapPoint::Status::TRACKING);
+      }
     }
 
     mMapPoints.insert({mp->id(), mp});

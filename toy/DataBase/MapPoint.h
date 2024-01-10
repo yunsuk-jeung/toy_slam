@@ -33,7 +33,8 @@ public:
   enum class Status {
     DELETING   = -1,
     INITIALING = 0,
-    TRACKING   = 1,
+    WAITING    = 1,
+    TRACKING   = 2,
   };
 
 protected:
@@ -68,8 +69,8 @@ public:
   const bool fixed() const { return mFixed; }
   void       setFixed(bool fixed) { mFixed = fixed; }
 
-  static constexpr size_t UNDIST_SIZE   = 2;
-  static constexpr size_t INVDEPTH_SIZE = 1;
+  static constexpr size_t UNDIST_SIZE    = 2;
+  static constexpr size_t INVDEPTH_SIZE  = 1;
   static constexpr size_t PARAMETER_SIZE = 3;
 };
 

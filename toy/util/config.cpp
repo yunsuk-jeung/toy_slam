@@ -36,12 +36,13 @@ bool        Config::Vio::showStereoTracking = false;
 std::string Config::Vio::lineTracker           = "none";
 bool        Config::Vio::frameTrackerSolvePose = false;
 
-int    Config::Vio::initializeMapPointCount = 30;
-float  Config::Vio::newKeframeFeatureRatio  = 0.8;
-int    Config::Vio::minKeyFrameCount        = 5;
-int    Config::Vio::maxKeyFrameSize         = 7;
-int    Config::Vio::maxFrameSize            = 3;
-double Config::Vio::minParallaxSqNorm       = 20;
+int    Config::Vio::initializeMapPointCount    = 30;
+float  Config::Vio::newKeframeFeatureRatio     = 0.8;
+float  Config::Vio::margFeatureConnectionRatio = 0.15;
+int    Config::Vio::minKeyFrameCount           = 5;
+int    Config::Vio::maxKeyFrameSize            = 7;
+int    Config::Vio::maxFrameSize               = 3;
+double Config::Vio::minParallaxSqNorm          = 20;
 
 std::string Config::Vio::solverType            = "SqrtLocalSolver";
 size_t      Config::Vio::solverMinimumFrames   = 4;
@@ -92,13 +93,14 @@ void Config::parseConfig(const std::string& configFile) {
   bool line_on               = feautreJson["line"]["on"];
   Vio::frameTrackerSolvePose = frameTrackerJson["solvePose"];
 
-  auto localTrackerJson        = json["vio"]["localTracker"];
-  Vio::initializeMapPointCount = localTrackerJson["initializeMapPointCount"];
-  Vio::newKeframeFeatureRatio  = localTrackerJson["newKeframeFeatureRatio"];
-  Vio::minKeyFrameCount        = localTrackerJson["minKeyFrameCount"];
-  Vio::maxFrameSize            = localTrackerJson["maxFrameSize"];
-  Vio::maxKeyFrameSize         = localTrackerJson["maxKeyFrameSize"];
-  Vio::minParallaxSqNorm       = localTrackerJson["minParallaxSqNorm"];
+  auto localTrackerJson           = json["vio"]["localTracker"];
+  Vio::initializeMapPointCount    = localTrackerJson["initializeMapPointCount"];
+  Vio::newKeframeFeatureRatio     = localTrackerJson["newKeframeFeatureRatio"];
+  Vio::margFeatureConnectionRatio = localTrackerJson["margFeatureConnectionRatio"];
+  Vio::minKeyFrameCount           = localTrackerJson["minKeyFrameCount"];
+  Vio::maxFrameSize               = localTrackerJson["maxFrameSize"];
+  Vio::maxKeyFrameSize            = localTrackerJson["maxKeyFrameSize"];
+  Vio::minParallaxSqNorm          = localTrackerJson["minParallaxSqNorm"];
 
   auto vioSolverJson = localTrackerJson["vioSolver"];
   Vio::solverType    = vioSolverJson["name"];

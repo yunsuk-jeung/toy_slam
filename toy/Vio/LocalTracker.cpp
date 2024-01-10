@@ -1,4 +1,4 @@
-#include "ToyLogger.h"
+#include "ToyAssert.h"
 #include "SLAMInfo.h"
 #include "Feature.h"
 #include "MapPoint.h"
@@ -42,9 +42,9 @@ void LocalTracker::process() {
   }
   case Status::INITIALIZING: {
     if (NO_IMU) {
-      auto  Tc0b         = currFrame->getTbc(0).inverse();
-      auto& Twb          = currFrame->getTwb();
-      Twb                = Tc0b;
+      auto  Tc0b = currFrame->getTbc(0).inverse();
+      auto& Twb  = currFrame->getTwb();
+      Twb        = Tc0b;
 
       Eigen::Vector3d X = Eigen::Vector3d::UnitY();
       X *= -3.14 / 180 * 20;
@@ -75,10 +75,12 @@ void LocalTracker::process() {
     }
 
     if (mLocalMap->addFrame(currFrame)) {
-      currFrame->setKeyFrame();
       mKeyFrameInterval = 0;
 
       int createMPCount = initializeMapPoints(currFrame);
+      if (createMPCount > 0) {
+        currFrame->setKeyFrame();
+      }
     }
 
     //if (!currFrame->isKeyFrame()) {
@@ -115,7 +117,8 @@ void LocalTracker::process() {
     //drawDebugView(101, 1040);
     drawDebugView(101, 1040);
 
-    //cv::waitKey();
+    if (frames.size() < Config::Vio::solverMinimumFrames)
+      return setDataToInfo();
 
     db::Frame::Ptr marginalFrame = selectMarginalFrame(frames);
 
@@ -142,14 +145,12 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
   Eigen::Vector3d Pc0x;
 
   int successCount = 0;
+  int tryCount     = 0;
   for (auto& [mpWeak, factor] : mapPointFactorMap) {
     auto mp = mpWeak.lock();
     if (mp->status() != db::MapPoint::Status::INITIALING)
       continue;
-
-    if (mp->id() == 0) {
-      ToyLogD("");
-    }
+    ++tryCount;
 
     switch (factor.getType()) {
     case db::ReprojectionFactor::Type::MONO: {
@@ -160,11 +161,11 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
         continue;
       }
 
-      double          invD = 1.0 / Pc0x.z();
-      Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
-      mp->setUndist(nuv);
+      double invD = 1.0 / Pc0x.z();
+      //Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
+      //mp->setUndist(nuv);
       mp->setInvDepth(invD);
-      mp->setState(db::MapPoint::Status::TRACKING);
+      mp->setState(db::MapPoint::Status::WAITING);
       ++successCount;
       break;
     }
@@ -175,7 +176,7 @@ int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
   }
 
   if (Config::Vio::debug) {
-    ToyLogD("triangulation successed {} / {}", successCount, mapPointFactorMap.size());
+    ToyLogD("triangulation successed {} / {}", successCount, tryCount);
   }
 
   if (Config::Vio::showStereoTracking) {
@@ -207,67 +208,61 @@ db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& al
   }
 
   if (keyFrames.size() > Config::Vio::maxKeyFrameSize) {
-    return keyFrames.front();
-  }
+    auto& oldest = keyFrames.front();
+    auto& target = *(std::prev(keyFrames.end(), 2));
 
-  return nullptr;
+    auto& oldestMpFactorMap = oldest->getMapPointFactorMap();
+    auto& targetMpFactorMap = target->getMapPointFactorMap();
 
-  std::vector<db::Frame::Ptr> cands;
-  cands.reserve(3);
-  cands.push_back(keyFrames.front());
-  cands.push_back(frames.front());
+    int count = 0;
 
-  auto secondLastFrameIt = std::prev(allFrames.end(), 2);
-
-  auto& secondLast     = *secondLastFrameIt;
-  auto& prevSecondLast = *(--secondLastFrameIt);
-
-  if (!secondLast->isKeyFrame()) {
-    auto& lastKeyFrame = keyFrames.back();
-
-    auto& mpFactorMap0 = prevSecondLast->getMapPointFactorMap();
-    auto& mpFactorMap1 = secondLast->getMapPointFactorMap();
-
-    int    count      = 0;
-    double parallaxSq = 0;
-
-    auto endIt = mpFactorMap1.end();
-    for (auto& [key, val] : mpFactorMap0) {
-      auto targetIt = mpFactorMap1.find(key);
-      if (targetIt == endIt) {
-        continue;
+    for (auto& [mpWeak, f] : oldestMpFactorMap) {
+      if (targetMpFactorMap.count(mpWeak)) {
+        ++count;
       }
-      ++count;
-      parallaxSq += (val.uv0() - targetIt->second.uv0()).squaredNorm();
     }
 
-    if (parallaxSq / count < Config::Vio::minParallaxSqNorm) {
-      return secondLast;
+    float ratio = float(count) / targetMpFactorMap.size();
+
+    if (Config::Vio::debug) {
+      ToyLogD("ratio : {} / {} = {}", count, targetMpFactorMap.size(), ratio);
     }
-  }
-  //else {
-  return frames.front();
-  //}
 
-  auto& keyFrame = keyFrames.back();
-
-  auto& mpFactorMap0 = keyFrame->getMapPointFactorMap();
-  auto& mpFactorMap1 = secondLast->getMapPointFactorMap();
-
-  int  count = 0;
-  auto endIt = mpFactorMap1.end();
-  for (auto& [key, val] : mpFactorMap0) {
-    if (mpFactorMap1.find(key) == endIt) {
-      continue;
+    if (ratio < Config::Vio::margFeatureConnectionRatio) {
+      return oldest;
     }
-    ++count;
-  }
 
-  if (count / mpFactorMap0.size() < (1.0 - Config::Vio::minTrackedRatio)) {
-    return keyFrame;
-  }
-  else {
-    return frames.front();
+    auto lastKeyFrame = keyFrames.back();
+
+    float  minScore = std::numeric_limits<float>::max();
+    size_t minIdx   = 1000000;
+    size_t idx      = 0;
+
+    auto endIt = std::prev(keyFrames.end(), 2);
+    for (auto it1 = keyFrames.begin(); it1 < endIt; ++it1) {
+      float denom = 0;
+      for (auto it2 = keyFrames.begin(); it2 < endIt; ++it2) {
+        // clang-format off
+        denom += 1.0f
+                 / (
+                   ((*it1)->getTwb().translation() - (*it2)->getTwb().translation()).norm()
+                    + 0.00001f
+                   );
+        // clang-format on
+      }
+      // clang-format off
+      float score = std::sqrt(
+        ((*it1)->getTwb().translation() - lastKeyFrame->getTwb().translation()) .norm()
+      ) * denom;
+      // clang-format on
+      if (score < minScore) {
+        minIdx   = idx;
+        minScore = score;
+      }
+      idx++;
+    }
+    TOY_ASSERT(minIdx < 100);
+    return keyFrames[minIdx];
   }
 
   return nullptr;
@@ -293,7 +288,7 @@ void LocalTracker::setDataToInfo() {
   outmp.reserve(mpSize * 4);
 
   for (auto& [key, mpPtr] : mpMap) {
-    if (mpPtr->status() < db::MapPoint::Status::TRACKING)
+    if (mpPtr->status() < db::MapPoint::Status::WAITING)
       continue;
 
     Eigen::Vector3d Pwx = mpPtr->getPwx();

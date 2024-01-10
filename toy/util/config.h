@@ -32,6 +32,7 @@ public:
     static int   initializeMapPointCount;
     static int   minKeyFrameCount;
     static float newKeframeFeatureRatio;
+    static float margFeatureConnectionRatio;
     static int   maxFrameSize;
     static int   maxKeyFrameSize;
 

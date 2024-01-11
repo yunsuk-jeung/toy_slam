@@ -250,24 +250,24 @@ bool SqrtProblem::solve() {
 double SqrtProblem::linearize(bool updateState) {
   double errSq = 0;
 
-  //if (Config::Vio::tbb) {
-  //  auto sumErrorSq = [&](const tbb::blocked_range<size_t>& r, double error) {
-  //    for (size_t i = r.begin(); i != r.end(); ++i) {
-  //      auto& mpL = mMapPointLinearizations[i];
-  //      error += mpL->linearize(updateState);
-  //    }
-  //    return error;
-  //  };
+  if (Config::Vio::tbb) {
+    auto sumErrorSq = [&](const tbb::blocked_range<size_t>& r, double error) {
+      for (size_t i = r.begin(); i != r.end(); ++i) {
+        auto& mpL = mMapPointLinearizations[i];
+        error += mpL->linearize(updateState);
+      }
+      return error;
+    };
 
-  //  auto                       mpLinearizationSize = mMapPointLinearizations.size();
-  //  tbb::blocked_range<size_t> range(0, mpLinearizationSize);
-  //  errSq = tbb::parallel_reduce(range, double(0), sumErrorSq, std::plus<double>());
-  //}
-  //else {
+    auto                       mpLinearizationSize = mMapPointLinearizations.size();
+    tbb::blocked_range<size_t> range(0, mpLinearizationSize);
+    errSq = tbb::parallel_reduce(range, double(0), sumErrorSq, std::plus<double>());
+  }
+  else {
     for (auto& mpL : mMapPointLinearizations) {
       errSq += mpL->linearize(updateState);
     }
-  //}
+  }
 
   errSq += mSqrtMarginalizationCost->linearize();
 
@@ -275,21 +275,21 @@ double SqrtProblem::linearize(bool updateState) {
 }
 
 void SqrtProblem::decomposeLinearization() {
-  //if (Config::Vio::tbb) {
-  //  auto decompose = [&](const tbb::blocked_range<size_t>& r) {
-  //    for (size_t i = r.begin(); i != r.end(); ++i) {
-  //      mMapPointLinearizations[i]->decomposeWithQR();
-  //    }
-  //  };
-  //  auto                       mpLSize = mMapPointLinearizations.size();
-  //  tbb::blocked_range<size_t> range(0, mpLSize);
-  //  tbb::parallel_for(range, decompose);
-  //}
-  //else {
+  if (Config::Vio::tbb) {
+    auto decompose = [&](const tbb::blocked_range<size_t>& r) {
+      for (size_t i = r.begin(); i != r.end(); ++i) {
+        mMapPointLinearizations[i]->decomposeWithQR();
+      }
+    };
+    auto                       mpLSize = mMapPointLinearizations.size();
+    tbb::blocked_range<size_t> range(0, mpLSize);
+    tbb::parallel_for(range, decompose);
+  }
+  else {
     for (auto& mpL : mMapPointLinearizations) {
       mpL->decomposeWithQR();
     }
-  //}
+  }
 #ifdef DEBUG_MATRIX0
   static int qridx = 0;
   int        temp  = 0;

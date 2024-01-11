@@ -145,6 +145,26 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
       continue;
     }
 
+    cv::Scalar color;
+    switch (mp->status()) {
+    case db::MapPoint::Status::DELETING:
+    case db::MapPoint::Status::MARGINED: {
+      continue;
+    }
+    case db::MapPoint::Status::INITIALING: {
+      color = {0, 255, 0};
+      break;
+    }
+    case db::MapPoint::Status::WAITING: {
+      color = {0, 255, 255};
+      break;
+    }
+    case db::MapPoint::Status::TRACKING: {
+      color = {0, 0, 255};
+      break;
+    }
+    }
+
     Eigen::Vector3d undist;
 
     if (idx == 0) {
@@ -162,26 +182,6 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
 
     auto proj = mCameras[idx]->project(nXcx);
 
-    cv::Scalar color;
-    switch (mp->status()) {
-    case db::MapPoint::Status::DELETING: {
-      color = {0, 0, 0};
-      break;
-    }
-
-    case db::MapPoint::Status::INITIALING: {
-      color = {0, 255, 0};
-      break;
-    }
-    case db::MapPoint::Status::WAITING: {
-      color = {0, 255, 255};
-      break;
-    }
-    case db::MapPoint::Status::TRACKING: {
-      color = {0, 0, 255};
-      break;
-    }
-    }
     cv::circle(img, proj, 3, color, -1);
     if (undist.z() > 0) {
       cv::line(img, meaUV, proj, color);

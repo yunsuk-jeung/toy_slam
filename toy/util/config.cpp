@@ -20,19 +20,21 @@ CameraInfo Config::Vio::camInfo0;
 CameraInfo Config::Vio::camInfo1;
 ImuInfo    Config::Vio::imuInfo;
 
-bool        Config::Vio::debug              = false;
-bool        Config::Vio::tbb                = true;
-int         Config::Vio::pyramidLevel       = 3;
-int         Config::Vio::patchSize          = 52;
-int         Config::Vio::rowGridCount       = 12;
-int         Config::Vio::colGridCount       = 8;
-std::string Config::Vio::pointTracker       = "Fast.OpticalflowLK";
-int         Config::Vio::minTrackedPoint    = 30;
-float       Config::Vio::minTrackedRatio    = 0.8;
-double      Config::Vio::epipolarThreashold = 0.005;
-bool        Config::Vio::showExtraction     = false;
-bool        Config::Vio::showMonoTracking   = false;
-bool        Config::Vio::showStereoTracking = false;
+bool        Config::Vio::debug                  = false;
+bool        Config::Vio::tbb                    = true;
+int         Config::Vio::pyramidLevel           = 3;
+int         Config::Vio::patchSize              = 52;
+int         Config::Vio::rowGridCount           = 12;
+int         Config::Vio::colGridCount           = 8;
+std::string Config::Vio::pointTracker           = "Fast.OpticalflowLK";
+int         Config::Vio::minTrackedPoint        = 30;
+float       Config::Vio::minTrackedRatio        = 0.8;
+double      Config::Vio::epipolarThreashold     = 0.005;
+int         Config::Vio::stereoTrackingInterval = 3;
+
+bool Config::Vio::showExtraction     = false;
+bool Config::Vio::showMonoTracking   = false;
+bool Config::Vio::showStereoTracking = false;
 
 std::string Config::Vio::lineTracker           = "none";
 bool        Config::Vio::frameTrackerSolvePose = false;
@@ -80,18 +82,19 @@ void Config::parseConfig(const std::string& configFile) {
 
   auto feautreJson = frameTrackerJson["feature"];
 
-  auto pointJson          = feautreJson["point"];
-  bool point_on           = pointJson["on"];
-  Vio::patchSize          = pointJson["patchSize"];
-  Vio::rowGridCount       = pointJson["rowGridCount"];
-  Vio::colGridCount       = pointJson["colGridCount"];
-  Vio::pointTracker       = pointJson["tracker"];
-  Vio::minTrackedPoint    = pointJson["minTrackedPoint"];
-  Vio::minTrackedRatio    = pointJson["minTrackedRatio"];
-  Vio::epipolarThreashold = pointJson["epipolarThreashold"];
-  Vio::showExtraction     = pointJson["showExtraction"];
-  Vio::showMonoTracking   = pointJson["showMonoTracking"];
-  Vio::showStereoTracking = pointJson["showStereoTracking"];
+  auto pointJson              = feautreJson["point"];
+  bool point_on               = pointJson["on"];
+  Vio::patchSize              = pointJson["patchSize"];
+  Vio::rowGridCount           = pointJson["rowGridCount"];
+  Vio::colGridCount           = pointJson["colGridCount"];
+  Vio::pointTracker           = pointJson["tracker"];
+  Vio::minTrackedPoint        = pointJson["minTrackedPoint"];
+  Vio::minTrackedRatio        = pointJson["minTrackedRatio"];
+  Vio::epipolarThreashold     = pointJson["epipolarThreashold"];
+  Vio::stereoTrackingInterval = pointJson["stereoTrackingInterval"];
+  Vio::showExtraction         = pointJson["showExtraction"];
+  Vio::showMonoTracking       = pointJson["showMonoTracking"];
+  Vio::showStereoTracking     = pointJson["showStereoTracking"];
 
   bool line_on               = feautreJson["line"]["on"];
   Vio::frameTrackerSolvePose = frameTrackerJson["solvePose"];

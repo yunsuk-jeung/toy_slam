@@ -191,27 +191,27 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
 
   auto mpLinearizations = mProblem->getMaPointLinearizations(marginMps);
 
-  //if (Config::Vio::tbb) {
-  //  auto sumRow = [&](const tbb::blocked_range<size_t>& r, size_t row) {
-  //    for (size_t i = r.begin(); i != r.end(); ++i) {
-  //      auto& linearization = mpLinearizations[i];
-  //      linearization->linearize(true);
-  //      linearization->decomposeWithQR();
-  //      row += (linearization->J().rows() - MP_SIZE);
-  //    }
-  //    return row;
-  //  };
-  //  auto                       mpLinearizationSize = mpLinearizations.size();
-  //  tbb::blocked_range<size_t> range(0, mpLinearizationSize);
-  //  rows = tbb::parallel_reduce(range, size_t(0), sumRow, std::plus<size_t>());
-  //}
-  //else {
+  if (Config::Vio::tbb) {
+    auto sumRow = [&](const tbb::blocked_range<size_t>& r, size_t row) {
+      for (size_t i = r.begin(); i != r.end(); ++i) {
+        auto& linearization = mpLinearizations[i];
+        linearization->linearize(true);
+        linearization->decomposeWithQR();
+        row += (linearization->J().rows() - MP_SIZE);
+      }
+      return row;
+    };
+    auto                       mpLinearizationSize = mpLinearizations.size();
+    tbb::blocked_range<size_t> range(0, mpLinearizationSize);
+    rows = tbb::parallel_reduce(range, size_t(0), sumRow, std::plus<size_t>());
+  }
+  else {
     for (auto& linearization : mpLinearizations) {
       linearization->linearize(true);
       linearization->decomposeWithQR();
       rows += (linearization->J().rows() - MP_SIZE);
     }
-  //}
+  }
 
   /*  imu factor */
 

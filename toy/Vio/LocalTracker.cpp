@@ -74,14 +74,10 @@ void LocalTracker::process() {
       currFrame->setTwb(Twb);
     }
 
-    if (mLocalMap->addFrame(currFrame)) {
-      mKeyFrameInterval = 0;
-
-      int createMPCount = initializeMapPoints(currFrame);
-      if (createMPCount > 0) {
-        currFrame->setKeyFrame();
-      }
-    }
+    bool newMp = mLocalMap->addFrame(currFrame);
+    //if (mLocalMap->addFrame(currFrame)) {
+      //mKeyFrameInterval = 0;
+    //}
 
     //YSTODO: check quality with createdMPCount
     std::vector<db::Frame::Ptr>    frames;
@@ -94,6 +90,17 @@ void LocalTracker::process() {
 
     //frames.front()->setFixed(true);
     mVioSolver->solve(frames, mapPoints);
+
+    int createMPCount = initializeMapPoints(currFrame);
+
+    if (newMp && createMPCount > 0) {
+      ToyLogD("     Set KeyFrame : {} create Mp Count : {}",
+              currFrame->id(),
+              createMPCount);
+      currFrame->setKeyFrame();
+    }
+
+    //drawDebugView(100, 0);
 
     //drawDebugView(101, 1040);
     //drawDebugView(101, 1040);
@@ -184,9 +191,9 @@ db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& al
     }
   }
 
-  if (frames.size() > Config::Vio::maxFrameSize) {
-    return frames.front();
-  }
+  //if (frames.size() > Config::Vio::maxFrameSize) {
+  //  return frames.front();
+  //}
 
   if (keyFrames.size() > Config::Vio::maxKeyFrameSize) {
     auto& latestMap = frames.back()->getMapPointFactorMap();
@@ -280,6 +287,10 @@ db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& al
     ToyLogD("marginalize due to : distance score");
 
     return keyFrames[minIdx];
+  }
+
+  if (frames.size() > 1) {
+    return frames.front();
   }
 
   return nullptr;

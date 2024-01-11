@@ -45,7 +45,7 @@ bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
   constexpr bool REMOVE_THIS = true;
 
   if (mFrameFactors.front().first.lock() == frame) {
-    return REMOVE_THIS;
+    this->mStatus = Status::MARGINED;
   }
 
   for (auto it = mFrameFactors.begin(); it != mFrameFactors.end(); ++it) {
@@ -56,8 +56,9 @@ bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
     mFrameFactors.erase(it);
     break;
   }
-  //if (mFrameFactors.empty())
-  //  return REMOVE_THIS;
+
+  if (mFrameFactors.empty())
+    return REMOVE_THIS;
 
   return !REMOVE_THIS;
 }

@@ -31,7 +31,8 @@ protected:
 
 public:
   enum class Status {
-    DELETING   = -1,
+    DELETING   = -2,
+    MARGINED   = -1,
     INITIALING = 0,
     WAITING    = 1,
     TRACKING   = 2,

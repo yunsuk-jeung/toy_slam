@@ -10,7 +10,8 @@
 namespace toy {
 PointTracker::PointTracker(std::string type)
   : mFeatureId{0u}
-  , mType{type} {
+  , mType{type}
+  , mStereoTrackingIntervalCount{Config::Vio::stereoTrackingInterval} {
   if (mType == "Fast.OpticalflowLK") {
     mFeature2D = cv::FastFeatureDetector::create();
   }
@@ -23,6 +24,7 @@ PointTracker::~PointTracker() {}
 size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
   size_t trackedPtSize = track(prevFrame, currFrame);
   size_t prevSize      = mPrevIds.size() + 1;
+  size_t newPt         = 0u;
 
   int   found  = 0;
   auto& kptIds = currFrame->getFeature(0)->getKeypoints().mIds;
@@ -31,35 +33,43 @@ size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
       ++found;
     }
   }
-
-  //if (prevSize > mMaxFeatureSize) {
-  //  prevSize = mMaxFeatureSize;
-  //}
+  if (prevSize > mMaxFeatureSize) {
+    prevSize = mMaxFeatureSize;
+  }
 
   float ratio = float(found) / float(prevSize);
 
-  if (ratio > Config::Vio::minTrackedRatio
-      && trackedPtSize > Config::Vio::minTrackedPoint) {
-    return trackedPtSize;
+  bool bTrackStereo = false;
+
+  if (mStereoTrackingIntervalCount == Config::Vio::stereoTrackingInterval) {
+    mStereoTrackingIntervalCount = 0;
+    bTrackStereo                 = true;
+  }
+  else {
+    ++mStereoTrackingIntervalCount;
   }
 
-  //if (Config::Vio::debug)
-  ToyLogD("tracked ratio : {} = {} / {} ", ratio, found, prevSize);
+  if (ratio < Config::Vio::minTrackedRatio
+      || trackedPtSize < Config::Vio::minTrackedPoint) {
+    ToyLogD("currFrame id {} , extracting new Feature : {} = {} /{}  ",
+            currFrame->id(),
+            ratio,
+            trackedPtSize,
+            prevSize);
+    newPt = extract(currFrame);
+    mPrevIds.clear();
 
-  auto newKptSize = extract(currFrame);
-  //auto& kptIds     = currFrame->getFeature(0)->getKeypoints().mIds;
-  mPrevIds.clear();
-
-  for (auto& id : kptIds) {
-    mPrevIds.insert(id);
+    for (auto& id : kptIds) {
+      mPrevIds.insert(id);
+    }
+    bTrackStereo = true;
   }
 
-  if (trackedPtSize + newKptSize == 0)
-    return 0;
   if (currFrame->getImagePyramid(1)->type() != 1)
     return trackedPtSize;
 
-  trackStereo(currFrame);
+  if (bTrackStereo)
+    trackStereo(currFrame);
 
   return trackedPtSize;
 }
@@ -188,7 +198,8 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
   cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
 
   const double threshold = Config::Vio::epipolarThreashold;
-  cv::findEssentialMat(undists0, undists, I, cv::RANSAC, 0.99, threshold, statusE);
+  cv::findFundamentalMat(uvs0, uvs, cv::FM_RANSAC, 1.0, 0.99, statusE);
+  //cv::findEssentialMat(undists0, undists, I, cv::RANSAC, 0.99, threshold, statusE);
 
   auto  trackSize  = statusE.size();
   auto& keyPoints1 = curr->getFeature(0)->getKeypoints();
@@ -217,12 +228,12 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
     cv::Mat image1 = pyramid1[0].clone();
     cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);
 
-    for (int i = 0; i < uvs0.size(); i++) {
-      if (statusO[i] == 0 || statusE[i] == 0) {
-        cv::line(image1, uvs0[i], uvs[i], {0.0, 0.0, 255.0}, 1);
-        cv::circle(image1, uvs[i], 4, {0.0, 0.0, 255.0}, -1);
-      }
-    }
+    //for (int i = 0; i < uvs0.size(); i++) {
+    //  if (statusO[i] == 0 || statusE[i] == 0) {
+    //    cv::line(image1, uvs0[i], uvs[i], {0.0, 0.0, 0}, 1);
+    //    cv::circle(image1, uvs[i], 4, {0.0, 0.0, 0}, -1);
+    //  }
+    //}
 
     auto calcColor = [](int trackCount) -> cv::Scalar {
       trackCount   = std::max(0, std::min(trackCount, 20));
@@ -280,7 +291,8 @@ size_t PointTracker::trackStereo(db::Frame* frame) {
   cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
 
   const double threshold = Config::Vio::epipolarThreashold;
-  cv::findEssentialMat(undists0, undists1, I, cv::RANSAC, 0.99, threshold, statusE);
+  //cv::findEssentialMat(undists0, undists1, I, cv::RANSAC, 0.99, threshold, statusE);
+  cv::findFundamentalMat(uvs0, uvs1, cv::FM_RANSAC, 1.0, 0.99, statusE);
 
   auto trackSize = uvs0.size();
 

@@ -67,6 +67,12 @@ bool LocalMap::addFrame(std::shared_ptr<Frame> frame) {
     frame->addMapPointFactor(mp, factor);
     mp->addFrameFactor(frame, factor);
   }
+
+  if (newMpCount > 0) {
+    DEBUG_POINT();
+    ToyLogE("created new mp : {}", newMpCount);
+  }
+
   return newMpCount > 0;
 }
 
@@ -76,7 +82,8 @@ void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
     frames.push_back(frame);
   }
   for (auto& [id, mp] : mMapPoints) {
-    if (static_cast<int>(mp->status()) < static_cast<int>(MapPoint::Status::TRACKING)) {
+    int status = static_cast<int>(mp->status());
+    if (status < static_cast<int>(MapPoint::Status::TRACKING)) {
       continue;
     }
     if (mp->getFrameFactors().size() < 2) {

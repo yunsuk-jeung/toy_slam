@@ -22,6 +22,7 @@ public:
     static int         minTrackedPoint;
     static float       minTrackedRatio;
     static double      epipolarThreashold;
+    static int         stereoTrackingInterval;
     static bool        showExtraction;
     static bool        showMonoTracking;
     static bool        showStereoTracking;

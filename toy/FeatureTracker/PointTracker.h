@@ -41,5 +41,6 @@ protected:
   std::string            mType;
   cv::Ptr<cv::Feature2D> mFeature2D;
   std::set<int>          mPrevIds;
+  int                    mStereoTrackingIntervalCount;
 };
 }  //namespace toy

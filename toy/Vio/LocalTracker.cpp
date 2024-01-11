@@ -100,7 +100,7 @@ void LocalTracker::process() {
       currFrame->setKeyFrame();
     }
 
-    //drawDebugView(100, 0);
+    drawDebugView(100, 0);
 
     //drawDebugView(101, 1040);
     //drawDebugView(101, 1040);

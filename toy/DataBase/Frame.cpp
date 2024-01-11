@@ -147,9 +147,12 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
 
     cv::Scalar color;
     switch (mp->status()) {
-    case db::MapPoint::Status::DELETING:
-    case db::MapPoint::Status::MARGINED: {
+    case db::MapPoint::Status::DELETING: {
       continue;
+    }
+    case db::MapPoint::Status::MARGINED: {
+      color = {255, 255, 0};
+      break;
     }
     case db::MapPoint::Status::INITIALING: {
       color = {0, 255, 0};

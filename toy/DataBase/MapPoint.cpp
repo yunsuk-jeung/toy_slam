@@ -13,6 +13,7 @@ MapPoint::MapPoint(int id, int hostFrameId)
   , mBackupInvD{1.0}
   , mFixed{false} {
   mFrameFactors.reserve(50);
+  mMarginedPwx.setZero();
 }
 
 void MapPoint::addFrameFactor(std::shared_ptr<db::Frame> frame,
@@ -44,26 +45,36 @@ bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
 
   constexpr bool REMOVE_THIS = true;
 
-  if (mFrameFactors.front().first.lock() == frame) {
-    this->mStatus = Status::MARGINED;
-  }
+  auto host = mFrameFactors.front().first.lock();
 
   for (auto it = mFrameFactors.begin(); it != mFrameFactors.end(); ++it) {
-    if (it->first.lock() != frame) {
+    auto fptr = it->first.lock();
+
+    if (fptr != frame) {
       continue;
     }
 
+    if (fptr == host) {
+      mMarginedPwx = getPwx();
+      this->mStatus = Status::MARGINED;
+    }
+
     mFrameFactors.erase(it);
+
+    if (mFrameFactors.empty())
+      return REMOVE_THIS;
+
     break;
   }
-
-  if (mFrameFactors.empty())
-    return REMOVE_THIS;
 
   return !REMOVE_THIS;
 }
 
 Eigen::Vector3d MapPoint::getPwx() {
+  if (mStatus == Status::MARGINED) {
+    return mMarginedPwx;
+  }
+
   auto& [frameW, factor] = mFrameFactors.front();
   auto fPtr              = frameW.lock();
 

@@ -49,6 +49,12 @@ size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
     ++mStereoTrackingIntervalCount;
   }
 
+  //ToyLogD("currFrame id {} , ratio : {} = {} /{}  ",
+  //        currFrame->id(),
+  //        ratio,
+  //        trackedPtSize,
+  //        prevSize);
+
   if (ratio < Config::Vio::minTrackedRatio
       || trackedPtSize < Config::Vio::minTrackedPoint) {
     ToyLogD("currFrame id {} , extracting new Feature : {} = {} /{}  ",
@@ -390,7 +396,7 @@ cv::Mat PointTracker::createMask(const cv::Mat& origin, db::Feature* feature) {
 
   const int gridCols = origin.cols / colGridCount;
   const int gridRows = origin.rows / rowGridCount;
-  const int radius   = gridCols > gridRows ? gridRows >> 1 : gridCols >> 1;
+  const int radius   = gridCols > gridRows ? gridRows : gridCols ;
 
   for (const auto& uv : uvs) {
     cv::circle(mask, uv, radius, {0}, -1);

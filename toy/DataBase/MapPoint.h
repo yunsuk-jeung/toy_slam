@@ -50,6 +50,7 @@ protected:
   Eigen::Vector2d              mBackupUndist;
   double                       mBackupInvD;
   bool                         mFixed;
+  Eigen::Vector3d              mMarginedPwx;
 
 public:
   const int     id() const { return mId; }

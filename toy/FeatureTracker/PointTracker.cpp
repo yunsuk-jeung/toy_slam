@@ -9,11 +9,13 @@
 
 namespace toy {
 PointTracker::PointTracker(std::string type)
-  : mFeatureId{0}
+  : mFeatureId{0u}
   , mType{type} {
   if (mType == "Fast.OpticalflowLK") {
     mFeature2D = cv::FastFeatureDetector::create();
   }
+  mMaxFeatureSize = Config::Vio::rowGridCount * Config::Vio::colGridCount
+                    * Config::Vio::minTrackedRatio * 2.0f;
 }
 
 PointTracker::~PointTracker() {}
@@ -30,12 +32,19 @@ size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
     }
   }
 
+  //if (prevSize > mMaxFeatureSize) {
+  //  prevSize = mMaxFeatureSize;
+  //}
+
   float ratio = float(found) / float(prevSize);
 
   if (ratio > Config::Vio::minTrackedRatio
       && trackedPtSize > Config::Vio::minTrackedPoint) {
     return trackedPtSize;
   }
+
+  //if (Config::Vio::debug)
+  ToyLogD("tracked ratio : {} = {} / {} ", ratio, found, prevSize);
 
   auto newKptSize = extract(currFrame);
   //auto& kptIds     = currFrame->getFeature(0)->getKeypoints().mIds;

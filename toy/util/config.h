@@ -9,11 +9,11 @@ public:
   static bool sync;
 
   struct Vio {
-    static CameraInfo camInfo0;
-    static CameraInfo camInfo1;
-    static ImuInfo    imuInfo;
-
+    static CameraInfo  camInfo0;
+    static CameraInfo  camInfo1;
+    static ImuInfo     imuInfo;
     static bool        debug;
+    static bool        tbb;
     static int         pyramidLevel;
     static int         patchSize;
     static int         rowGridCount;
@@ -38,6 +38,7 @@ public:
 
     static double      minParallaxSqNorm;
     static std::string solverType;
+    static bool        solverLogDebug;
     static size_t      solverMinimumFrames;
     static int         reprojectionME;
     static double      reprojectionMEConst;

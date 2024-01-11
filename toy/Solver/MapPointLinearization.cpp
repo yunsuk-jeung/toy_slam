@@ -41,7 +41,7 @@ double MapPointLinearization::linearize(bool updateState) {
 
   const size_t mpCol = mJ.cols() - MP_SIZE;
 
-  //YSTODO: tbb
+  //YSTODO: tbb.... tbb might be slower
   for (auto& cost : mReprojectionCosts) {
     errSq += cost->linearlize(updateState);
 

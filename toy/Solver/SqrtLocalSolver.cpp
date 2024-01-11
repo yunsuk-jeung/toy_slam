@@ -1,4 +1,6 @@
 #include <numeric>
+#include <tbb/parallel_reduce.h>
+#include <tbb/blocked_range.h>
 #include "ToyLogger.h"
 #include "config.h"
 #include "Feature.h"
@@ -180,22 +182,36 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
     ToyLogD("MarginalFrame ID : {}, margin mapPoints : {} ",
             marginalFrame->id(),
             marginMps.size());
-    if (!marginMps.empty() > 0)
-      ToyLogD("here");
   }
 
   /*  get linearized and decomposed mappoint blocks  */
 
-  //YSTODO: TBB
-  size_t     rows             = 0u;
-  const auto cols             = mFrames->size() * db::Frame::PARAMETER_SIZE;
-  auto       mpLinearizations = mProblem->getMaPointLinearizations(marginMps);
+  size_t     rows = 0u;
+  const auto cols = mFrames->size() * db::Frame::PARAMETER_SIZE;
 
-  for (auto& linearization : mpLinearizations) {
-    linearization->linearize(true);
-    linearization->decomposeWithQR();
-    rows += (linearization->J().rows() - MP_SIZE);
-  }
+  auto mpLinearizations = mProblem->getMaPointLinearizations(marginMps);
+
+  //if (Config::Vio::tbb) {
+  //  auto sumRow = [&](const tbb::blocked_range<size_t>& r, size_t row) {
+  //    for (size_t i = r.begin(); i != r.end(); ++i) {
+  //      auto& linearization = mpLinearizations[i];
+  //      linearization->linearize(true);
+  //      linearization->decomposeWithQR();
+  //      row += (linearization->J().rows() - MP_SIZE);
+  //    }
+  //    return row;
+  //  };
+  //  auto                       mpLinearizationSize = mpLinearizations.size();
+  //  tbb::blocked_range<size_t> range(0, mpLinearizationSize);
+  //  rows = tbb::parallel_reduce(range, size_t(0), sumRow, std::plus<size_t>());
+  //}
+  //else {
+    for (auto& linearization : mpLinearizations) {
+      linearization->linearize(true);
+      linearization->decomposeWithQR();
+      rows += (linearization->J().rows() - MP_SIZE);
+    }
+  //}
 
   /*  imu factor */
 

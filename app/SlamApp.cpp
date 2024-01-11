@@ -73,7 +73,7 @@ bool SLAMApp::prepare() {
   mGraphicsCamera->cam.M.block<3, 3>(0, 0) = Qyz.toRotationMatrix();
 
   auto* simulator = (io::Simulator*)mSensor;
-  simulator->setContinuosMode(false);
+  simulator->setContinuosMode(true);
 
   ImGui::Object::RenderImpl impl = [this, simulator]() {
     ImGui::Begin("Simulator");

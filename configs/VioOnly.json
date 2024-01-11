@@ -3,7 +3,8 @@
 
   "vio": {
     "on": true,
-    "debug": true,
+    "tbb": false,
+    "debug": false,
     "frameTracker": {
       "pyramidLevel": 3,
       "feature": {
@@ -17,7 +18,7 @@
           "minTrackedRatio": 0.7,
           "epipolarThreashold": 0.005,
           "showExtraction": false,
-          "showMonoTracking": false,
+          "showMonoTracking": true,
           "showStereoTracking": false
         },
         "line": {
@@ -31,11 +32,12 @@
       "newKeframeFeatureRatio": 0.7,
       "margFeatureConnectionRatio": 0.2,
       "minKeyFrameCount": 3,
-      "maxFrameSize": 2,
-      "maxKeyFrameSize": 4,
+      "maxFrameSize": 1,
+      "maxKeyFrameSize": 6,
       "minParallaxSqNorm": 400,
       "vioSolver": {
         "name": "SqrtLocalSolver",
+        "solverLogDebug": false,
         "solverMinimumFrames": 4,
         "reprojectionME": "huber",
         "reprojectionMEConst": 1.0,

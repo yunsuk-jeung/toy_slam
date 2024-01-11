@@ -21,6 +21,7 @@ CameraInfo Config::Vio::camInfo1;
 ImuInfo    Config::Vio::imuInfo;
 
 bool        Config::Vio::debug              = false;
+bool        Config::Vio::tbb                = true;
 int         Config::Vio::pyramidLevel       = 3;
 int         Config::Vio::patchSize          = 52;
 int         Config::Vio::rowGridCount       = 12;
@@ -45,6 +46,7 @@ int    Config::Vio::maxFrameSize               = 3;
 double Config::Vio::minParallaxSqNorm          = 20;
 
 std::string Config::Vio::solverType            = "SqrtLocalSolver";
+bool        Config::Vio::solverLogDebug        = false;
 size_t      Config::Vio::solverMinimumFrames   = 4;
 int         Config::Vio::reprojectionME        = 1;
 double      Config::Vio::reprojectionMEConst   = 1.0;
@@ -71,6 +73,7 @@ void Config::parseConfig(const std::string& configFile) {
   sync               = json["sync"];
   bool vio_on        = json["vio"]["on"];
   Config::Vio::debug = json["vio"]["debug"];
+  Config::Vio::tbb   = json["vio"]["tbb"];
 
   auto frameTrackerJson = json["vio"]["frameTracker"];
   Vio::pyramidLevel     = frameTrackerJson["pyramidLevel"];
@@ -108,6 +111,7 @@ void Config::parseConfig(const std::string& configFile) {
     std::string me      = vioSolverJson["reprojectionME"];
     Vio::reprojectionME = parseME(me);
   }
+  Vio::solverLogDebug        = vioSolverJson["solverLogDebug"];
   Vio::solverMinimumFrames   = vioSolverJson["solverMinimumFrames"];
   Vio::reprojectionMEConst   = vioSolverJson["reprojectionMEConst"];
   Vio::standardFocalLength   = vioSolverJson["standardFocalLength"];

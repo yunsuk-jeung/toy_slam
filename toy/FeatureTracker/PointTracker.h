@@ -36,7 +36,8 @@ protected:
   static cv::Mat createMask(const cv::Mat& origin, db::Feature* feature);
 
 protected:
-  int                    mFeatureId;
+  size_t                 mFeatureId;
+  size_t                 mMaxFeatureSize;
   std::string            mType;
   cv::Ptr<cv::Feature2D> mFeature2D;
   std::set<int>          mPrevIds;

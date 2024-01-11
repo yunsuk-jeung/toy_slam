@@ -1,3 +1,6 @@
+#include <tbb/parallel_reduce.h>
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_for.h>
 #include "config.h"
 #include "ToyAssert.h"
 #include "DebugUtil.h"
@@ -99,7 +102,10 @@ bool SqrtProblem::solve() {
   bool terminated = false;
   bool converged  = false;
 
-  ToyLogD("-------- Start optimize --------");
+  if (Config::Vio::solverLogDebug) {
+    ToyLogD("-------- Start optimize --------");
+  }
+
   int successfulIter = 0;
   int iter           = 0;
 
@@ -191,7 +197,8 @@ bool SqrtProblem::solve() {
 
         double stepSize = frameDelta.array().abs().maxCoeff();
         //ToyLogD("frame delta : {}", ToyLogger::eigenVec(frameDelta, 4));
-        // clang-format off
+        if (Config::Vio::solverLogDebug) {
+          // clang-format off
         ToyLogD("iter : {:02d} {:<2} sucessed. {:<4}  {:03.2f}->{:03.2f}, frame step size : {:.5f}",
                 iter,
                 "",
@@ -199,8 +206,8 @@ bool SqrtProblem::solve() {
                 currErrSq,
                 newErrSq,
                 stepSize);
-        // clang-format on
-
+          // clang-format on
+        }
         if ((errDiff > 0 && errDiff < 1e-6) || stepSize < 1e-4) {
           converged  = true;
           terminated = true;
@@ -210,14 +217,16 @@ bool SqrtProblem::solve() {
         break;
       }
       else {
-        // clang-format off
+        if (Config::Vio::solverLogDebug) {
+          // clang-format off
         ToyLogD("iter : {:02d} {:<2} failed.   {:<4} {:03.5f}->{:03.5f}",
                 iter,
                 "",
                 "update lambda",
                 lambda,
                 lambda * mu);
-        // clang-format on
+          // clang-format on
+        }
 
         lambda = mu * lambda;
         mu *= muFactor;
@@ -227,7 +236,9 @@ bool SqrtProblem::solve() {
 
         if (lambda > maxLambda) {
           terminated = true;
-          ToyLogD("Solver did not converge and reached maximum damping lambda");
+          if (Config::Vio::solverLogDebug) {
+            ToyLogD("Solver did not converge and reached maximum damping lambda");
+          }
         }
       }
     }
@@ -238,10 +249,25 @@ bool SqrtProblem::solve() {
 
 double SqrtProblem::linearize(bool updateState) {
   double errSq = 0;
-  //YSTODO: tbb
-  for (auto& mpL : mMapPointLinearizations) {
-    errSq += mpL->linearize(updateState);
-  }
+
+  //if (Config::Vio::tbb) {
+  //  auto sumErrorSq = [&](const tbb::blocked_range<size_t>& r, double error) {
+  //    for (size_t i = r.begin(); i != r.end(); ++i) {
+  //      auto& mpL = mMapPointLinearizations[i];
+  //      error += mpL->linearize(updateState);
+  //    }
+  //    return error;
+  //  };
+
+  //  auto                       mpLinearizationSize = mMapPointLinearizations.size();
+  //  tbb::blocked_range<size_t> range(0, mpLinearizationSize);
+  //  errSq = tbb::parallel_reduce(range, double(0), sumErrorSq, std::plus<double>());
+  //}
+  //else {
+    for (auto& mpL : mMapPointLinearizations) {
+      errSq += mpL->linearize(updateState);
+    }
+  //}
 
   errSq += mSqrtMarginalizationCost->linearize();
 
@@ -249,10 +275,21 @@ double SqrtProblem::linearize(bool updateState) {
 }
 
 void SqrtProblem::decomposeLinearization() {
-  //YSTODO: tbb
-  for (auto& mpL : mMapPointLinearizations) {
-    mpL->decomposeWithQR();
-  }
+  //if (Config::Vio::tbb) {
+  //  auto decompose = [&](const tbb::blocked_range<size_t>& r) {
+  //    for (size_t i = r.begin(); i != r.end(); ++i) {
+  //      mMapPointLinearizations[i]->decomposeWithQR();
+  //    }
+  //  };
+  //  auto                       mpLSize = mMapPointLinearizations.size();
+  //  tbb::blocked_range<size_t> range(0, mpLSize);
+  //  tbb::parallel_for(range, decompose);
+  //}
+  //else {
+    for (auto& mpL : mMapPointLinearizations) {
+      mpL->decomposeWithQR();
+    }
+  //}
 #ifdef DEBUG_MATRIX0
   static int qridx = 0;
   int        temp  = 0;

@@ -13,6 +13,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_executable(sample_vulkan sample_vulkan.cpp )
 add_executable(sample_custom_fmt "sample_custom_fmt.cpp")
 add_executable(sample_sparse_matrix_draw "sample_sparse_matrix_draw.cpp")
+add_executable(sample_tbb "sample_tbb.cpp")
 
 target_compile_options(sample_vulkan PUBLIC
   $<$<CONFIG:Debug>:/MDd>
@@ -22,6 +23,7 @@ target_compile_options(sample_vulkan PUBLIC
 target_link_libraries(sample_vulkan PRIVATE libs vulkanLight::vulkanLight)
 target_link_libraries(sample_custom_fmt PRIVATE libs)
 target_link_libraries(sample_sparse_matrix_draw PRIVATE libs toy::toy)
+target_link_libraries(sample_tbb PRIVATE libs)
 
 # target_link_libraries(sample_optflow PRIVATE io)
 # if(WIN32)

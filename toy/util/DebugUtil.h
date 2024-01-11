@@ -55,7 +55,7 @@ void drawSparseMatrix(const std::string& name, const Matrix& mat, const int key 
   for (int i = 0; i < mat.rows(); ++i) {
     for (int j = 0; j < mat.cols(); ++j) {
       if (abs(mat(i, j)) > 1e-4 ) {
-        matrix.at<cv::uint8_t>(i, j) = cv::uint8_t(188);  //避事生稽 事張
+        matrix.at<cv::uint8_t>(i, j) = cv::uint8_t(188);
       }
     }
   }

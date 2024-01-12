@@ -17,7 +17,7 @@ void LocalMap::reset() {
   mMapPoints.clear();
 }
 
-bool LocalMap::addFrame(std::shared_ptr<Frame> frame) {
+size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {
   int frameId = frame->id();
 
   mFrames.insert({frameId, frame});
@@ -27,7 +27,8 @@ bool LocalMap::addFrame(std::shared_ptr<Frame> frame) {
   auto size0 = keyPoints0.size();
   auto size1 = keyPoints1.size();
 
-  auto newMpCount = 0;
+  mMapPointCandidates.clear();
+  size_t connected = 0u;
   for (size_t i = 0; i < size0; ++i) {
     int id = keyPoints0.mIds[i];
 
@@ -37,19 +38,21 @@ bool LocalMap::addFrame(std::shared_ptr<Frame> frame) {
     auto& uv0     = keyPoints0.mUVs[i];
     auto& undist0 = keyPoints0.mUndists[i];
 
+    bool exist = false;
     if (it == mMapPoints.end()) {
-      mp = std::make_shared<MapPoint>(id, frameId);
-      mp->setUndist({undist0.x, undist0.y});
-      ++newMpCount;
+      mp = std::make_shared<MapPoint>(id);
+      //mp->setUndist({undist0.x, undist0.y});
+      mMapPointCandidates.push_front(mp);
     }
     else {
       mp = it->second;
-      if (mp->status() == db::MapPoint::Status::WAITING) {
+      if (mp->status() == db::MapPoint::Status::INITIALING) {
         mp->setState(db::MapPoint::Status::TRACKING);
       }
+      mMapPoints.insert({mp->id(), mp});
+      exist = true;
+      ++connected;
     }
-
-    mMapPoints.insert({mp->id(), mp});
 
     auto factor = ReprojectionFactor(frame.get(),
                                      mp.get(),
@@ -63,34 +66,48 @@ bool LocalMap::addFrame(std::shared_ptr<Frame> frame) {
         factor.addStereo({uv1.x, uv1.y}, {undist1.x, undist1.y, 1.0});
       }
     }
-
-    frame->addMapPointFactor(mp, factor);
     mp->addFrameFactor(frame, factor);
+
+    if (exist) {
+      frame->addMapPointFactor(mp, factor);
+    }
   }
 
-  if (newMpCount > 0) {
-    DEBUG_POINT();
-    ToyLogE("created new mp : {}", newMpCount);
-  }
+  return connected;
+}
 
-  return newMpCount > 0;
+void LocalMap::addMapPoint(std::shared_ptr<MapPoint> mp) {
+  assert(mMapPoints.count(mp->id()) == 0);
+  mMapPoints.insert({mp->id(), mp});
 }
 
 void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
-                                std::vector<MapPoint::Ptr>& mapPoints) {
+                                std::vector<MapPoint::Ptr>& trackingMapPoints,
+                                std::vector<MapPoint::Ptr>& marginedMapPoints) {
+  frames.reserve(mFrames.size());
+  trackingMapPoints.reserve(mMapPoints.size());
+  marginedMapPoints.reserve(mFrames.size());
+
   for (auto& [id, frame] : mFrames) {
     frames.push_back(frame);
   }
+
   for (auto& [id, mp] : mMapPoints) {
     int status = static_cast<int>(mp->status());
     if (status < static_cast<int>(MapPoint::Status::TRACKING)) {
       continue;
     }
+
+    if (mp->status() == MapPoint::Status::MARGINED) {
+      marginedMapPoints.push_back(mp);
+      continue;
+    }
+
     if (mp->getFrameFactors().size() < 2) {
       continue;
     }
 
-    mapPoints.push_back(mp);
+    trackingMapPoints.push_back(mp);
   }
 }
 

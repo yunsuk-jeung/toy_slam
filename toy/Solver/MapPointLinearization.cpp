@@ -1,6 +1,7 @@
 #include "config.h"
 #include "ToyAssert.h"
 #include "CostFunction.h"
+#include "DebugUtil.h"
 #include "MapPointLinearization.h"
 
 namespace toy {
@@ -9,8 +10,8 @@ static constexpr auto COST_SIZE = ReprojectionCost::SIZE;
 static constexpr auto POSE_SIZE = db::Frame::PARAMETER_SIZE;
 static constexpr auto MP_SIZE   = db::MapPoint::PARAMETER_SIZE;
 }  //namespace
-MapPointLinearization::MapPointLinearization(db::MapPoint::Ptr   mp,
-                                             std::map<int, int>* frameIdColMap,
+MapPointLinearization::MapPointLinearization(db::MapPoint::Ptr         mp,
+                                             std::map<size_t, size_t>* frameIdColMap,
                                              std::vector<ReprojectionCost::Ptr>& costs)
   : mMapPoint{mp}
   , mFrameIdColumnMapRp{frameIdColMap} {
@@ -35,6 +36,8 @@ MapPointLinearization::MapPointLinearization(MapPointLinearization&& src) noexce
 }
 
 double MapPointLinearization::linearize(bool updateState) {
+  mJ.setZero();
+  mRes.setZero();
 
   double errSq = 0;
   size_t row   = 0;
@@ -46,8 +49,8 @@ double MapPointLinearization::linearize(bool updateState) {
     errSq += cost->linearlize(updateState);
 
     if (updateState) {
-      const int& id0 = cost->getFrameParameter0()->id();
-      const int& id1 = cost->getFrameParameter1()->id();
+      const int& id0 = cost->getFrame0()->id();
+      const int& id1 = cost->getFrame1()->id();
 
       TOY_ASSERT(mFrameIdColumnMapRp->find(id0) != mFrameIdColumnMapRp->end());
       TOY_ASSERT(mFrameIdColumnMapRp->find(id1) != mFrameIdColumnMapRp->end());
@@ -58,7 +61,7 @@ double MapPointLinearization::linearize(bool updateState) {
       mJ.block<COST_SIZE, POSE_SIZE>(row, idx0) = cost->J_f0();
       mJ.block<COST_SIZE, POSE_SIZE>(row, idx1) = cost->J_f1();
       mJ.block<COST_SIZE, MP_SIZE>(row, mpCol)  = cost->J_mp();
-      mRes.segment(row, COST_SIZE)                = cost->Res();
+      mRes.segment(row, COST_SIZE)              = cost->Res();
       row += COST_SIZE;
     }
   }
@@ -84,8 +87,8 @@ void MapPointLinearization::decomposeWithQR() {
     mJ.block(k, 0, remainingRows, mCols)
       .applyHouseholderOnTheLeft(buffer1, tau, buffer0.data());
 
-    mRes.segment(k, remainingRows).applyHouseholderOnTheLeft(buffer1, tau, buffer0.data());
-
+    mRes.segment(k, remainingRows)
+      .applyHouseholderOnTheLeft(buffer1, tau, buffer0.data());
     //ToyLogD("house holder test J : {}", ToyLogger::eigenMat(mJ));
     //ToyLogD("house holder test Res : {}", ToyLogger::eigenVec(mRes));
     //ToyLogD("");
@@ -97,7 +100,7 @@ void MapPointLinearization::decomposeWithQR() {
 }
 
 double MapPointLinearization::backSubstitue(Eigen::VectorXd& frameDelta) {
-  const auto       mpColIdx = mCols - MP_SIZE;
+  const auto mpColIdx = mCols - MP_SIZE;
 
   const auto Q1t_C  = mRes.head(MP_SIZE);
   const auto Q1t_Jp = mJ.topLeftCorner(MP_SIZE, mpColIdx);

@@ -8,7 +8,7 @@
 
 namespace toy {
 namespace db {
-int Frame::globalId = 0;
+size_t Frame::globalId = 0;
 Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   : mId{globalId++}
   , mIsKeyFrame{false}
@@ -156,10 +156,6 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
     }
     case db::MapPoint::Status::INITIALING: {
       color = {0, 255, 0};
-      break;
-    }
-    case db::MapPoint::Status::WAITING: {
-      color = {0, 255, 255};
       break;
     }
     case db::MapPoint::Status::TRACKING: {

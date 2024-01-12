@@ -25,6 +25,7 @@ private:
   using Thread<db::Frame, void>::getLatestInput;
   using Thread<db::Frame, void>::mInQueue;
 
+  int                        initializeMapPoints();
   int                        initializeMapPoints(std::shared_ptr<db::Frame> currFrame);
   std::shared_ptr<db::Frame> selectMarginalFrame(
     std::vector<std::shared_ptr<db::Frame>>& frames);

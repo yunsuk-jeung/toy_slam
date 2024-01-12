@@ -10,6 +10,11 @@
 #include "SqrtMarginalizationCost.h"
 #include "MapPointLinearization.h"
 namespace toy {
+namespace {
+static constexpr auto COST_SIZE = ReprojectionCost::SIZE;
+static constexpr auto POSE_SIZE = db::Frame::PARAMETER_SIZE;
+static constexpr auto MP_SIZE   = db::MapPoint::PARAMETER_SIZE;
+}  //namespace
 SqrtProblem::Option::Option()
   : mMaxIteration{7}
   , mLambda{1e-4}
@@ -37,9 +42,11 @@ void SqrtProblem::reset() {
   mMapPoints = nullptr;
 
   mMapPointLinearizations.clear();
+  mPoseOnlyReprojectionCosts.clear();
+  mSqrtMarginalizationCost.reset();
 }
 
-void SqrtProblem::setFrames(std::vector<db::Frame::Ptr>* framesRp) {
+void SqrtProblem::setFrames(const std::vector<db::Frame::Ptr>* framesRp) {
   mFrames = framesRp;
 
   int column = 0;
@@ -49,12 +56,17 @@ void SqrtProblem::setFrames(std::vector<db::Frame::Ptr>* framesRp) {
   }
 }
 
-void SqrtProblem::setMapPoints(std::vector<std::shared_ptr<db::MapPoint>>* mapPointsRp) {
+void SqrtProblem::setMapPoints(const std::vector<db::MapPoint::Ptr>* mapPointsRp) {
   mMapPoints = mapPointsRp;
 }
 
-void SqrtProblem::addReprojectionCost(db::MapPoint::Ptr                  mp,
-                                      std::vector<ReprojectionCost::Ptr> costs) {
+void SqrtProblem::addPoseOnlyReprojectionCost(
+  std::vector<PoseOnlyReporjectinCost::Ptr>& costs) {
+  mPoseOnlyReprojectionCosts.swap(costs);
+}
+
+void SqrtProblem::addReprojectionCost(db::MapPoint::Ptr                   mp,
+                                      std::vector<ReprojectionCost::Ptr>& costs) {
   mMapPointLinearizations.emplace_back(
     std::make_shared<MapPointLinearization>(mp, &mFrameIdColumnMap, costs));
 }
@@ -63,7 +75,7 @@ void SqrtProblem::addMarginalizationCost(SqrtMarginalizationCost::Ptr cost) {
   mSqrtMarginalizationCost = cost;
 }
 
-std::vector<MapPointLinearization::Ptr> SqrtProblem::getMaPointLinearizations(
+std::vector<MapPointLinearization::Ptr> SqrtProblem::grepMarginMapPointLinearizations(
   std::vector<db::MapPoint::Ptr>& mps) {
   if (mps.empty())
     return {};
@@ -87,7 +99,8 @@ std::vector<MapPointLinearization::Ptr> SqrtProblem::getMaPointLinearizations(
 
 bool SqrtProblem::solve() {
   const auto& frames = *mFrames;
-
+  //const auto  iTwb0  = frames.front()->getTwb();
+  
   //prepare solving
   const int Hrows = frames.size() * db::Frame::PARAMETER_SIZE;
   mH.resize(Hrows, Hrows);
@@ -118,25 +131,7 @@ bool SqrtProblem::solve() {
     mH.setZero();
     mB.setZero();
 
-    //construct hessian for frames from mapPoints
-    for (auto& mpL : mMapPointLinearizations) {
-      const Eigen::MatrixXd& vJ   = mpL->J();
-      const Eigen::VectorXd& vRes = mpL->Res();
-
-      const auto  rows = vJ.rows() - db::MapPoint::PARAMETER_SIZE;
-      const auto& cols = Hrows;
-
-      const Eigen::MatrixXd J   = vJ.bottomLeftCorner(rows, cols);
-      const Eigen::VectorXd Res = vRes.bottomRows(rows);
-
-      Eigen::MatrixXd Jt = J.transpose();
-
-      mH += Jt * J;
-      mB -= Jt * Res;
-    }
-
-    //construct hessian for frames from marginCost
-    mSqrtMarginalizationCost->addToHessian(mH, mB);
+    constructFrameHessian();
 
     while (iter <= Config::Vio::maxIteration && !terminated) {
       bool            deltaValid = false;
@@ -244,6 +239,13 @@ bool SqrtProblem::solve() {
     }
   }
 
+  //const auto nTwb0 = frames.front()->getTwb();
+  //const auto del   = iTwb0 * nTwb0.inverse();
+  //for (auto& f : frames) {
+  //  auto& Twb = f->getTwb();
+  //  Twb       = del * Twb;
+  //}
+
   return true;
 }
 
@@ -269,6 +271,10 @@ double SqrtProblem::linearize(bool updateState) {
     }
   }
 
+  for (auto& poseOnlyReporjectinCost : mPoseOnlyReprojectionCosts) {
+    errSq += poseOnlyReporjectinCost->linearlize(updateState);
+  }
+
   errSq += mSqrtMarginalizationCost->linearize();
 
   return errSq;
@@ -290,6 +296,7 @@ void SqrtProblem::decomposeLinearization() {
       mpL->decomposeWithQR();
     }
   }
+
 #ifdef DEBUG_MATRIX0
   static int qridx = 0;
   int        temp  = 0;
@@ -298,6 +305,43 @@ void SqrtProblem::decomposeLinearization() {
   }
   qridx++;
 #endif
+}
+
+void SqrtProblem::constructFrameHessian() {
+  const int Hrows = mFrames->size() * db::Frame::PARAMETER_SIZE;
+
+  //YSTODO tbb
+  for (auto& mpL : mMapPointLinearizations) {
+    const Eigen::MatrixXd& vJ = mpL->J();
+
+    const Eigen::VectorXd& vRes = mpL->Res();
+
+    const auto  rows = vJ.rows() - db::MapPoint::PARAMETER_SIZE;
+    const auto& cols = Hrows;
+
+    const Eigen::MatrixXd J   = vJ.bottomLeftCorner(rows, cols);
+    const Eigen::VectorXd Res = vRes.bottomRows(rows);
+
+    Eigen::MatrixXd Jt = J.transpose();
+
+    mH += Jt * J;
+    mB -= Jt * Res;
+  }
+
+  for (auto& cost : mPoseOnlyReprojectionCosts) {
+    auto&            J   = cost->J_f0();
+    auto&            Res = cost->Res();
+    Eigen::Matrix62d Jt  = J.transpose();
+
+    const size_t& id  = cost->getFrame()->id();
+    auto          col = mFrameIdColumnMap[id];
+
+    mH.block(col, col, POSE_SIZE, POSE_SIZE) += Jt * J;
+    mB.segment(col, POSE_SIZE) -= Jt * Res;
+  }
+
+  //construct hessian for frames from marginCost
+  mSqrtMarginalizationCost->addToHessian(mH, mB);
 }
 
 void SqrtProblem::backupParameters() {

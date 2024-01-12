@@ -16,7 +16,7 @@ public:
   DELETE_MOVE_CONSTRUCTORS(MapPoint);
 
   MapPoint() = delete;
-  MapPoint(int id, int hostFrameId);
+  MapPoint(size_t id);
 
   void addFrameFactor(std::shared_ptr<db::Frame> frame, ReprojectionFactor factor);
 
@@ -32,17 +32,17 @@ protected:
 public:
   enum class Status {
     DELETING   = -2,
-    MARGINED   = -1,
-    INITIALING = 0,
-    WAITING    = 1,
+    NONE       = 0,
+    INITIALING = 1,
     TRACKING   = 2,
+    MARGINED   = 3,
   };
 
 protected:
   using FrameFactorPair = std::pair<std::weak_ptr<db::Frame>, ReprojectionFactor>;
 
-  int                          mId;
-  int                          mHostFrameId;
+  size_t mId;
+  //size_t                       mHostFrameId;
   Status                       mStatus;
   std::vector<FrameFactorPair> mFrameFactors;
   Eigen::Vector2d              mUndist;
@@ -53,7 +53,7 @@ protected:
   Eigen::Vector3d              mMarginedPwx;
 
 public:
-  const int     id() const { return mId; }
+  const size_t  id() const { return mId; }
   const Status& status() const { return mStatus; }
   void          setState(Status status) { mStatus = status; }
 

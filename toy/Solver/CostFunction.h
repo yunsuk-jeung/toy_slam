@@ -1,7 +1,7 @@
 #pragma once
 #include "macros.h"
 #include "usings.h"
-#include "ToyLogger.h"
+#include "ToyAssert.h"
 #include "Frame.h"
 #include "MapPoint.h"
 #include "EigenUtil.h"
@@ -34,13 +34,13 @@ public:
   }
 };
 
-class PoseOnlyReprojectionCost {
+class BasicPoseOnlyReprojectionCost {
 public:
-  PoseOnlyReprojectionCost(Sophus::SE3d*     Swc,
-                           db::MapPoint::Ptr mp,
-                           Eigen::Vector2d   undist,
-                           MEstimator::Ptr   ME,
-                           double            scale = 640.0)
+  BasicPoseOnlyReprojectionCost(Sophus::SE3d*     Swc,
+                                db::MapPoint::Ptr mp,
+                                Eigen::Vector2d   undist,
+                                MEstimator::Ptr   ME,
+                                double            scale = 640.0)
     : mSwc{Swc}
     , mMapPoint{mp}
     , mJ{Eigen::Matrix26d::Zero()}
@@ -50,8 +50,7 @@ public:
     , mScale{scale} {}
 
   double linearlize() {
-    Eigen::Vector3d Pwx = mMapPoint->getPwx();
-
+    Eigen::Vector3d Pwx  = mMapPoint->getPwx();
     Sophus::SE3d    Scw  = mSwc->inverse();
     Eigen::Matrix3d Rcw  = Scw.rotationMatrix();
     Eigen::Vector3d Pcx  = Scw * Pwx;
@@ -108,6 +107,97 @@ public:
   db::MapPoint::Ptr getMapPoint() { return mMapPoint; }
 };
 
+class PoseOnlyReporjectinCost {
+public:
+  USING_SMART_PTR(PoseOnlyReporjectinCost);
+  PoseOnlyReporjectinCost() = delete;
+  PoseOnlyReporjectinCost(db::Frame::Ptr         f0,
+                          Sophus::SE3d&          Tbc,
+                          db::MapPoint::Ptr      mp,
+                          const Eigen::Vector3d& maesurement,
+                          MEstimator::Ptr        ME,
+                          double                 sqrtInfo = 640.0)
+    : mF{f0}
+    , mMp{mp}
+    , mZ{maesurement}
+    , mME{ME}
+    , mSqrtInfo{sqrtInfo} {
+    mTcb = Tbc.inverse();
+    mRes.setZero();
+    mJ_f0.setZero();
+  }
+
+  virtual double linearlize(bool updateState) {
+    //TOY_ASSERT(mMp->status() == db::MapPoint::Status::MARGINED);
+
+    const Sophus::SE3d    Tbw = mF->Twb().inverse();
+    const Eigen::Vector3d Pwx = mMp->getPwx();
+    const Eigen::Vector3d Pcx = (mTcb * Tbw) * Pwx;
+
+    double z  = Pcx.z();
+    double iz = 1.0 / z;
+
+    Eigen::Vector3d nPc1x = Pcx * iz;
+    Eigen::Vector2d cost  = mSqrtInfo * (nPc1x - mZ).head(2);
+
+    double cSq    = cost.squaredNorm();
+    double errSq  = cSq;
+    double weight = 1.0;
+
+    if (mME) {
+      std::tie(errSq, weight) = mME->computeError(cSq);
+    }
+
+    if (updateState) {
+      const Eigen::Vector3d Pbx = Tbw * Pwx;
+      Eigen::Matrix3d       Rcb = mTcb.so3().matrix();
+      Eigen::Matrix3d       Rcw = Rcb * Tbw.so3().matrix();
+
+      double sqrtW = std::sqrt(weight);
+
+      mRes = sqrtW * cost;
+
+      double           izSq = iz * iz;
+      Eigen::Matrix23d reduce;
+      reduce << iz, 0.0, -Pcx.x() * izSq, 0.0, iz, -Pcx.y() * izSq;
+
+      double totalSqrtInfo = sqrtW * mSqrtInfo;
+
+      Eigen::Matrix36d J;
+
+      if (mF->fixed()) {
+        mJ_f0.setZero();
+      }
+      else {
+        J.block<3, 3>(0, 0) = -Rcw;
+        J.block<3, 3>(0, 3) = Rcb * Eigen::skew(Pbx);
+        mJ_f0               = totalSqrtInfo * reduce * J;
+      }
+    }
+
+    return errSq;
+  }
+
+protected:
+  db::Frame::Ptr mF;
+  Sophus::SE3d   mTcb;
+
+  db::MapPoint::Ptr mMp;
+
+  Eigen::Vector3d mZ;  //measurement
+
+  MEstimator::Ptr mME;
+  double          mSqrtInfo;
+
+  Eigen::Vector2d  mRes;   //cost
+  Eigen::Matrix26d mJ_f0;  //jacobian for host
+
+public:
+  const Eigen::Vector2d&  Res() const { return mRes; }
+  const Eigen::Matrix26d& J_f0() const { return mJ_f0; }
+  db::Frame::Ptr          getFrame() { return mF; }
+};
+
 class ReprojectionCost {
 public:
   USING_SMART_PTR(ReprojectionCost);
@@ -120,8 +210,8 @@ public:
                    const Eigen::Vector3d& maesurement,
                    MEstimator::Ptr        ME,
                    double                 sqrtInfo = 640.0)
-    : mFP0{fs0}
-    , mFP1{fs1}
+    : mF0{fs0}
+    , mF1{fs1}
     , mMp{mp}
     , mZ{maesurement}
     , mME{ME}
@@ -135,8 +225,8 @@ public:
   }
 
   virtual double linearlize(bool updateState) {
-    const Sophus::SE3d& Twb0 = mFP0->Twb();
-    const Sophus::SE3d  Tb1w = mFP1->Twb().inverse();
+    const Sophus::SE3d& Twb0 = mF0->Twb();
+    const Sophus::SE3d  Tb1w = mF1->Twb().inverse();
 
     const Eigen::Matrix3d Rwb0 = Twb0.rotationMatrix();
     const Eigen::Vector3d Pwb0 = Twb0.translation();
@@ -183,7 +273,7 @@ public:
 
       Eigen::Matrix36d J;
 
-      if (mFP0->fixed()) {
+      if (mF0->fixed()) {
         mJ_f0.setZero();
       }
       else {
@@ -192,7 +282,7 @@ public:
         mJ_f0               = totalSqrtInfo * reduce * J;
       }
 
-      if (mFP1->fixed()) {
+      if (mF1->fixed()) {
         mJ_f1.setZero();
       }
       else {
@@ -219,8 +309,8 @@ public:
   static constexpr int SIZE = 2;
 
 protected:
-  db::Frame::Ptr mFP0;
-  db::Frame::Ptr mFP1;
+  db::Frame::Ptr mF0;
+  db::Frame::Ptr mF1;
 
   Eigen::Matrix3d mRb0c0;
   Eigen::Vector3d mPb0c0;
@@ -240,9 +330,9 @@ protected:
   Eigen::Matrix23d mJ_mp;  //jacobian for mp
 
 public:
-  db::Frame::Ptr    getFrameParameter0() { return mFP0; }
-  db::Frame::Ptr    getFrameParameter1() { return mFP1; }
-  db::MapPoint::Ptr getMapPointParameter() { return mMp; }
+  db::Frame::Ptr    getFrame0() { return mF0; }
+  db::Frame::Ptr    getFrame1() { return mF1; }
+  db::MapPoint::Ptr getMapPoint() { return mMp; }
 
   const Eigen::Vector2d&  Res() const { return mRes; }
   const Eigen::Matrix26d& J_f0() const { return mJ_f0; }

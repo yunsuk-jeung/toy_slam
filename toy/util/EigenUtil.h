@@ -4,7 +4,7 @@
 namespace Eigen {
 
 template <typename T>
-static Eigen::Matrix<T, 3, 3> skew(Eigen::Matrix<T, 3, 1>& src) {
+static Eigen::Matrix<T, 3, 3> skew(const Eigen::Matrix<T, 3, 1>& src) {
   Eigen::Matrix<T, 3, 3> skew = Eigen::Matrix3d::Zero();
   skew(0, 1)                  = -src[2];
   skew(0, 2)                  = src[1];

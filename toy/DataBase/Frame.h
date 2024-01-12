@@ -58,9 +58,9 @@ protected:
   using MapPointFactorMap = std::map<std::weak_ptr<db::MapPoint>,
                                      ReprojectionFactor,
                                      std::owner_less<std::weak_ptr<db::MapPoint>>>;
-  static int globalId;
-  int        mId;
-  bool       mIsKeyFrame;
+  static size_t globalId;
+  size_t        mId;
+  bool          mIsKeyFrame;
 
   std::array<std::unique_ptr<ImagePyramid>, 2> mImagePyramids;
   std::array<std::unique_ptr<Camera>, 2>       mCameras;
@@ -85,7 +85,7 @@ protected:
   bool mFixed;
 
 public:
-  const int           id() const { return mId; }
+  const size_t        id() const { return mId; }
   void                setKeyFrame() { mIsKeyFrame = true; }
   const bool          isKeyFrame() const { return mIsKeyFrame; }
   ImagePyramid*       getImagePyramid(int i) { return mImagePyramids[i].get(); }

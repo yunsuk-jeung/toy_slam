@@ -5,10 +5,9 @@
 namespace toy {
 namespace db {
 
-MapPoint::MapPoint(int id, int hostFrameId)
-  : mId{id}
-  , mHostFrameId{hostFrameId}
-  , mStatus{Status::INITIALING}
+MapPoint::MapPoint(size_t id)
+  : mId{id}  //, mHostFrameId{hostFrameId}
+  , mStatus{Status::NONE}
   , mInvDepth{1.0}
   , mBackupInvD{1.0}
   , mFixed{false} {
@@ -55,7 +54,7 @@ bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
     }
 
     if (fptr == host) {
-      mMarginedPwx = getPwx();
+      mMarginedPwx  = getPwx();
       this->mStatus = Status::MARGINED;
     }
 

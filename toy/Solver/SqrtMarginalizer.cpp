@@ -6,9 +6,8 @@
 #include "SqrtMarginalizer.h"
 #include "DebugUtil.h"
 
-
 namespace toy {
-void SqrtMarginalizer::setFrames(std::vector<db::Frame::Ptr>& frames) {
+void SqrtMarginalizer::setFrames(const std::vector<db::Frame::Ptr>& frames) {
   auto size = mJ.cols() / db::Frame::PARAMETER_SIZE;
   mFrames.resize(size);
   std::copy(frames.begin(), frames.begin() + size, mFrames.begin());
@@ -43,6 +42,7 @@ void SqrtMarginalizer::marginalize(Eigen::VectorXi& indices,
   //debug::drawSparseMatrix("after QR", mJ , 1);
 
   //ToyLogD("final QR {}", ToyLogger::eigenMat(mJ, 2));
+  //ToyLogD("final QR {}", ToyLogger::eigenVec(mRes, 2));
   //ToyLogD("=============================================================");
 }
 

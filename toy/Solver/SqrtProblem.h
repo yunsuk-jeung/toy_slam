@@ -11,6 +11,7 @@ class Frame;
 class MapPoint;
 }  //namespace db
 class SqrtMarginalizationCost;
+class PoseOnlyReporjectinCost;
 class ReprojectionCost;
 class MapPointLinearization;
 class SqrtProblem {
@@ -20,15 +21,18 @@ public:
   ~SqrtProblem();
 
   void reset();
-  void setFrames(std::vector<std::shared_ptr<db::Frame>>* framesRp);
-  void setMapPoints(std::vector<std::shared_ptr<db::MapPoint>>* mapPointsRp);
+  void setFrames(const std::vector<std::shared_ptr<db::Frame>>* framesRp);
+  void setMapPoints(const std::vector<std::shared_ptr<db::MapPoint>>* mapPointsRp);
 
-  void addReprojectionCost(std::shared_ptr<db::MapPoint>                  mp,
-                           std::vector<std::shared_ptr<ReprojectionCost>> costs);
+  void addPoseOnlyReprojectionCost(
+    std::vector<std::shared_ptr<PoseOnlyReporjectinCost>>& costs);
+
+  void addReprojectionCost(std::shared_ptr<db::MapPoint>                   mp,
+                           std::vector<std::shared_ptr<ReprojectionCost>>& costs);
 
   void addMarginalizationCost(std::shared_ptr<SqrtMarginalizationCost> cost);
 
-  std::vector<std::shared_ptr<MapPointLinearization>> getMaPointLinearizations(
+  std::vector<std::shared_ptr<MapPointLinearization>> grepMarginMapPointLinearizations(
     std::vector<std::shared_ptr<db::MapPoint>>& mps);
 
   bool solve();
@@ -36,6 +40,7 @@ public:
 protected:
   double linearize(bool updateState);
   void   decomposeLinearization();
+  void   constructFrameHessian();
   void   backupParameters();
   void   restoreParameters();
 
@@ -53,13 +58,14 @@ public:
 protected:
   //std::map<int, FrameParameter>*                      mFrameParameterMapRpt;
   //std::map<int, MapPointParameter>*                   mMapPointParameterMapRpt;
-  std::map<int, int>                          mFrameIdColumnMap;
-  std::vector<std::shared_ptr<db::Frame>>*    mFrames;
-  std::vector<std::shared_ptr<db::MapPoint>>* mMapPoints;
+  std::map<size_t, size_t>                          mFrameIdColumnMap;
+  const std::vector<std::shared_ptr<db::Frame>>*    mFrames;
+  const std::vector<std::shared_ptr<db::MapPoint>>* mMapPoints;
 
   std::vector<std::shared_ptr<MapPointLinearization>> mMapPointLinearizations;
 
-  std::shared_ptr<SqrtMarginalizationCost> mSqrtMarginalizationCost;
+  std::vector<std::shared_ptr<PoseOnlyReporjectinCost>> mPoseOnlyReprojectionCosts;
+  std::shared_ptr<SqrtMarginalizationCost>              mSqrtMarginalizationCost;
 
   Eigen::MatrixXd mH;
   Eigen::VectorXd mB;
@@ -69,6 +75,6 @@ public:
     return mSqrtMarginalizationCost;
   }
 
-  std::map<int, int>& getFrameIdColumnMap() { return mFrameIdColumnMap; };
+  std::map<size_t, size_t>& getFrameIdColumnMap() { return mFrameIdColumnMap; };
 };
 }  //namespace toy

@@ -4,6 +4,8 @@
 #include "ToyLogger.h"
 #include "config.h"
 #include "Feature.h"
+#include "ImagePyramid.h"
+#include "Camera.h"
 #include "MapPoint.h"
 #include "Frame.h"
 #include "Factor.h"
@@ -55,13 +57,14 @@ SqrtLocalSolver::SqrtLocalSolver() {
 
 SqrtLocalSolver::~SqrtLocalSolver() {}
 
-bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
-                            std::vector<db::MapPoint::Ptr>& mapPoints) {
+bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
+                            const std::vector<db::MapPoint::Ptr>& trackingMapPoints,
+                            const std::vector<db::MapPoint::Ptr>& marginedMapPoints) {
   if (frames.size() < Config::Vio::solverMinimumFrames)
     return false;
 
   mFrames    = &frames;
-  mMapPoints = &mapPoints;
+  mMapPoints = &trackingMapPoints;
 
   for (auto& f : *mFrames) {
     f->resetDelta();
@@ -76,7 +79,60 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
   MEstimator::Ptr reProjME    = createReprojectionMEstimator();
   const double&   focalLength = Config::Vio::standardFocalLength;
 
-  for (auto& mp : mapPoints) {
+  //add margin mappoints for anchor
+  {
+    //std::map<size_t, cv::Mat> images;
+    //for (auto& f : *mFrames) {
+    //  cv::Mat mat = f->getImagePyramid(0)->getOrigin().clone();
+    //  cv::cvtColor(mat, mat, CV_GRAY2BGR);
+    //  images[f->id()] = mat;
+    //}
+
+    using PORC = PoseOnlyReporjectinCost;
+    std::vector<PORC::Ptr> costs;
+    costs.reserve(marginedMapPoints.size() * frames.size());
+    for (auto& mp : marginedMapPoints) {
+      auto& frameFactors = mp->getFrameFactors();
+      if (mp->status() == db::MapPoint::Status::MARGINED) {
+        for (auto& frameFactor : frameFactors) {
+          db::Frame::Ptr   frame0  = frameFactor.first.lock();
+          Eigen::Vector3d& undist0 = frameFactor.second.undist0();
+          Sophus::SE3d&    Tbc0    = frame0->getTbc(0);
+
+          PORC::Ptr cost = std::make_shared<PORC>(frame0, Tbc0, mp, undist0, reProjME);
+          costs.push_back(cost);
+          //{
+          //  cv::Mat& image = images[frame0->id()];
+          //  auto     uv0   = frameFactor.second.uv0();
+          //  cv::circle(image, cv::Point2f(uv0.x(), uv0.y()), 5, {255, 0, 0}, -1);
+
+          //Eigen::Vector3d Xcx  = frame0->getTwc(0).inverse() * mp->getPwx();
+          //Eigen::Vector3d nXcx = Xcx / Xcx.z();
+          //auto            proj = frame0->getCamera(0)->project(nXcx);
+          //cv::circle(image, proj, 3, {0, 0, 255}, -1);
+          //}
+
+          if (frameFactor.second.type() != db::ReprojectionFactor::Type::STEREO)
+            continue;
+
+          Eigen::Vector3d& undist1 = frameFactor.second.undist1();
+          Sophus::SE3d&    Tbc1    = frame0->getTbc(1);
+          PORC::Ptr cost2 = std::make_shared<PORC>(frame0, Tbc1, mp, undist1, reProjME);
+          costs.push_back(cost2);
+        }
+      }
+    }
+    //if (!marginedMapPoints.empty()) {
+    //  int idx = 0;
+    //  for (auto& [id, mat] : images) {
+    //    cv::imshow(std::to_string(idx++), mat);
+    //  }
+    //  cv::waitKey();
+    //}
+    mProblem->addPoseOnlyReprojectionCost(costs);
+  }
+
+  for (auto& mp : *mMapPoints) {
     auto& frameFactors = mp->getFrameFactors();
 
     std::vector<ReprojectionCost::Ptr> costs;
@@ -103,7 +159,7 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
       costs.push_back(cost);
     }
     //add stereo reprojection cost for sub cam
-    if (it->second.getType() == db::ReprojectionFactor::Type::STEREO) {
+    if (it->second.type() == db::ReprojectionFactor::Type::STEREO) {
       Sophus::SE3d&    Tbc1    = frame0->getTbc(1);
       Eigen::Vector3d& undist1 = it->second.undist1();
 
@@ -135,7 +191,7 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
                                                                       focalLength);
       costs.push_back(cost);
 
-      if (it->second.getType() != db::ReprojectionFactor::Type::STEREO)
+      if (it->second.type() != db::ReprojectionFactor::Type::STEREO)
         continue;
 
       Sophus::SE3d&    Tbc2    = frame1->getTbc(1);
@@ -155,7 +211,7 @@ bool SqrtLocalSolver::solve(std::vector<db::Frame::Ptr>&    frames,
     mProblem->addReprojectionCost(mp, costs);
   }
 
-  mMarginalizer->setFrames(frames);
+  mMarginalizer->setFrames(*mFrames);
   auto marginCost = mMarginalizer->createMarginCost();
   mProblem->addMarginalizationCost(marginCost);
 
@@ -189,7 +245,7 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
   size_t     rows = 0u;
   const auto cols = mFrames->size() * db::Frame::PARAMETER_SIZE;
 
-  auto mpLinearizations = mProblem->getMaPointLinearizations(marginMps);
+  auto mpLinearizations = mProblem->grepMarginMapPointLinearizations(marginMps);
 
   if (Config::Vio::tbb) {
     auto sumRow = [&](const tbb::blocked_range<size_t>& r, size_t row) {
@@ -248,8 +304,8 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
     currRow += J.rows();
   }
 
-  std::map<int, int>& frameColumnMap = mProblem->getFrameIdColumnMap();
-  auto                marginColStart = frameColumnMap[marginFrameId];
+  std::map<size_t, size_t>& frameColumnMap = mProblem->getFrameIdColumnMap();
+  auto                      marginColStart = frameColumnMap[marginFrameId];
 
   Eigen::VectorXi indices(cols);
   auto            indexBegin = indices.begin();

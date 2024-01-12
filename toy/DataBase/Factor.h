@@ -52,7 +52,7 @@ protected:
   Eigen::Vector3d mUndist1;
 
 public:
-  const Type       getType() const { return mType; }
+  const Type       type() const { return mType; }
   Eigen::Vector2d& uv0() { return mUV0; }
   Eigen::Vector3d& undist0() { return mUndist0; }
   Eigen::Vector2d& uv1() { return mUV1; }

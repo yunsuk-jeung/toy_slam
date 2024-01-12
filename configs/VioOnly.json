@@ -3,7 +3,7 @@
 
   "vio": {
     "on": true,
-    "tbb": true,
+    "tbb": false,
     "debug": false,
     "frameTracker": {
       "pyramidLevel": 3,
@@ -17,7 +17,7 @@
           "minTrackedPoint": 30,
           "minTrackedRatio": 0.7,
           "epipolarThreashold": 0.005,
-          "stereoTrackingInterval": 3,
+          "stereoTrackingInterval": 1,
           "showExtraction": false,
           "showMonoTracking": true,
           "showStereoTracking": false

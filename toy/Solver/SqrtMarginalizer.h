@@ -15,7 +15,7 @@ public:
   SqrtMarginalizer()  = default;
   ~SqrtMarginalizer() = default;
 
-  void setFrames(std::vector<std::shared_ptr<db::Frame>>& frames);
+  void setFrames(const std::vector<std::shared_ptr<db::Frame>>& frames);
   std::shared_ptr<SqrtMarginalizationCost> createMarginCost();
 
   void marginalize(Eigen::VectorXi& indices, Eigen::MatrixXd& J, Eigen::VectorXd& Res);
@@ -28,7 +28,6 @@ protected:
                        size_t&          validBlockRows);
 
 protected:
-
   Eigen::MatrixXd mJ;
   Eigen::VectorXd mRes;
 

@@ -120,9 +120,9 @@ void LocalTracker::process() {
     //            createMPCount);
     //  }
 
-    if (currFrame->id() > 2800) {
+    if (currFrame->id() > 2600) {
       drawDebugView(100, 0);
-      cv::waitKey();
+      cv::waitKey(1);
     }
 
     //drawDebugView(101, 1040);

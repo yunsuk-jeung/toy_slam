@@ -19,7 +19,7 @@
           "epipolarThreashold": 0.005,
           "stereoTrackingInterval": 1,
           "showExtraction": false,
-          "showMonoTracking": false,
+          "showMonoTracking": true,
           "showStereoTracking": false
         },
         "line": {

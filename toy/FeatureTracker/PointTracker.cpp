@@ -207,6 +207,36 @@ size_t PointTracker::track(db::Frame* prev, db::Frame* curr) {
   cv::findFundamentalMat(uvs0, uvs, cv::FM_RANSAC, 1.0, 0.99, statusE);
   //cv::findEssentialMat(undists0, undists, I, cv::RANSAC, 0.99, threshold, statusE);
 
+  std::vector<cv::Point2f> reverse_uvs;
+  std::vector<uchar>       reverse_status;
+
+  cv::calcOpticalFlowPyrLK(pyramid1,
+                           pyramid0,
+                           uvs,
+                           reverse_uvs,
+                           reverse_status,
+                           cv::noArray(),
+                           patch,
+                           Config::Vio::pyramidLevel);
+
+  for (size_t i = 0; i < reverse_status.size(); ++i) {
+    if (!statusO[i]) {
+      continue;
+    }
+
+    if (!reverse_status[i]) {
+      statusO[i] = false;
+      continue;
+    }
+
+    //cv::Point2f dist       = uvs0[i] - reverse_uvs[i];
+    //float       distNormSq = dist.x * dist.x + dist.y * dist.y;
+
+    //if (distNormSq > 5) {
+    //statusO[i] = false;
+    //}
+  }
+
   auto  trackSize  = statusE.size();
   auto& keyPoints1 = curr->getFeature(0)->getKeypoints();
   keyPoints1.reserve(trackSize);
@@ -396,7 +426,7 @@ cv::Mat PointTracker::createMask(const cv::Mat& origin, db::Feature* feature) {
 
   const int gridCols = origin.cols / colGridCount;
   const int gridRows = origin.rows / rowGridCount;
-  const int radius   = gridCols > gridRows ? gridRows : gridCols ;
+  const int radius   = gridCols > gridRows ? gridRows : gridCols;
 
   for (const auto& uv : uvs) {
     cv::circle(mask, uv, radius, {0}, -1);

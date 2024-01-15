@@ -15,7 +15,8 @@ Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   , mImagePyramids{std::move(set->mImagePyramid0), std::move(set->mImagePyramid1)}
   , mCameras{nullptr, nullptr}
   , mFeatures{std::make_unique<Feature>(), std::make_unique<Feature>()}
-  , mFixed{false} {}
+  , mFixed{false}
+  , mLinearized{false} {}
 
 Frame::Frame(Frame* src) {
   this->mId         = src->mId;
@@ -42,6 +43,7 @@ Frame::Frame(Frame* src) {
   this->mDelta       = src->mDelta;
   this->mBackupDelta = src->mBackupDelta;
   this->mFixed       = src->mFixed;
+  this->mLinearized  = src->mLinearized;
 }
 
 Frame::~Frame() {
@@ -149,6 +151,10 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
     switch (mp->status()) {
     case db::MapPoint::Status::DELETING: {
       continue;
+    }
+    case db::MapPoint::Status::NONE: {
+      color = {0, 0, 0};
+      break;
     }
     case db::MapPoint::Status::MARGINED: {
       color = {255, 255, 0};

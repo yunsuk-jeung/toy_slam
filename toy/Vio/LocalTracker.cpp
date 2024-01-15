@@ -16,7 +16,7 @@ constexpr bool NO_IMU = true;
 LocalTracker::LocalTracker()
   : mStatus{Status::NONE}
   , mLocalMap{nullptr}
-  , mKeyFrameInterval{0} {}
+  , mKeyFrameAfter{100} {}
 
 LocalTracker::~LocalTracker() {
   mLocalMap.reset();
@@ -54,7 +54,7 @@ void LocalTracker::process() {
     mLocalMap->addFrame(currFrame);
 
     currFrame->setKeyFrame();
-    int  createMPCount = initializeMapPoints();
+    int  createMPCount = initializeMapPoints(currFrame);
     bool OK            = createMPCount > Config::Vio::initializeMapPointCount;
 
     if (OK) {
@@ -67,7 +67,7 @@ void LocalTracker::process() {
     break;
   }
   case Status::TRACKING: {
-    ++mKeyFrameInterval;
+    ++mKeyFrameAfter;
 
     //YSTODO: changed if imu exists;
     if (NO_IMU) {
@@ -93,21 +93,25 @@ void LocalTracker::process() {
 
     bool setKf = false;
 
-    float ratio = float(connected)
-                  / float(mLocalMap->getMapPoints().size());
+    //float ratio = float(connected) / float(mLocalMap->getMapPoints().size());
+    float ratio = float(connected) / float(currFrame->getMapPointFactorMap().size());
 
     if (ratio < 0.8) {
-      ToyLogD("wtf : {}= {} /{}",
+      /*ToyLogD("{}th frame, mp ratio : {}= {} /{}",
+              currFrame->id(),
               ratio,
               connected,
-              mLocalMap->getMapPoints().size());
+              currFrame->getMapPointFactorMap().size());*/
       setKf = true;
     }
 
     if (setKf) {
-      int createMPCount = initializeMapPoints();
-      ToyLogD("createMP : {} " ,createMPCount);
-      currFrame->setKeyFrame();
+      int createMPCount = initializeMapPoints(currFrame);
+      //ToyLogD("{}th frame, createMP : {} ", currFrame->id(), createMPCount);
+      if (createMPCount > 10 && mKeyFrameAfter > 1) {
+        currFrame->setKeyFrame();
+        mKeyFrameAfter = 0;
+      }
     }
 
     //if (newMp > 0) && createMPCount > 0) {
@@ -116,7 +120,10 @@ void LocalTracker::process() {
     //            createMPCount);
     //  }
 
-    drawDebugView(100, 0);
+    if (currFrame->id() > 2800) {
+      drawDebugView(100, 0);
+      cv::waitKey();
+    }
 
     //drawDebugView(101, 1040);
     //drawDebugView(101, 1040);
@@ -140,78 +147,133 @@ void LocalTracker::process() {
   setDataToInfo();
 }
 
-int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
-  auto& mapPointFactorMap = currFrame->getMapPointFactorMap();
+//int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
+//  auto& mapPointFactorMap = currFrame->getMapPointFactorMap();
+//
+//  auto            Twc0  = currFrame->getTwc(0);
+//  auto            Twc1  = currFrame->getTwc(1);  //identity for mono or depth..
+//  auto            Tc1c0 = Twc1.inverse() * Twc0;
+//  Eigen::Vector3d Pc0x;
+//
+//  int successCount = 0;
+//  int tryCount     = 0;
+//  for (auto& [mpWeak, factor] : mapPointFactorMap) {
+//    auto mp = mpWeak.lock();
+//    if (mp->status() != db::MapPoint::Status::INITIALING)
+//      continue;
+//    ++tryCount;
+//
+//    switch (factor.type()) {
+//    case db::ReprojectionFactor::Type::MONO: {
+//      break;
+//    }
+//    case db::ReprojectionFactor::Type::STEREO: {
+//      if (!BasicSolver::triangulate(factor.undist0(), factor.undist1(), Tc1c0, Pc0x)) {
+//        continue;
+//      }
+//
+//      double invD = 1.0 / Pc0x.z();
+//      //Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
+//      //mp->setUndist(nuv);
+//      mp->setInvDepth(invD);
+//      mp->setState(db::MapPoint::Status::INITIALING);
+//      ++successCount;
+//      break;
+//    }
+//    case db::ReprojectionFactor::Type::DEPTH: {
+//      break;
+//    }
+//    }
+//  }
+//
+//  if (Config::Vio::debug) {
+//    ToyLogD("triangulation successed {} / {}", successCount, tryCount);
+//  }
+//
+//  if (Config::Vio::showStereoTracking) {
+//    currFrame->drawReprojectionView(0, "tri0");
+//    currFrame->drawReprojectionView(1, "tri1");
+//    cv::waitKey();
+//  }
+//
+//  return successCount;
+//}
 
-  auto            Twc0  = currFrame->getTwc(0);
-  auto            Twc1  = currFrame->getTwc(1);  //identity for mono or depth..
-  auto            Tc1c0 = Twc1.inverse() * Twc0;
-  Eigen::Vector3d Pc0x;
+int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
+  auto& mpCands = mLocalMap->getMapPointCandidiates();
 
-  int successCount = 0;
-  int tryCount     = 0;
-  for (auto& [mpWeak, factor] : mapPointFactorMap) {
-    auto mp = mpWeak.lock();
-    if (mp->status() != db::MapPoint::Status::INITIALING)
-      continue;
-    ++tryCount;
+  //cv::Mat image = currFrame->getImagePyramid(0)->getOrigin().clone();
+  //cv::cvtColor(image, image, CV_GRAY2BGR);
 
-    switch (factor.type()) {
-    case db::ReprojectionFactor::Type::MONO: {
-      break;
-    }
-    case db::ReprojectionFactor::Type::STEREO: {
-      if (!BasicSolver::triangulate(factor.undist0(), factor.undist1(), Tc1c0, Pc0x)) {
-        continue;
-      }
-
-      double invD = 1.0 / Pc0x.z();
-      //Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
-      //mp->setUndist(nuv);
-      mp->setInvDepth(invD);
-      mp->setState(db::MapPoint::Status::INITIALING);
-      ++successCount;
-      break;
-    }
-    case db::ReprojectionFactor::Type::DEPTH: {
-      break;
-    }
-    }
-  }
-
-  if (Config::Vio::debug) {
-    ToyLogD("triangulation successed {} / {}", successCount, tryCount);
-  }
-
-  if (Config::Vio::showStereoTracking) {
-    currFrame->drawReprojectionView(0, "tri0");
-    currFrame->drawReprojectionView(1, "tri1");
-    cv::waitKey();
-  }
-
-  return successCount;
-}
-
-int LocalTracker::initializeMapPoints() {
-  auto& mpCands   = mLocalMap->getMapPointCandidiates();
-  int   initCount = 0;
-  for (auto& mp : mpCands) {
+  int initCount     = 0;
+  int monoInitCount = 0;
+  int tryCount      = 0;
+  int candSize      = mpCands.size();
+  for (auto it = mpCands.begin(); it != mpCands.end();) {
+    bool  success      = false;
+    auto& mp           = it->second;
     auto& frameFactors = mp->getFrameFactors();
     auto& factor       = frameFactors.back().second;
     auto& frame        = frameFactors.back().first.lock();
 
+    Eigen::Vector3d Pc0x;
     switch (factor.type()) {
     case db::ReprojectionFactor::Type::STEREO: {
-      auto            Twc0  = frame->getTwc(0);
-      auto            Twc1  = frame->getTwc(1);  //identity for mono or depth..
-      auto            Tc1c0 = Twc1.inverse() * Twc0;
-      Eigen::Vector3d Pc0x;
+      auto Twc0  = frame->getTwc(0);
+      auto Twc1  = frame->getTwc(1);  //identity for mono or depth..
+      auto Tc1c0 = Twc1.inverse() * Twc0;
 
       if (!BasicSolver::triangulate(factor.undist0(), factor.undist1(), Tc1c0, Pc0x)) {
-        ToyLogE("triangulation fail");
+        //ToyLogE("stereo triangulation fail");
+        ++it;
+        continue;
+      }
+      ++initCount;
+      success = true;
+      break;
+    }
+    case db::ReprojectionFactor::Type::DEPTH: {
+      TOY_ASSERT_MESSAGE(0, "not implemented");
+      break;
+    }
+    default:
+      auto frame0 = frameFactors.front().first.lock();
+      if (frame == frame0) {
+        ++it;
+        continue;
+      }
+      auto  Twc0    = frame0->getTwc(0);
+      auto& factor0 = frameFactors.front().second;
+
+      auto Twc1  = frame->getTwc(0);
+      auto Tc1c0 = Twc1.inverse() * Twc0;
+
+      if (Tc1c0.translation().squaredNorm() < Config::Vio::minTriangulationBaselineSq) {
+        ++it;
         continue;
       }
 
+      if (!BasicSolver::triangulate(factor0.undist0(), factor.undist0(), Tc1c0, Pc0x)) {
+        auto id = frameFactors.front().first.lock()->id();
+        //ToyLogE("triangulation fail  frame {} -- frame {}", id, frame->id());
+        ++it;
+        continue;
+      }
+      //if (currFrame == frame) {
+      //  auto cam = frame->getCamera(0);
+      //  auto uv  = cam->project(Tc1c0 * Pc0x);
+      //  auto uv2 = cam->project(factor.undist0());
+
+      //cv::circle(image, uv, 5, {255, 0, 0}, -1);
+      //cv::circle(image, uv, 3, {0, 0, 255}, -1);
+      //}
+      ++monoInitCount;
+
+      success = true;
+      break;
+    }
+
+    if (success) {
       double          invD = 1.0 / Pc0x.z();
       Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
 
@@ -219,12 +281,20 @@ int LocalTracker::initializeMapPoints() {
       mp->setInvDepth(invD);
       mp->setState(db::MapPoint::Status::INITIALING);
       mLocalMap->addMapPoint(mp);
-      ++initCount;
-      break;
+
+      it = mpCands.erase(it);
     }
-    default:
-      break;
+    else {
+      ++it;
     }
+  }
+  //cv::imshow("test", image);
+  //cv::waitKey();
+  if (Config::Vio::debug) {
+    ToyLogD("init stereo : {}, init mono : {},  cand :{}",
+            initCount,
+            monoInitCount,
+            candSize);
   }
   return initCount;
 }

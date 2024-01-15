@@ -19,7 +19,7 @@
           "epipolarThreashold": 0.005,
           "stereoTrackingInterval": 1,
           "showExtraction": false,
-          "showMonoTracking": true,
+          "showMonoTracking": false,
           "showStereoTracking": false
         },
         "line": {
@@ -30,6 +30,7 @@
     },
     "localTracker": {
       "initializeMapPointCount": 30,
+      "minTriangulationBaseline": 0.05,
       "newKeframeFeatureRatio": 0.7,
       "margFeatureConnectionRatio": 0.2,
       "minKeyFrameCount": 3,

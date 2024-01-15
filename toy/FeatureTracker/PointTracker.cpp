@@ -57,11 +57,11 @@ size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
 
   if (ratio < Config::Vio::minTrackedRatio
       || trackedPtSize < Config::Vio::minTrackedPoint) {
-    ToyLogD("currFrame id {} , extracting new Feature : {} = {} /{}  ",
-            currFrame->id(),
-            ratio,
-            trackedPtSize,
-            prevSize);
+    //ToyLogD("currFrame id {} , extracting new Feature : {} = {} /{}  ",
+    //        currFrame->id(),
+    //        ratio,
+    //        trackedPtSize,
+    //        prevSize);
     newPt = extract(currFrame);
     mPrevIds.clear();
 

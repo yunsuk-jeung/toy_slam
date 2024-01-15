@@ -31,9 +31,10 @@ public:
     static bool        frameTrackerSolvePose;
 
     static int   initializeMapPointCount;
-    static int   minKeyFrameCount;
+    static float minTriangulationBaselineSq;
     static float newKeframeFeatureRatio;
     static float margFeatureConnectionRatio;
+    static int   minKeyFrameCount;
     static int   maxFrameSize;
     static int   maxKeyFrameSize;
 

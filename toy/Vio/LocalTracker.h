@@ -25,7 +25,7 @@ private:
   using Thread<db::Frame, void>::getLatestInput;
   using Thread<db::Frame, void>::mInQueue;
 
-  int                        initializeMapPoints();
+  //int                        initializeMapPoints(std::shared_ptr<db::Frame> currFrame);
   int                        initializeMapPoints(std::shared_ptr<db::Frame> currFrame);
   std::shared_ptr<db::Frame> selectMarginalFrame(
     std::vector<std::shared_ptr<db::Frame>>& frames);
@@ -38,7 +38,7 @@ private:
   Status                        mStatus;
   std::unique_ptr<db::LocalMap> mLocalMap;
   std::unique_ptr<VioSolver>    mVioSolver;
-  int                           mKeyFrameInterval;
+  int                           mKeyFrameAfter;
 };
 
 }  //namespace toy

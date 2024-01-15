@@ -6,7 +6,7 @@ namespace toy {
 namespace db {
 
 MapPoint::MapPoint(size_t id)
-  : mId{id}  //, mHostFrameId{hostFrameId}
+  : mId{id}  //, mHostFrameId{-1}
   , mStatus{Status::NONE}
   , mInvDepth{1.0}
   , mBackupInvD{1.0}
@@ -14,6 +14,10 @@ MapPoint::MapPoint(size_t id)
   mFrameFactors.reserve(50);
   mMarginedPwx.setZero();
 }
+
+//void MapPoint::setHost(std::shared_ptr<db::Frame> host) {
+//
+//}
 
 void MapPoint::addFrameFactor(std::shared_ptr<db::Frame> frame,
                               ReprojectionFactor         factor) {
@@ -54,8 +58,23 @@ bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
     }
 
     if (fptr == host) {
-      mMarginedPwx  = getPwx();
-      this->mStatus = Status::MARGINED;
+      if (status() > Status::INITIALING) {
+        auto nextIt   = std::next(it, 1);
+        this->mStatus = Status::MARGINED;
+        if (nextIt != mFrameFactors.end()) {
+          auto            Pwx = getPwx();
+          auto            kf  = nextIt->first.lock();
+          Eigen::Vector3d Pcx = kf->getTwc(0).inverse() * Pwx;
+          this->mInvDepth     = 1.0 / Pcx.z();
+          this->mUndist       = Pcx.head(2) * this->mInvDepth;
+          if (mFrameFactors.size() > 2) {
+            this->mStatus = Status::TRACKING;
+          }
+          else {
+            this->mStatus = Status::INITIALING;
+          }
+        }
+      }
     }
 
     mFrameFactors.erase(it);
@@ -70,9 +89,9 @@ bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
 }
 
 Eigen::Vector3d MapPoint::getPwx() {
-  if (mStatus == Status::MARGINED) {
-    return mMarginedPwx;
-  }
+  //if (mStatus == Status::MARGINED) {
+  //  return mMarginedPwx;
+  //}
 
   auto& [frameW, factor] = mFrameFactors.front();
   auto fPtr              = frameW.lock();

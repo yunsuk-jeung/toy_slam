@@ -40,6 +40,7 @@ std::string Config::Vio::lineTracker           = "none";
 bool        Config::Vio::frameTrackerSolvePose = false;
 
 int    Config::Vio::initializeMapPointCount    = 30;
+float  Config::Vio::minTriangulationBaselineSq = 0.0025;
 float  Config::Vio::newKeframeFeatureRatio     = 0.8;
 float  Config::Vio::margFeatureConnectionRatio = 0.15;
 int    Config::Vio::minKeyFrameCount           = 5;
@@ -101,6 +102,8 @@ void Config::parseConfig(const std::string& configFile) {
 
   auto localTrackerJson           = json["vio"]["localTracker"];
   Vio::initializeMapPointCount    = localTrackerJson["initializeMapPointCount"];
+  float minBase                   = localTrackerJson["minTriangulationBaseline"];
+  Vio::minTriangulationBaselineSq = minBase * minBase;
   Vio::newKeframeFeatureRatio     = localTrackerJson["newKeframeFeatureRatio"];
   Vio::margFeatureConnectionRatio = localTrackerJson["margFeatureConnectionRatio"];
   Vio::minKeyFrameCount           = localTrackerJson["minKeyFrameCount"];

@@ -19,7 +19,8 @@ std::shared_ptr<SqrtMarginalizationCost> SqrtMarginalizer::createMarginCost() {
 
 void SqrtMarginalizer::marginalize(Eigen::VectorXi& indices,
                                    Eigen::MatrixXd& J,
-                                   Eigen::VectorXd& Res) {
+                                   Eigen::VectorXd& Res,
+                                   Eigen::VectorXd& delta) {
   using PermutationWrapper = Eigen::PermutationWrapper<
     Eigen::Matrix<int, Eigen::Dynamic, 1>>;
 
@@ -37,7 +38,7 @@ void SqrtMarginalizer::marginalize(Eigen::VectorXi& indices,
   mRes.resize(rows);
 
   mJ   = J.block(margRank, db::Frame::PARAMETER_SIZE, rows, cols);
-  mRes = Res.segment(margRank, rows);
+  mRes = Res.segment(margRank, rows) + mJ * delta;
 
   //debug::drawSparseMatrix("after QR", mJ , 1);
 

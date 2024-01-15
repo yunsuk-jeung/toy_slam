@@ -27,7 +27,6 @@ size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {
   auto size0 = keyPoints0.size();
   auto size1 = keyPoints1.size();
 
-  mMapPointCandidates.clear();
   size_t connected = 0u;
   for (size_t i = 0; i < size0; ++i) {
     int id = keyPoints0.mIds[i];
@@ -38,11 +37,17 @@ size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {
     auto& uv0     = keyPoints0.mUVs[i];
     auto& undist0 = keyPoints0.mUndists[i];
 
-    bool exist = false;
+    //bool exist = false;
     if (it == mMapPoints.end()) {
-      mp = std::make_shared<MapPoint>(id);
+      auto candIt = mMapPointCandidates.find(id);
+      if (candIt == mMapPointCandidates.end()) {
+        mp = std::make_shared<MapPoint>(id);
+        mMapPointCandidates.insert({id, mp});
+      }
+      else {
+        mp = candIt->second;
+      }
       //mp->setUndist({undist0.x, undist0.y});
-      mMapPointCandidates.push_front(mp);
     }
     else {
       mp = it->second;
@@ -50,7 +55,7 @@ size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {
         mp->setState(db::MapPoint::Status::TRACKING);
       }
       mMapPoints.insert({mp->id(), mp});
-      exist = true;
+      //exist = true;
       ++connected;
     }
 
@@ -68,9 +73,9 @@ size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {
     }
     mp->addFrameFactor(frame, factor);
 
-    if (exist) {
-      frame->addMapPointFactor(mp, factor);
-    }
+    //if (exist) {
+    frame->addMapPointFactor(mp, factor);
+    //}
   }
 
   return connected;
@@ -120,6 +125,16 @@ void LocalMap::removeFrame(int id) {
     bool eraseMapPoint = it->second->eraseFrame(f);
     if (eraseMapPoint) {
       it = mMapPoints.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
+
+  for (auto it = mMapPointCandidates.begin(); it != mMapPointCandidates.end();) {
+    bool eraseMapPoint = it->second->eraseFrame(f);
+    if (eraseMapPoint) {
+      it = mMapPointCandidates.erase(it);
     }
     else {
       ++it;

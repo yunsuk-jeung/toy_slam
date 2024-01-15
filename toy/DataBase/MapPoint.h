@@ -18,6 +18,7 @@ public:
   MapPoint() = delete;
   MapPoint(size_t id);
 
+  //void setHost(std::shared_ptr<db::Frame> host);
   void addFrameFactor(std::shared_ptr<db::Frame> frame, ReprojectionFactor factor);
 
   void backup();
@@ -33,9 +34,9 @@ public:
   enum class Status {
     DELETING   = -2,
     NONE       = 0,
-    INITIALING = 1,
-    TRACKING   = 2,
-    MARGINED   = 3,
+    MARGINED   = 1,
+    INITIALING = 2,
+    TRACKING   = 3,
   };
 
 protected:

@@ -67,7 +67,9 @@ bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
   mMapPoints = &trackingMapPoints;
 
   for (auto& f : *mFrames) {
-    f->resetDelta();
+    if (!f->isLinearized()) {
+      f->resetDelta();
+    }
   }
 
   /*problem->mOption.mLambda;*/
@@ -80,57 +82,33 @@ bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
   const double&   focalLength = Config::Vio::standardFocalLength;
 
   //add margin mappoints for anchor
-  {
-    //std::map<size_t, cv::Mat> images;
-    //for (auto& f : *mFrames) {
-    //  cv::Mat mat = f->getImagePyramid(0)->getOrigin().clone();
-    //  cv::cvtColor(mat, mat, CV_GRAY2BGR);
-    //  images[f->id()] = mat;
-    //}
+  //{
+  //  using PORC = PoseOnlyReporjectinCost;
+  //  std::vector<PORC::Ptr> costs;
+  //  costs.reserve(marginedMapPoints.size() * frames.size());
+  //  for (auto& mp : marginedMapPoints) {
+  //    auto& frameFactors = mp->getFrameFactors();
+  //    if (mp->status() == db::MapPoint::Status::MARGINED) {
+  //      for (auto& frameFactor : frameFactors) {
+  //        db::Frame::Ptr   frame0  = frameFactor.first.lock();
+  //        Eigen::Vector3d& undist0 = frameFactor.second.undist0();
+  //        Sophus::SE3d&    Tbc0    = frame0->getTbc(0);
 
-    using PORC = PoseOnlyReporjectinCost;
-    std::vector<PORC::Ptr> costs;
-    costs.reserve(marginedMapPoints.size() * frames.size());
-    for (auto& mp : marginedMapPoints) {
-      auto& frameFactors = mp->getFrameFactors();
-      if (mp->status() == db::MapPoint::Status::MARGINED) {
-        for (auto& frameFactor : frameFactors) {
-          db::Frame::Ptr   frame0  = frameFactor.first.lock();
-          Eigen::Vector3d& undist0 = frameFactor.second.undist0();
-          Sophus::SE3d&    Tbc0    = frame0->getTbc(0);
+  //PORC::Ptr cost = std::make_shared<PORC>(frame0, Tbc0, mp, undist0, reProjME);
+  //costs.push_back(cost);
 
-          PORC::Ptr cost = std::make_shared<PORC>(frame0, Tbc0, mp, undist0, reProjME);
-          costs.push_back(cost);
-          //{
-          //  cv::Mat& image = images[frame0->id()];
-          //  auto     uv0   = frameFactor.second.uv0();
-          //  cv::circle(image, cv::Point2f(uv0.x(), uv0.y()), 5, {255, 0, 0}, -1);
+  //if (frameFactor.second.type() != db::ReprojectionFactor::Type::STEREO)
+  //  continue;
 
-          //Eigen::Vector3d Xcx  = frame0->getTwc(0).inverse() * mp->getPwx();
-          //Eigen::Vector3d nXcx = Xcx / Xcx.z();
-          //auto            proj = frame0->getCamera(0)->project(nXcx);
-          //cv::circle(image, proj, 3, {0, 0, 255}, -1);
-          //}
-
-          if (frameFactor.second.type() != db::ReprojectionFactor::Type::STEREO)
-            continue;
-
-          Eigen::Vector3d& undist1 = frameFactor.second.undist1();
-          Sophus::SE3d&    Tbc1    = frame0->getTbc(1);
-          PORC::Ptr cost2 = std::make_shared<PORC>(frame0, Tbc1, mp, undist1, reProjME);
-          costs.push_back(cost2);
-        }
-      }
-    }
-    //if (!marginedMapPoints.empty()) {
-    //  int idx = 0;
-    //  for (auto& [id, mat] : images) {
-    //    cv::imshow(std::to_string(idx++), mat);
-    //  }
-    //  cv::waitKey();
-    //}
-    mProblem->addPoseOnlyReprojectionCost(costs);
-  }
+  //Eigen::Vector3d& undist1 = frameFactor.second.undist1();
+  //Sophus::SE3d&    Tbc1    = frame0->getTbc(1);
+  //PORC::Ptr cost2 = std::make_shared<PORC>(frame0, Tbc1, mp, undist1, reProjME);
+  //costs.push_back(cost2);
+  //}
+  //}
+  //}
+  //mProblem->addPoseOnlyReprojectionCost(costs);
+  //}
 
   for (auto& mp : *mMapPoints) {
     auto& frameFactors = mp->getFrameFactors();
@@ -316,11 +294,25 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
   for (auto& [id, startCol] : frameColumnMap) {
     if (id == marginFrameId)
       continue;
-
     std::iota(indexBegin, indexBegin + FRAME_SIZE, startCol);
     indexBegin += FRAME_SIZE;
   }
-  mMarginalizer->marginalize(indices, Q2t_J, Q2t_C);
+
+  Eigen::VectorXd delta(cols - db::Frame::PARAMETER_SIZE);
+  Eigen::Index    deltaIdx = 0u;
+
+  for (auto& f : *mFrames) {
+    if (f->isKeyFrame()) {
+      f->setLinearized(true);
+    }
+    if (f->id() == marginFrameId) {
+      continue;
+    }
+    delta.segment(deltaIdx, FRAME_SIZE) = f->getDelta();
+    deltaIdx += db::Frame::PARAMETER_SIZE;
+  }
+  //ToyLogD("wtf {}", delta);
+  mMarginalizer->marginalize(indices, Q2t_J, Q2t_C, delta);
 }
 
 }  //namespace toy

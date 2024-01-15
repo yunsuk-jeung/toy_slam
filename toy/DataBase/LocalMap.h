@@ -27,14 +27,14 @@ protected:
 
 protected:
   //in the case of not using sliding window, map is used for frames
-  std::map<size_t, std::shared_ptr<Frame>>     mFrames;
-  std::map<size_t, std::shared_ptr<MapPoint>>  mMapPoints;
-  std::forward_list<std::shared_ptr<MapPoint>> mMapPointCandidates;
+  std::map<size_t, std::shared_ptr<Frame>>    mFrames;
+  std::map<size_t, std::shared_ptr<MapPoint>> mMapPoints;
+  std::map<size_t, std::shared_ptr<MapPoint>> mMapPointCandidates;
 
 public:
-  std::map<size_t, std::shared_ptr<Frame>>&     getFrames() { return mFrames; }
-  std::map<size_t, std::shared_ptr<MapPoint>>&  getMapPoints() { return mMapPoints; }
-  std::forward_list<std::shared_ptr<MapPoint>>& getMapPointCandidiates() {
+  std::map<size_t, std::shared_ptr<Frame>>&    getFrames() { return mFrames; }
+  std::map<size_t, std::shared_ptr<MapPoint>>& getMapPoints() { return mMapPoints; }
+  std::map<size_t, std::shared_ptr<MapPoint>>& getMapPointCandidiates() {
     return mMapPointCandidates;
   }
 };

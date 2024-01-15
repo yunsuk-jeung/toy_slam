@@ -275,6 +275,9 @@ double SqrtProblem::linearize(bool updateState) {
     errSq += poseOnlyReporjectinCost->linearlize(updateState);
   }
 
+  if (Config::Vio::solverLogDebug) {
+    ToyLogD("------ marginal cost : {}", mSqrtMarginalizationCost->linearize());
+  }
   errSq += mSqrtMarginalizationCost->linearize();
 
   return errSq;

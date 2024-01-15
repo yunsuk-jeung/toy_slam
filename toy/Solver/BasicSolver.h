@@ -50,12 +50,15 @@ public:
 
     MEstimator::Ptr huber = std::shared_ptr<Huber>(new Huber(1.0));
 
-    using PORC            = PoseOnlyReporjectinCost;
+    using PORC = PoseOnlyReporjectinCost;
     std::vector<PORC::Ptr> costs;
     costs.reserve(mapPointFactorMap.size());
 
     for (auto& [mpWeak, factor] : mapPointFactorMap) {
-      auto             mp      = mpWeak.lock();
+      auto mp = mpWeak.lock();
+      if (mp->status() != db::MapPoint::Status::TRACKING) {
+        continue;
+      }
       db::Frame::Ptr   frame0  = curr;
       Eigen::Vector3d& undist0 = factor.undist0();
       Sophus::SE3d&    Tbc0    = frame0->getTbc(0);
@@ -90,7 +93,6 @@ public:
       curr->update(delX);
     }
     return true;
-
 
     /*
     std::vector<BasicPoseOnlyReprojectionCost> costs;

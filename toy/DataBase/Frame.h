@@ -83,6 +83,7 @@ protected:
   Eigen::Vector6d mBackupDelta;
 
   bool mFixed;
+  bool mLinearized;
 
 public:
   const size_t        id() const { return mId; }
@@ -99,6 +100,9 @@ public:
   MapPointFactorMap&  getMapPointFactorMap() { return mMapPointFactorMap; }
   const bool          fixed() const { return mFixed; }
   void                setFixed(bool fixed) { mFixed = fixed; }
+  void                setLinearized(bool linearized) { mLinearized = linearized; }
+  bool                isLinearized() { return mLinearized; }
+  Eigen::Vector6d     getDelta() { return mDelta; };
 };
 
 }  //namespace db

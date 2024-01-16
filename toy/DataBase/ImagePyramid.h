@@ -41,9 +41,9 @@ public:
 
 class ImagePyramidSet {
 public:
-  ImagePyramidSet(ImagePyramid* i0, ImagePyramid* i1) {
-    mImagePyramid0 = std::unique_ptr<ImagePyramid>(i0);
-    mImagePyramid1 = std::unique_ptr<ImagePyramid>(i1);
+  ImagePyramidSet(std::unique_ptr<ImagePyramid>& i0, std::unique_ptr<ImagePyramid>& i1) {
+    mImagePyramid0 = std::move(i0);
+    mImagePyramid1 = std::move(i1);
   }
 
   using Ptr = std::shared_ptr<ImagePyramidSet>;

@@ -7,6 +7,7 @@
 
 namespace toy {
 class Camera;
+class PointMatcher;
 namespace db {
 class Feature;
 class Frame;
@@ -19,7 +20,7 @@ public:
   size_t process(db::Frame* prev, db::Frame* curr);
 
 protected:
-  size_t extract(db::Frame* frame);
+  size_t detect(db::Frame* frame);
 
   void devideImage(cv::Mat&                  src,
                    cv::Mat&                  mask,
@@ -30,17 +31,19 @@ protected:
                                    std::vector<cv::KeyPoint>& kpts,
                                    db::Feature*               feature);
 
-  size_t track(db::Frame* prev, db::Frame* curr);
-  size_t trackStereo(db::Frame* frame);
+  size_t match(db::Frame* prev, db::Frame* curr);
+  size_t matchStereo(db::Frame* frame);
 
   static cv::Mat createMask(const cv::Mat& origin, db::Feature* feature);
 
 protected:
-  size_t                 mFeatureId;
-  size_t                 mMaxFeatureSize;
-  std::string            mType;
-  cv::Ptr<cv::Feature2D> mFeature2D;
-  std::set<int>          mPrevIds;
-  int                    mStereoTrackingIntervalCount;
+  size_t                        mFeatureId;
+  size_t                        mMaxFeatureSize;
+  std::string                   mFeatureType;
+  std::string                   mMatcherType;
+  cv::Ptr<cv::Feature2D>        mPointDetector;
+  std::shared_ptr<PointMatcher> mPointMatcher;
+  std::set<int>                 mPrevIds;
+  int                           mStereoTrackingIntervalCount;
 };
 }  //namespace toy

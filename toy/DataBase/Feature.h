@@ -19,7 +19,7 @@ public:
       mUVs         = src.mUVs;
       mTrackCounts = src.mTrackCounts;
       mUndists     = src.mUndists;
-      mFeatureType = src.mFeatureType;
+      //mFeatureType = src.mFeatureType;
     }
     size_t size() { return mIds.size(); }
 
@@ -29,7 +29,7 @@ public:
       mUVs.reserve(size);
       mTrackCounts.reserve(size);
       mUndists.reserve(size);
-      mFeatureType.reserve(size);
+      //mFeatureType.reserve(size);
     }
 
     void push_back(Keypoints& kpts) {
@@ -39,7 +39,7 @@ public:
       mUVs.insert(mUVs.end(), kpts.mUVs.begin(), kpts.mUVs.begin());
       mTrackCounts.insert(mTrackCounts.end(), kpts.mTrackCounts.begin(), kpts.mTrackCounts.begin());
       mUndists.insert(mUndists.end(), kpts.mUndists.begin(), kpts.mUndists.begin());
-      mFeatureType.insert(mFeatureType.end(), kpts.mFeatureType.begin(), kpts.mFeatureType.begin());
+      //mFeatureType.insert(mFeatureType.end(), kpts.mFeatureType.begin(), kpts.mFeatureType.begin());
       // clang-format on
     }
 
@@ -48,7 +48,7 @@ public:
     std::vector<cv::Point2f> mUVs;
     std::vector<uint32_t>    mTrackCounts;
     std::vector<cv::Point2f> mUndists;
-    std::vector<uint8_t>     mFeatureType;  //0 1 2 is mono, stereo, depth
+    //std::vector<uint8_t>     mFeatureType;  //0 1 2 is mono, stereo, depth
   };
 
   Feature()  = default;

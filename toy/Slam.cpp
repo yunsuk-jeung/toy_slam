@@ -37,8 +37,8 @@ void SLAM::prepare(const std::string& configFile) {
 }
 
 void SLAM::setNewImage(ImageData& imageData0, ImageData& imageData1) {
-  db::ImagePyramid* imagePyramid0{new db::ImagePyramid(imageData0)};
-  db::ImagePyramid* imagePyramid1{new db::ImagePyramid(imageData1)};
+  db::ImagePyramid::Uni imagePyramid0 = std::make_unique<db::ImagePyramid>(imageData0);
+  db::ImagePyramid::Uni imagePyramid1 = std::make_unique<db::ImagePyramid>(imageData1);
 
   db::ImagePyramidSet::Ptr set = std::make_shared<db::ImagePyramidSet>(imagePyramid0,
                                                                        imagePyramid1);

@@ -8,20 +8,17 @@
 namespace toy {
 FeatureTracker::FeatureTracker(std::string pointTracker, std::string lineTracker)
   : mLineTracker{nullptr} {
-  mPointTracker = new PointTracker(pointTracker);
+  mPointTracker = std::make_unique<PointTracker>(pointTracker);
 
   if (lineTracker == "none")
     return;
 
-  mLineTracker = new LineTracker(lineTracker);
+  mLineTracker = std::make_unique<LineTracker>(lineTracker);
 }
 
 FeatureTracker::~FeatureTracker() {
-  delete mPointTracker;
-  mPointTracker = nullptr;
-
-  delete mLineTracker;
-  mLineTracker;
+  mPointTracker.reset();
+  mLineTracker.reset();
 }
 
 bool FeatureTracker::process(db::Frame* prevFrame, db::Frame* currentFrame) {

@@ -33,60 +33,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 #pragma once
-
-#include <Eigen/Dense>
-// clang-format off
+#include "usings.h"
 
 namespace toy {
 
-template <class Scalar>
-struct Pattern24 {
-  //          00  01
-  //
-  //      02  03  04  05
-  //
-  //  06  07  08  09  10  11
-  //
-  //  12  13  14  15  16  17
-  //
-  //      18  19  20  21
-  //
-  //          22  23
-  //
-  // -----> x
-  // |
-  // |
-  // y
-  static constexpr Scalar pattern_raw[][2] = {
-      {-1, 5},  {1, 5},
-
-      {-3, 3},  {-1, 3},  {1, 3},   {3, 3},
-
-      {-5, 1},  {-3, 1},  {-1, 1},  {1, 1},  {3, 1},  {5, 1},
-
-      {-5, -1}, {-3, -1}, {-1, -1}, {1, -1}, {3, -1}, {5, -1},
-
-      {-3, -3}, {-1, -3}, {1, -3},  {3, -3},
-
-      {-1, -5}, {1, -5}
-
-  };
-
-
-  static constexpr int PATTERN_SIZE =
-      sizeof(pattern_raw) / (2 * sizeof(Scalar));
-
-  typedef Eigen::Matrix<Scalar, 2, PATTERN_SIZE> Matrix2P;
-  static const Matrix2P pattern2;
-};
-
-template <class Scalar>
-const typename Pattern24<Scalar>::Matrix2P Pattern24<Scalar>::pattern2 =
-    Eigen::Map<Pattern24<Scalar>::Matrix2P>((Scalar *)
-                                                Pattern24<Scalar>::pattern_raw);
-
-template <class Scalar>
-struct Pattern52 {
+// clang-format off
+struct Pattern {
   //          00  01  02  03
   //
   //      04  05  06  07  08  09
@@ -108,66 +60,34 @@ struct Pattern52 {
   // |
   // y
 
-  static constexpr Scalar pattern_raw[][2] = {
-      {-3, 7},  {-1, 7},  {1, 7},   {3, 7},
+  static constexpr float pattern_raw[][2] = {
+                          {-3, -7}, {-1, -7}, {1, -7},  {3, -7},
 
-      {-5, 5},  {-3, 5},  {-1, 5},  {1, 5},   {3, 5},  {5, 5},
+                {-5, -5}, {-3, -5}, {-1, -5}, {1, -5},  {3, -5}, {5, -5},
 
-      {-7, 3},  {-5, 3},  {-3, 3},  {-1, 3},  {1, 3},  {3, 3},
-      {5, 3},   {7, 3},
+      {-7, -3}, {-5, -3}, {-3, -3}, {-1, -3}, {1, -3}, {3, -3},  {5, -3},  {7, -3},
 
-      {-7, 1},  {-5, 1},  {-3, 1},  {-1, 1},  {1, 1},  {3, 1},
-      {5, 1},   {7, 1},
+      {-7, -1}, {-5, -1}, {-3, -1}, {-1, -1}, {1, -1}, {3, -1},  {5, -1},  {7, -1},
 
-      {-7, -1}, {-5, -1}, {-3, -1}, {-1, -1}, {1, -1}, {3, -1},
-      {5, -1},  {7, -1},
+      {-7, 1},  {-5, 1},  {-3, 1},  {-1, 1},  {1, 1},  {3, 1},   {5, 1},   {7, 1},
 
-      {-7, -3}, {-5, -3}, {-3, -3}, {-1, -3}, {1, -3}, {3, -3},
-      {5, -3},  {7, -3},
+      {-7, 3},  {-5, 3},  {-3, 3},  {-1, 3},  {1, 3},  {3, 3},   {5, 3},   {7, 3},
 
-      {-5, -5}, {-3, -5}, {-1, -5}, {1, -5},  {3, -5}, {5, -5},
+                {-5, 5},  {-3, 5},  {-1, 5},  {1, 5},   {3, 5},  {5, 5},
 
-      {-3, -7}, {-1, -7}, {1, -7},  {3, -7}
-
+                          {-3, 7},  {-1, 7},  {1, 7},   {3, 7}
   };
 
-  static constexpr int PATTERN_SIZE =
-      sizeof(pattern_raw) / (2 * sizeof(Scalar));
+  static constexpr size_t PATTERN_SIZE = sizeof(pattern_raw) / (2 * sizeof(float));
+  // clang-format on
 
-  typedef Eigen::Matrix<Scalar, 2, PATTERN_SIZE> Matrix2P;
-  static const Matrix2P pattern2;
+  static const Eigen::Matrix2Pf& pattern() {
+    static const Eigen::Matrix2Pf
+      pattern = 0.5
+                * Eigen::Map<const Eigen::Matrix<float, 2, PATTERN_SIZE>>(
+                  (const float*)pattern_raw);
+    return pattern;
+  }
 };
 
-template <class Scalar>
-const typename Pattern52<Scalar>::Matrix2P Pattern52<Scalar>::pattern2 =
-    Eigen::Map<Pattern52<Scalar>::Matrix2P>((Scalar *)
-                                                Pattern52<Scalar>::pattern_raw);
-
-// Same as Pattern52 but twice smaller
-template <class Scalar>
-struct Pattern51 {
-  static constexpr int PATTERN_SIZE = Pattern52<Scalar>::PATTERN_SIZE;
-
-  typedef Eigen::Matrix<Scalar, 2, PATTERN_SIZE> Matrix2P;
-  static const Matrix2P pattern2;
-};
-
-template <class Scalar>
-const typename Pattern51<Scalar>::Matrix2P Pattern51<Scalar>::pattern2 =
-    0.5 * Pattern52<Scalar>::pattern2;
-
-// Same as Pattern52 but 0.75 smaller
-template <class Scalar>
-struct Pattern50 {
-  static constexpr int PATTERN_SIZE = Pattern52<Scalar>::PATTERN_SIZE;
-
-  typedef Eigen::Matrix<Scalar, 2, PATTERN_SIZE> Matrix2P;
-  static const Matrix2P pattern2;
-};
-
-template <class Scalar>
-const typename Pattern50<Scalar>::Matrix2P Pattern50<Scalar>::pattern2 =
-    0.75 * Pattern52<Scalar>::pattern2;
-
-}  // namespace basalt
-// clang-format on
+}  //namespace toy

@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <string>
 namespace toy {
 namespace db {
@@ -18,7 +19,7 @@ public:
   bool process(db::Frame* prevFrame, db::Frame* currentFrame);
 
 protected:
-  PointTracker* mPointTracker;
-  LineTracker*  mLineTracker;
+  std::unique_ptr<PointTracker> mPointTracker;
+  std::unique_ptr<LineTracker>  mLineTracker;
 };
 }  //namespace toy

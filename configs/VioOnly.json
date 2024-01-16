@@ -13,7 +13,7 @@
           "rowGridCount": 10,
           "colGridCount": 14,
           "on": true,
-          "tracker": "Fast.OpticalflowLK",
+          "tracker": "Fast.CVOpticalFlow",
           "minTrackedPoint": 30,
           "minTrackedRatio": 0.7,
           "epipolarThreashold": 0.005,

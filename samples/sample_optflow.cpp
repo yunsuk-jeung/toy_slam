@@ -7,10 +7,39 @@
 #include "ImagePyramid.h"
 #include "ToyLogger.h"
 #include "IoUtil.h"
-#include "PointExtractor.h"
+#include "Frame.h"
+#include "PointTracker.h"
+#include "patch.h"
+#include "PatchOpticalFlow.h"
 
 using namespace toy;
+
+void drawKeyPoint(db::Frame::Ptr f) {
+  auto& pyramid0   = f->getImagePyramid(0)->getPyramids();
+  auto& keyPoints0 = f->getFeature(0)->getKeypoints();
+  auto& uvs0       = keyPoints0.mUVs;
+
+  cv::Mat image = f->getImagePyramid(0)->getOrigin().clone();
+  cv::cvtColor(image, image, CV_GRAY2BGR);
+
+  for (auto& uv : uvs0) {
+    cv::circle(image, uv, 5, {255, 0, 0}, -1);
+  }
+
+  cv::imshow(std::to_string(f->id()), image);
+  cv::waitKey();
+}
+void test() {
+  Eigen::AffineCompact2f a;
+  a.linear().setIdentity();
+  const Eigen::Matrix2Pf& pattern = Pattern::pattern();
+  std::cout << pattern.col(6) << std::endl;
+}
 auto main() -> int {
+  test();
+  return 0;
+
+  ToyLogger::init();
   ToyLogI("Starting opticalflow module ");
 
   std::string           currCpp = __FILE__;
@@ -21,21 +50,61 @@ auto main() -> int {
   auto pngs = io::util::getFiles(resourcePath, ".png");
   ToyLogI("png size : {}", pngs.size());
 
-  std::vector<db::ImagePyramid> pyramids;
+  /*std::vector<db::ImagePyramidSet> pyramids;*/
+
+  Config::Vio::showExtraction   = true;
+  Config::Vio::showMonoTracking = true;
+
+  std::vector<db::Frame::Ptr> frames;
+
+  uint64_t ns = 0;
   for (const auto& png : pngs) {
-    cv::Mat image = cv::imread(png.string(), CV_LOAD_IMAGE_GRAYSCALE);
-    pyramids.push_back({ImageType::MAIN, image});
+    cv::Mat   image = cv::imread(png.string(), CV_LOAD_IMAGE_GRAYSCALE);
+    ImageData data0{0, CV_8UC1, ns, image.data, image.cols, image.rows};
+    ImageData data1{-1, CV_8UC1, ns, nullptr, image.cols, image.rows};
+
+    db::ImagePyramid::Uni    pyr0  = std::make_unique<db::ImagePyramid>(data0);
+    db::ImagePyramid::Uni    pyr1  = std::make_unique<db::ImagePyramid>(data1);
+    db::ImagePyramidSet::Ptr set   = std::make_shared<db::ImagePyramidSet>(pyr0, pyr1);
+    db::Frame::Ptr           frame = std::make_shared<db::Frame>(set);
+    frames.push_back(frame);
+
+    std::vector<float> Mbc(16);
+    Eigen::Matrix4f    I = Eigen::Matrix4f::Identity();
+    memcpy(Mbc.data(), I.data(), sizeof(float) * 16);
+    float f  = image.rows;
+    float cx = float(image.cols) / 2.0f;
+    float cy = float(image.rows) / 2.0f;
+
+    CameraInfo camInfo0;
+    camInfo0.id              = 0;
+    camInfo0.w               = image.cols;
+    camInfo0.h               = image.rows;
+    camInfo0.cameraModel     = 0;
+    camInfo0.intrinsics      = {f, f, cx, cy};
+    camInfo0.distortionModel = 0;
+    camInfo0.distortions     = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    camInfo0.Mbc             = Mbc;
+    auto camInfo1            = camInfo0;
+    camInfo1.id              = -1;
+
+    Camera* cam0 = CameraFactory::createCamera(&camInfo0);
+    Camera* cam1 = CameraFactory::createCamera(&camInfo1);
+
+    frame->setCameras(cam0, cam1);
   }
 
-  toy::PointTracker extractor;
+  auto* pointTracker = new toy::PointTracker("Fast.PatchOpticalFlow");
 
-  std::vector<std::vector<cv::Point2f>> pointss;
-  pointss.resize(pyramids.size());
+  auto it         = frames.begin();
+  auto beforeLast = std::prev(frames.end(), 2);
 
-  for (auto i = 0; i < pyramids.size(); i++) {
-    auto  img    = pyramids[i].getGray();
-    auto& points = pointss[i];
-    extractor.process(img, points);
+  pointTracker->process(nullptr, (*it).get());
+  cv::waitKey();
+
+  for (; it != beforeLast; it++) {
+    auto next = std::next(it, 1);
+    pointTracker->process((*it).get(), (*next).get());
   }
 
   return 0;

@@ -136,7 +136,7 @@ protected:
     bool valid    = true;
     uv1           = uv0;
 
-    for (int i = pyrLevel; valid && i >= 0; --i) {
+    for (int i = 0; valid && i >= 0; --i) {
       float scale = 1 << i;
 
       size_t idx = i << 1;

@@ -53,7 +53,7 @@ public:
     , mMeanI{0}
     , mValid{false}
     , mImage(pyr)
-    , mUv{uv.x, uv.y} {
+    , mUv{700, 34} {
     prepareInverseComposition();
     std::cout << mWarp.matrix() << std::endl;
   }
@@ -134,9 +134,14 @@ protected:
       if (util::inBounds(mImage, uv1, 2)) {
         Eigen::Vector3f grad = util::interpolateGradient(mImage, uv1, util::LINEAR);
 
-        mIs[i]               = grad[0];
+        mIs[i] = grad[0];
         sum += grad[0];
-
+        if (i < 30) {
+          std::cout << "pattern : " << mPattern.col(i).transpose() << " ";
+          uint8_t real = grad[0];
+          std::cout << (int)real << ", " << grad[1] << " , " << grad[2] << std::endl;
+          std::cout << J_uv_se2 << std::endl;
+        }
         J_I_se2.row(i) = grad.tail(2).transpose() * J_uv_se2;
         J_I_se2_sum += J_I_se2.row(i);
         ++validCount;
@@ -145,8 +150,15 @@ protected:
         mIs[i] = -1;
       }
     }
+    std::cout << "stacked jaco " << std::endl;
+    std::cout << J_I_se2 * 256 << std::endl;
+    std::cout << "sum" << std::endl;
+    std::cout << J_I_se2_sum << std::endl;
+
     mMean                = sum / validCount;
     const float mean_inv = 1.0f / mMean;
+
+    std::cout << "mean_inv : " << mean_inv / 256.0 << "  or  " << mean_inv * 256  << std::endl;
 
     for (int i = 0; i < PATTERN_SIZE; i++) {
       if (mIs[i] >= 0) {
@@ -157,6 +169,8 @@ protected:
 
     J_I_se2 *= mean_inv;
 
+    std::cout << "final  jaco \n" << J_I_se2 << std::endl;
+
     Eigen::MatrixP3f& J  = J_I_se2;
     Eigen::Matrix3Pf  Jt = J.transpose();
     Eigen::Matrix3f   H  = Jt * J;
@@ -166,7 +180,10 @@ protected:
     H.ldlt().solveInPlace(H_inv);
     mH_inv_Jt = H_inv * Jt;
 
-    mValid    = mMean > std::numeric_limits<float>::epsilon()
+    std::cout << "hessian_inv * Jt\n" << mH_inv_Jt.transpose() << std::endl;
+
+
+    mValid = mMean > std::numeric_limits<float>::epsilon()
              && mH_inv_Jt.array().isFinite().all() && mIs.array().isFinite().all();
   }
 

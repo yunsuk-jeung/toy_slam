@@ -132,7 +132,8 @@ protected:
       J_uv_se2(1, 2) = mPattern(0, i);
 
       if (util::inBounds(mImage, uv1, 2)) {
-        Eigen::Vector3f grad = util::interpolateGradient(mImage, uv1, util::HERMITE);
+        Eigen::Vector3f grad = util::interpolateGradient(mImage, uv1, util::LINEAR);
+
         mIs[i]               = grad[0];
         sum += grad[0];
 
@@ -179,7 +180,7 @@ protected:
         res[i] = -1;
         continue;
       }
-      res[i] = util::interpolate<float>(target, warpedPattern.col(i));
+      res[i] = util::interpolate<float>(target, warpedPattern.col(i), util::LINEAR);
       sum += res[i];
       validCount++;
     }

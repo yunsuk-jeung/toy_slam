@@ -37,57 +37,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace toy {
 
-// clang-format off
 struct Pattern {
-  //          00  01  02  03
-  //
-  //      04  05  06  07  08  09
-  //
-  //  10  11  12  13  14  15  16  17
-  //
-  //  18  19  20  21  22  23  24  25
-  //
-  //  26  27  28  29  30  31  32  33
-  //
-  //  34  35  36  37  38  39  40  41
-  //
-  //      42  43  44  45  46  47
-  //
-  //          48  49  50  51
-  //
-  // -----> x
-  // |
-  // |
-  // y
-
-  static constexpr float pattern_raw[][2] = {
-                          {-3, -7}, {-1, -7}, {1, -7},  {3, -7},
-
-                {-5, -5}, {-3, -5}, {-1, -5}, {1, -5},  {3, -5}, {5, -5},
-
-      {-7, -3}, {-5, -3}, {-3, -3}, {-1, -3}, {1, -3}, {3, -3},  {5, -3},  {7, -3},
-
-      {-7, -1}, {-5, -1}, {-3, -1}, {-1, -1}, {1, -1}, {3, -1},  {5, -1},  {7, -1},
-
-      {-7, 1},  {-5, 1},  {-3, 1},  {-1, 1},  {1, 1},  {3, 1},   {5, 1},   {7, 1},
-
-      {-7, 3},  {-5, 3},  {-3, 3},  {-1, 3},  {1, 3},  {3, 3},   {5, 3},   {7, 3},
-
-                {-5, 5},  {-3, 5},  {-1, 5},  {1, 5},   {3, 5},  {5, 5},
-
-                          {-3, 7},  {-1, 7},  {1, 7},   {3, 7}
-  };
-
-  static constexpr size_t PATTERN_SIZE = sizeof(pattern_raw) / (2 * sizeof(float));
-  // clang-format on
-
-  static const Eigen::Matrix2Pf& pattern() {
-    static const Eigen::Matrix2Pf
-      pattern = 0.5
-                * Eigen::Map<const Eigen::Matrix<float, 2, PATTERN_SIZE>>(
-                  (const float*)pattern_raw);
-    return pattern;
-  }
+  static constexpr size_t       PATTERN_SIZE = 52;
+  static const Eigen::Matrix2Pf pattern;
 };
 
 }  //namespace toy

@@ -22,7 +22,7 @@ ImuInfo    Config::Vio::imuInfo;
 
 bool        Config::Vio::debug                  = false;
 bool        Config::Vio::tbb                    = true;
-int         Config::Vio::pyramidLevel           = 3;
+int         Config::Vio::pyramidLevel           = 4;
 int         Config::Vio::patchSize              = 52;
 int         Config::Vio::rowGridCount           = 12;
 int         Config::Vio::colGridCount           = 8;

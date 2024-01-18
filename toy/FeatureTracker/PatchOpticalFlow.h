@@ -38,29 +38,21 @@ public:
 
     //YSTODO tbb
     for (auto i = 0; i < uvSize; ++i) {
-      auto& uv0 = uvs0[i];
-      auto& uv1 = uvs[i];
+      const auto& uv0 = uvs0[i];
+      auto&       uv1 = uvs[i];
 
-      ToyLogD("before {} {} ___ {} {} ", uv0.x, uv0.y, uv1.x, uv1.y);
       bool valid = matchPoint(pyramid0, pyramid1, uv0, uv1);
-      if (!valid) {
-        continue;
+      if (valid) {
+        cv::Point2f recovered;
+        valid &= matchPoint(pyramid1, pyramid0, uv1, recovered);
+        if (valid) {
+          cv::Point2f dist       = uv0 - recovered;
+          float       distNormSq = dist.x * dist.x + dist.y * dist.y;
+          if (distNormSq < 0.04f) {
+            statusO[i] = 1u;
+          }
+        }
       }
-      ToyLogD("after {} {} ___ {} {} ", uv0.x, uv0.y, uv1.x, uv1.y);
-
-      //cv::Point2f recovered;
-      //valid &= matchPoint(pyramid1, pyramid0, uv1, recovered);
-
-      if (!valid) {
-        continue;
-      }
-      //cv::Point2f dist       = uv0 - recovered;
-      //float       distNormSq = dist.x * dist.x + dist.y * dist.y;
-
-      //if (distNormSq > 10.0f) {
-      //  continue;
-      //}
-      statusO[i] = 1;
     }
 
     auto* cam1 = curr->getCamera(0);
@@ -83,7 +75,7 @@ public:
     auto& undists1    = keyPoints1.mUndists;
 
     for (size_t i = 0; i < trackSize; ++i) {
-      if (statusO[i] == 0 || statusE[i] == 0)
+      if (statusO[i] == 0 /*|| statusE[i] == 0*/)
         continue;
       ids1.push_back(ids0[i]);
       levels1.push_back(levels0[i]);
@@ -91,18 +83,12 @@ public:
       trackCount1.push_back(++trackCount0[i]);
       undists1.push_back(undists[i]);
     }
+
     if (true) {
       cv::Mat image0 = pyramid0[0].clone();
       cv::Mat image1 = pyramid1[0].clone();
       cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);
       cv::cvtColor(image0, image0, cv::COLOR_GRAY2BGR);
-
-      for (int i = 0; i < uvs0.size(); i++) {
-        if (statusO[i] == 0 || statusE[i] == 0) {
-          cv::line(image1, uvs0[i], uvs[i], {0.0, 0.0, 0}, 1);
-          cv::circle(image1, uvs[i], 4, {0.0, 0.0, 0}, -1);
-        }
-      }
 
       auto calcColor = [](int trackCount) -> cv::Scalar {
         trackCount   = std::max(0, std::min(trackCount, 20));
@@ -111,20 +97,27 @@ public:
         int    red   = static_cast<int>(ratio * 255);
         return cv::Scalar(blue, 0, red);
       };
-      int iiii = 0;
-      for (const auto& uv : uvs1) {
-        auto color = calcColor(trackCount1[iiii++]);
-        cv::circle(image1, uv, 3, color, -1);
+
+      for (int i = 0; i < uvs0.size(); i++) {
+        if (statusO[i] == 0 || statusE[i] == 0) {
+          cv::line(image1, uvs0[i], uvs[i], {0, 0, 255}, 1);
+          cv::circle(image1, uvs0[i], 4, {0, 0, 255}, -1);
+          cv::circle(image1, uvs[i], 3, {0, 0, 0}, -1);
+        }
+        else {
+          auto color = calcColor(trackCount0[i]);
+          cv::circle(image1, uvs0[i], 4, {0, 255, 0}, -1);
+          cv::line(image1, uvs0[i], uvs[i], color, 1);
+          cv::circle(image1, uvs[i], 3, color, -1);
+        }
       }
-      for (const auto& uv : uvs0) {
-        cv::circle(image0, uv, 3, {255, 0, 0}, -1);
-      }
-      cv::imshow("mono opticalflow0", image0);
+
       cv::imshow("mono opticalflow1", image1);
-      cv::waitKey();
+      cv::waitKey(1);
     }
     return ids1.size();
   }
+
   virtual size_t matchStereo(db::Frame* frame) override { return 0; }
 
 protected:
@@ -136,7 +129,7 @@ protected:
     bool valid    = true;
     uv1           = uv0;
 
-    for (int i = 0; valid && i >= 0; --i) {
+    for (int i = pyrLevel; valid && i >= 0; --i) {
       float scale = 1 << i;
 
       size_t idx = i << 1;

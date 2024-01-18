@@ -6,7 +6,7 @@
     "tbb": false,
     "debug": false,
     "frameTracker": {
-      "pyramidLevel": 3,
+      "maxPyramidLevel": 10,
       "feature": {
         "point": {
           "patchSize": 31,

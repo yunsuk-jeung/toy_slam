@@ -14,7 +14,7 @@ public:
     static ImuInfo     imuInfo;
     static bool        debug;
     static bool        tbb;
-    static int         pyramidLevel;
+    static int         maxPyramidLevel;
     static int         patchSize;
     static int         rowGridCount;
     static int         colGridCount;

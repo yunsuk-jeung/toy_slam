@@ -56,10 +56,10 @@ ImagePyramid* ImagePyramid::clone() {
 }
 
 void ImagePyramid::createImagePyrmid() {
-  //clahe->apply(mOrigin, mOrigin);
+  clahe->apply(mOrigin, mOrigin);
 
   const cv::Point2i patch(Config::Vio::patchSize, Config::Vio::patchSize);
-  const int&        level = Config::Vio::pyramidLevel;
+  const int        level = Config::Vio::maxPyramidLevel;
   cv::buildOpticalFlowPyramid(mOrigin,
                               mPyramids,
                               patch,

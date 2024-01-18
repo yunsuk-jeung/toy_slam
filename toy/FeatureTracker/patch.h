@@ -53,15 +53,15 @@ public:
     , mMeanI{0}
     , mValid{false}
     , mImage(pyr)
-    , mUv{700, 34} {
+    , mUv{uv.x, uv.y} {
     prepareInverseComposition();
-    std::cout << mWarp.matrix() << std::endl;
   }
 
   bool match(const cv::Mat& targetImage, cv::Point2f& uv) {
     bool valid          = true;
     mWarp.translation() = Eigen::Vector2f{uv.x, uv.y};
 
+    //std::cout << "initial warping mat \n " << mWarp.matrix2x3() << std::endl;
     //cv::Mat colorOri = mImage.clone();
     //cv::cvtColor(colorOri, colorOri, CV_GRAY2BGR);
     //cv::circle(colorOri, cv::Point2f(mUv.x(), mUv.y()), 5, {255, 0, 0}, -1);
@@ -76,6 +76,7 @@ public:
       warpedPattern.colwise() += mWarp.translation();
 
       Eigen::VectorPf res;
+      //std::cout << "iteration  " << i << " ----------------------\n";
 
       valid &= calculateResidual(targetImage, warpedPattern, res);
 
@@ -88,13 +89,17 @@ public:
       valid &= del.array().isFinite().all();
       valid &= del.lpNorm<Eigen::Infinity>() < 1e6;
 
-      ToyLogD("iter {} -- res {} del {}", i, res.norm(), del);
+      //ToyLogD("iter {} -- res {} del {}", i, res.norm(), del);
 
       if (!valid) {
         continue;
       }
 
       mWarp *= Sophus::SE2f::exp(del);
+
+      //std::cout << "inc : " << del.transpose() << std::endl;
+      //std::cout << "updated transform \n " << mWarp.matrix2x3() << std::endl;
+
       //cv::circle(colorDst,
       //           cv::Point2f(mWarp.translation().x(), mWarp.translation().y()),
       //           5,
@@ -137,10 +142,10 @@ protected:
         mIs[i] = grad[0];
         sum += grad[0];
         if (i < 30) {
-          std::cout << "pattern : " << mPattern.col(i).transpose() << " ";
-          uint8_t real = grad[0];
-          std::cout << (int)real << ", " << grad[1] << " , " << grad[2] << std::endl;
-          std::cout << J_uv_se2 << std::endl;
+          //std::cout << "pattern : " << mPattern.col(i).transpose() << " ";
+          //uint8_t real = grad[0];
+          //std::cout << (int)real << ", " << grad[1] << " , " << grad[2] << std::endl;
+          //std::cout << J_uv_se2 << std::endl;
         }
         J_I_se2.row(i) = grad.tail(2).transpose() * J_uv_se2;
         J_I_se2_sum += J_I_se2.row(i);
@@ -150,15 +155,16 @@ protected:
         mIs[i] = -1;
       }
     }
-    std::cout << "stacked jaco " << std::endl;
-    std::cout << J_I_se2 * 256 << std::endl;
-    std::cout << "sum" << std::endl;
-    std::cout << J_I_se2_sum << std::endl;
+    //std::cout << "stacked jaco " << std::endl;
+    //std::cout << J_I_se2 * 256 << std::endl;
+    //std::cout << "sum" << std::endl;
+    //std::cout << J_I_se2_sum << std::endl;
 
     mMean                = sum / validCount;
     const float mean_inv = 1.0f / mMean;
 
-    std::cout << "mean_inv : " << mean_inv / 256.0 << "  or  " << mean_inv * 256  << std::endl;
+    //std::cout << "mean_inv : " << mean_inv / 256.0 << "  or  " << mean_inv * 256
+    //          << std::endl;
 
     for (int i = 0; i < PATTERN_SIZE; i++) {
       if (mIs[i] >= 0) {
@@ -169,7 +175,7 @@ protected:
 
     J_I_se2 *= mean_inv;
 
-    std::cout << "final  jaco \n" << J_I_se2 << std::endl;
+    //std::cout << "final  jaco \n" << J_I_se2 << std::endl;
 
     Eigen::MatrixP3f& J  = J_I_se2;
     Eigen::Matrix3Pf  Jt = J.transpose();
@@ -180,8 +186,7 @@ protected:
     H.ldlt().solveInPlace(H_inv);
     mH_inv_Jt = H_inv * Jt;
 
-    std::cout << "hessian_inv * Jt\n" << mH_inv_Jt.transpose() << std::endl;
-
+    //std::cout << "hessian_inv * Jt\n" << mH_inv_Jt.transpose() << std::endl;
 
     mValid = mMean > std::numeric_limits<float>::epsilon()
              && mH_inv_Jt.array().isFinite().all() && mIs.array().isFinite().all();
@@ -202,6 +207,14 @@ protected:
       validCount++;
     }
 
+    //for (int i = 0; i < PATTERN_SIZE; ++i) {
+    //  if (i < 30) {
+    //    std::cout << i << "  pattern2 : " << warpedPattern.col(i).transpose() << " ";
+    //    uint8_t real = res[i];
+    //    std::cout << "res : " << (int)real << std::endl;
+    //  }
+    //}
+
     if (sum < std::numeric_limits<float>::epsilon()) {
       res.setZero();
       return false;
@@ -219,6 +232,15 @@ protected:
         res[i] = 0;
       }
     }
+
+    //for (int i = 0; i < PATTERN_SIZE; ++i) {
+    //  if (i < 30) {
+    //    std::cout << i << "              pattern3 : " << warpedPattern.col(i).transpose()
+    //              << " ";
+    //    std::cout << "res : " << res[i] << std::endl;
+    //  }
+    //}
+    //std::cout << "###### valid count : " << validResidualCount << std::endl;
 
     return validResidualCount > PATTERN_SIZE / 2;
   }

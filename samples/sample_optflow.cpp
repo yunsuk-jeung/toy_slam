@@ -99,6 +99,9 @@ auto main() -> int {
   for (; it != beforeLast; it++) {
     auto next = std::next(it, 1);
     pointTracker->process((*it).get(), (*next).get());
+    int key = cv::waitKey();
+    if (key == 27)
+      break;
   }
 
   return 0;

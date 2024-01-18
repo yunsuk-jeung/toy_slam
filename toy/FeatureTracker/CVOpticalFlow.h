@@ -40,7 +40,7 @@ public:
                              statusO,
                              cv::noArray(),
                              patch,
-                             Config::Vio::pyramidLevel);
+                             Config::Vio::maxPyramidLevel);
 
     auto* cam1 = curr->getCamera(0);
     cam1->undistortPoints(uvs, undists);
@@ -62,7 +62,7 @@ public:
                              reverse_status,
                              cv::noArray(),
                              patch,
-                             Config::Vio::pyramidLevel);
+                             Config::Vio::maxPyramidLevel);
 
     for (size_t i = 0; i < reverse_status.size(); ++i) {
       if (!statusO[i]) {
@@ -73,12 +73,11 @@ public:
         statusO[i] = false;
         continue;
       }
-
       //cv::Point2f dist       = uvs0[i] - reverse_uvs[i];
       //float       distNormSq = dist.x * dist.x + dist.y * dist.y;
-
-      //if (distNormSq > 5) {
-      //statusO[i] = false;
+      //
+      //if (distNormSq > 5.0f) {
+      //  statusO[i] = 0;
       //}
     }
 
@@ -164,7 +163,7 @@ public:
                              status,
                              cv::noArray(),
                              patch,
-                             Config::Vio::pyramidLevel);
+                             Config::Vio::maxPyramidLevel);
 
     auto* cam1 = frame->getCamera(1);
     cam1->undistortPoints(uvs1, undists1);

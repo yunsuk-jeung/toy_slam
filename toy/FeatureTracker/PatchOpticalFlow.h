@@ -61,7 +61,6 @@ public:
     std::vector<uchar> statusE;
     cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
 
-    const double threshold = Config::Vio::epipolarThreashold;
     cv::findFundamentalMat(uvs0, uvs, cv::FM_RANSAC, 1.0, 0.99, statusE);
 
     auto  trackSize  = statusE.size();
@@ -84,7 +83,7 @@ public:
       undists1.push_back(undists[i]);
     }
 
-    if (true) {
+    if (Config::Vio::showMonoTracking) {
       cv::Mat image0 = pyramid0[0].clone();
       cv::Mat image1 = pyramid1[0].clone();
       cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);
@@ -118,7 +117,86 @@ public:
     return ids1.size();
   }
 
-  virtual size_t matchStereo(db::Frame* frame) override { return 0; }
+  virtual size_t matchStereo(db::Frame* frame) override {
+    auto& pyramid0    = frame->getImagePyramid(0)->getPyramids();
+    auto& keyPoints0  = frame->getFeature(0)->getKeypoints();
+    auto& ids0        = keyPoints0.mIds;
+    auto& levels0     = keyPoints0.mLevels;
+    auto& uvs0        = keyPoints0.mUVs;
+    auto& trackCount0 = keyPoints0.mTrackCounts;
+    auto& undists0    = keyPoints0.mUndists;
+
+    auto& pyramid1    = frame->getImagePyramid(1)->getPyramids();
+    auto& keyPoints1  = frame->getFeature(1)->getKeypoints();
+    auto& ids1        = keyPoints1.mIds;
+    auto& levels1     = keyPoints1.mLevels;
+    auto& uvs1        = keyPoints1.mUVs;
+    auto& trackCount1 = keyPoints1.mTrackCounts;
+    auto& undists1    = keyPoints1.mUndists;
+
+    std::vector<uchar> status;
+    const size_t       uvSize = uvs0.size();
+    status.resize(uvSize, 0);
+    uvs1.resize(uvSize);
+
+    //YSTODO tbb
+    for (auto i = 0; i < uvSize; ++i) {
+      const auto& uv0 = uvs0[i];
+      auto&       uv1 = uvs1[i];
+
+      bool valid = matchPoint(pyramid0, pyramid1, uv0, uv1);
+      if (valid) {
+        cv::Point2f recovered;
+        valid &= matchPoint(pyramid1, pyramid0, uv1, recovered);
+        if (valid) {
+          cv::Point2f dist       = uv0 - recovered;
+          float       distNormSq = dist.x * dist.x + dist.y * dist.y;
+          if (distNormSq < 0.04f) {
+            status[i] = 1u;
+          }
+        }
+      }
+    }
+
+    auto* cam1 = frame->getCamera(1);
+    cam1->undistortPoints(uvs1, undists1);
+
+    std::vector<uchar> statusE;
+    cv::findFundamentalMat(uvs0, uvs1, cv::FM_RANSAC, 1.0, 0.99, statusE);
+    auto trackSize = uvs0.size();
+
+    size_t stereoFeatureSize = 0u;
+    for (int i = 0; i < trackSize; ++i) {
+      if (status[i] == 0 || statusE[i] == 0) {
+        ids1.push_back(0);
+        continue;
+      }
+      ids1.push_back(1);  //stereo
+      ++stereoFeatureSize;
+    }
+
+    //#####################################################################
+    if (Config::Vio::showStereoTracking) {
+      cv::Mat image1 = pyramid1[0].clone();
+      cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);
+
+      for (int i = 0; i < uvs0.size(); i++) {
+        cv::line(image1, uvs0[i], uvs1[i], {0.0, 255.0, 0.0}, 1);
+        cv::circle(image1, uvs1[i], 4, {0.0, 255.0, 0.0}, -1);
+      }
+      for (int i = 0; i < uvs0.size(); i++) {
+        if (status[i] == 0 || statusE[i] == 0) {
+          cv::line(image1, uvs0[i], uvs1[i], {255.0, 0.0, 0.0}, 1);
+          cv::circle(image1, uvs1[i], 2, {255.0, 0.0, 0.0}, -1);
+        }
+      }
+      cv::imshow("stereo opticalflow1", image1);
+      cv::waitKey(1);
+    }
+    //#####################################################################
+
+    return stereoFeatureSize;
+  }
 
 protected:
   bool matchPoint(std::vector<cv::Mat>& srcs,

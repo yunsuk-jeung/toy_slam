@@ -13,14 +13,14 @@
           "rowGridCount": 10,
           "colGridCount": 14,
           "on": true,
-          "tracker": "Fast.CVOpticalFlow",
+          "tracker": "Fast.PatchOpticalFlow",
           "minTrackedPoint": 30,
           "minTrackedRatio": 0.7,
           "epipolarThreashold": 0.005,
           "stereoTrackingInterval": 1,
           "showExtraction": false,
           "showMonoTracking": true,
-          "showStereoTracking": false
+          "showStereoTracking": true
         },
         "line": {
           "on": false

@@ -168,9 +168,9 @@ public:
     auto* cam1 = frame->getCamera(1);
     cam1->undistortPoints(uvs1, undists1);
     std::vector<uchar> statusE;
-    cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
+    //cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
 
-    const double threshold = Config::Vio::epipolarThreashold;
+    //const double threshold = Config::Vio::epipolarThreashold;
     //cv::findEssentialMat(undists0, undists1, I, cv::RANSAC, 0.99, threshold, statusE);
     cv::findFundamentalMat(uvs0, uvs1, cv::FM_RANSAC, 1.0, 0.99, statusE);
 

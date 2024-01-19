@@ -97,32 +97,35 @@ void LocalTracker::process() {
     float ratio = float(connected) / float(currFrame->getMapPointFactorMap().size());
 
     if (ratio < 0.8) {
-      /*ToyLogD("{}th frame, mp ratio : {}= {} /{}",
+      ToyLogD("{}th frame, mp ratio : {}= {} /{}",
               currFrame->id(),
               ratio,
               connected,
-              currFrame->getMapPointFactorMap().size());*/
+              currFrame->getMapPointFactorMap().size());
       setKf = true;
     }
 
     if (setKf) {
       int createMPCount = initializeMapPoints(currFrame);
-      //ToyLogD("{}th frame, createMP : {} ", currFrame->id(), createMPCount);
-      if (createMPCount > 10 && mKeyFrameAfter > 1) {
+      ToyLogD("{}th frame, createMP : {} ", currFrame->id(), createMPCount);
+      if (createMPCount > 5 && mKeyFrameAfter > 1) {
         currFrame->setKeyFrame();
         mKeyFrameAfter = 0;
       }
     }
-
+    drawDebugView(100, 0);
+    DEBUG_POINT();
+    cv::waitKey();
     //if (newMp > 0) && createMPCount > 0) {
     //    ToyLogD("     Set KeyFrame : {} create Mp Count : {}",
     //            currFrame->id(),
     //            createMPCount);
     //  }
 
-    //if (currFrame->id() > 2600) {
-      drawDebugView(100, 0);
-      //cv::waitKey(1);
+    //if (currFrame->id() > 49) {
+    //  drawDebugView(100, 0);
+    //  DEBUG_POINT();
+    //  cv::waitKey();
     //}
 
     //drawDebugView(101, 1040);
@@ -208,13 +211,21 @@ int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
   int initCount     = 0;
   int monoInitCount = 0;
   int tryCount      = 0;
+  int oldCount      = 0;
   int candSize      = mpCands.size();
+
   for (auto it = mpCands.begin(); it != mpCands.end();) {
     bool  success      = false;
     auto& mp           = it->second;
     auto& frameFactors = mp->getFrameFactors();
     auto& factor       = frameFactors.back().second;
     auto& frame        = frameFactors.back().first.lock();
+
+    if (frame->id() != currFrame->id()) {
+      it = mpCands.erase(it);
+      ++oldCount;
+      continue;
+    }
 
     Eigen::Vector3d Pc0x;
     switch (factor.type()) {
@@ -223,20 +234,18 @@ int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
       auto Twc1  = frame->getTwc(1);  //identity for mono or depth..
       auto Tc1c0 = Twc1.inverse() * Twc0;
 
-      if (!BasicSolver::triangulate(factor.undist0(), factor.undist1(), Tc1c0, Pc0x)) {
-        //ToyLogE("stereo triangulation fail");
-        ++it;
-        continue;
-      }
-      ++initCount;
-      success = true;
+      success |= BasicSolver::triangulate(factor.undist0(),
+                                          factor.undist1(),
+                                          Tc1c0,
+                                          Pc0x);
       break;
     }
     case db::ReprojectionFactor::Type::DEPTH: {
       TOY_ASSERT_MESSAGE(0, "not implemented");
       break;
     }
-    default:
+    }
+    if (!success) {
       auto frame0 = frameFactors.front().first.lock();
       if (frame == frame0) {
         ++it;
@@ -244,39 +253,26 @@ int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
       }
       auto  Twc0    = frame0->getTwc(0);
       auto& factor0 = frameFactors.front().second;
+      auto  Twc1    = frame->getTwc(0);
+      auto  Tc1c0   = Twc1.inverse() * Twc0;
 
-      auto Twc1  = frame->getTwc(0);
-      auto Tc1c0 = Twc1.inverse() * Twc0;
-
-      if (Tc1c0.translation().squaredNorm() < Config::Vio::minTriangulationBaselineSq) {
-        ++it;
-        continue;
+      if (Tc1c0.translation().squaredNorm() > Config::Vio::minTriangulationBaselineSq) {
+        success |= BasicSolver::triangulate(factor0.undist0(),
+                                            factor.undist0(),
+                                            Tc1c0,
+                                            Pc0x);
       }
-
-      if (!BasicSolver::triangulate(factor0.undist0(), factor.undist0(), Tc1c0, Pc0x)) {
-        auto id = frameFactors.front().first.lock()->id();
-        //ToyLogE("triangulation fail  frame {} -- frame {}", id, frame->id());
-        ++it;
-        continue;
+      if (success) {
+        ++monoInitCount;
       }
-      //if (currFrame == frame) {
-      //  auto cam = frame->getCamera(0);
-      //  auto uv  = cam->project(Tc1c0 * Pc0x);
-      //  auto uv2 = cam->project(factor.undist0());
-
-      //cv::circle(image, uv, 5, {255, 0, 0}, -1);
-      //cv::circle(image, uv, 3, {0, 0, 255}, -1);
-      //}
-      ++monoInitCount;
-
-      success = true;
-      break;
+    }
+    else {
+      ++initCount;
     }
 
     if (success) {
       double          invD = 1.0 / Pc0x.z();
       Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
-
       mp->setUndist(nuv);
       mp->setInvDepth(invD);
       mp->setState(db::MapPoint::Status::INITIALING);
@@ -286,14 +282,17 @@ int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
     }
     else {
       ++it;
+      auto id = frameFactors.front().first.lock()->id();
+      ToyLogE("triangulation fail  frame {} -- frame {}", id, frame->id());
     }
   }
   //cv::imshow("test", image);
   //cv::waitKey();
   if (Config::Vio::debug) {
-    ToyLogD("init stereo : {}, init mono : {},  cand :{}",
+    ToyLogD("init stereo : {}, init mono : {},  oldCount :{},cand :{}",
             initCount,
             monoInitCount,
+            oldCount,
             candSize);
   }
   return initCount;
@@ -412,7 +411,7 @@ db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& al
     return keyFrames[minIdx];
   }
 
-  if (frames.size() > 1) {
+  if (frames.size() > Config::Vio::maxFrameSize) {
     return frames.front();
   }
 

@@ -4,7 +4,7 @@
   "vio": {
     "on": true,
     "tbb": false,
-    "debug": false,
+    "debug": true,
     "frameTracker": {
       "maxPyramidLevel": 10,
       "feature": {
@@ -18,7 +18,7 @@
           "minTrackedRatio": 0.7,
           "epipolarThreashold": 0.005,
           "stereoTrackingInterval": 1,
-          "showExtraction": false,
+          "showExtraction": true,
           "showMonoTracking": true,
           "showStereoTracking": true
         },
@@ -34,8 +34,8 @@
       "newKeframeFeatureRatio": 0.7,
       "margFeatureConnectionRatio": 0.2,
       "minKeyFrameCount": 3,
-      "maxFrameSize": 1,
-      "maxKeyFrameSize": 6,
+      "maxFrameSize": 3,
+      "maxKeyFrameSize": 7,
       "minParallaxSqNorm": 400,
       "vioSolver": {
         "name": "SqrtLocalSolver",

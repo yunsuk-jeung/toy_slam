@@ -153,8 +153,9 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
       continue;
     }
     case db::MapPoint::Status::NONE: {
-      //color = {0, 0, 0};
-      continue;
+      color = {0, 0, 0};
+      break;
+      //continue;
     }
     case db::MapPoint::Status::MARGINED: {
       color = {255, 255, 0};
@@ -188,7 +189,7 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
     auto proj = mCameras[idx]->project(nXcx);
 
     cv::circle(img, proj, 3, color, -1);
-    if (undist.z() > 0) {
+    if (undist.z() > 0 && mp->status() > db::MapPoint::Status::NONE) {
       cv::line(img, meaUV, proj, color);
     }
 

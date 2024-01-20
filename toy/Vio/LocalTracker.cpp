@@ -97,25 +97,30 @@ void LocalTracker::process() {
     float ratio = float(connected) / float(currFrame->getMapPointFactorMap().size());
 
     if (ratio < 0.8) {
-      ToyLogD("{}th frame, mp ratio : {}= {} /{}",
-              currFrame->id(),
-              ratio,
-              connected,
-              currFrame->getMapPointFactorMap().size());
+      if (Config::Vio::debug)
+        ToyLogD("{}th frame, mp ratio : {}= {} /{}",
+                currFrame->id(),
+                ratio,
+                connected,
+                currFrame->getMapPointFactorMap().size());
       setKf = true;
     }
 
     if (setKf) {
       int createMPCount = initializeMapPoints(currFrame);
-      ToyLogD("{}th frame, createMP : {} ", currFrame->id(), createMPCount);
-      if (createMPCount > 5 && mKeyFrameAfter > 1) {
+      if (Config::Vio::debug)
+        ToyLogD("{}th frame, createMP : {} ", currFrame->id(), createMPCount);
+
+      if (createMPCount > 0 && mKeyFrameAfter > 1) {
         currFrame->setKeyFrame();
         mKeyFrameAfter = 0;
       }
     }
-    drawDebugView(100, 0);
-    DEBUG_POINT();
-    cv::waitKey();
+
+    //drawDebugView(100, 0);
+    //DEBUG_POINT();
+    //cv::waitKey();
+    //
     //if (newMp > 0) && createMPCount > 0) {
     //    ToyLogD("     Set KeyFrame : {} create Mp Count : {}",
     //            currFrame->id(),
@@ -205,15 +210,13 @@ void LocalTracker::process() {
 int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
   auto& mpCands = mLocalMap->getMapPointCandidiates();
 
-  //cv::Mat image = currFrame->getImagePyramid(0)->getOrigin().clone();
-  //cv::cvtColor(image, image, CV_GRAY2BGR);
-
   int initCount     = 0;
   int monoInitCount = 0;
   int tryCount      = 0;
   int oldCount      = 0;
   int candSize      = mpCands.size();
 
+  //YSTODO : tbb & erase with rejected count
   for (auto it = mpCands.begin(); it != mpCands.end();) {
     bool  success      = false;
     auto& mp           = it->second;
@@ -282,20 +285,19 @@ int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
     }
     else {
       ++it;
-      auto id = frameFactors.front().first.lock()->id();
-      ToyLogE("triangulation fail  frame {} -- frame {}", id, frame->id());
+      //auto id = frameFactors.front().first.lock()->id();
+      //ToyLogE("triangulation fail  frame {} -- frame {}", id, frame->id());
     }
   }
-  //cv::imshow("test", image);
-  //cv::waitKey();
+
   if (Config::Vio::debug) {
-    ToyLogD("init stereo : {}, init mono : {},  oldCount :{},cand :{}",
+    ToyLogD("init stereo : {}, init mono : {},  oldCount :{}, cand :{}",
             initCount,
             monoInitCount,
             oldCount,
             candSize);
   }
-  return initCount;
+  return initCount + monoInitCount;
 }
 
 db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {

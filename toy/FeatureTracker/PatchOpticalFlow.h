@@ -161,13 +161,13 @@ public:
     auto* cam1 = frame->getCamera(1);
     cam1->undistortPoints(uvs1, undists1);
 
-    std::vector<uchar> statusE;
-    cv::findFundamentalMat(uvs0, uvs1, cv::FM_RANSAC, 1.0, 0.99, statusE);
+    //std::vector<uchar> statusE;
+    //cv::findFundamentalMat(uvs0, uvs1, cv::FM_RANSAC, 1.0, 0.99, statusE);
     auto trackSize = uvs0.size();
 
     size_t stereoFeatureSize = 0u;
     for (int i = 0; i < trackSize; ++i) {
-      if (status[i] == 0 || statusE[i] == 0) {
+      if (status[i] == 0/* || statusE[i] == 0*/) {
         ids1.push_back(0);
         continue;
       }
@@ -185,7 +185,7 @@ public:
         cv::circle(image1, uvs1[i], 4, {0.0, 255.0, 0.0}, -1);
       }
       for (int i = 0; i < uvs0.size(); i++) {
-        if (status[i] == 0 || statusE[i] == 0) {
+        if (status[i] == 0 /*|| statusE[i] == 0*/) {
           cv::line(image1, uvs0[i], uvs1[i], {255.0, 0.0, 0.0}, 1);
           cv::circle(image1, uvs1[i], 2, {255.0, 0.0, 0.0}, -1);
         }

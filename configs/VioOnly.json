@@ -11,7 +11,7 @@
         "point": {
           "patchSize": 31,
           "rowGridCount": 10,
-          "colGridCount": 14,
+          "colGridCount": 16,
           "on": true,
           "tracker": "Fast.PatchOpticalFlow",
           "minTrackedPoint": 30,
@@ -20,7 +20,7 @@
           "stereoTrackingInterval": 1,
           "showExtraction": true,
           "showMonoTracking": true,
-          "showStereoTracking": true
+          "showStereoTracking": true  
         },
         "line": {
           "on": false
@@ -34,7 +34,7 @@
       "newKeframeFeatureRatio": 0.7,
       "margFeatureConnectionRatio": 0.2,
       "minKeyFrameCount": 3,
-      "maxFrameSize": 3,
+      "maxFrameSize": 2,
       "maxKeyFrameSize": 7,
       "minParallaxSqNorm": 400,
       "vioSolver": {

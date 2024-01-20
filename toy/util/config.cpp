@@ -26,7 +26,8 @@ int         Config::Vio::maxPyramidLevel        = 3;
 int         Config::Vio::patchSize              = 52;
 int         Config::Vio::rowGridCount           = 12;
 int         Config::Vio::colGridCount           = 8;
-std::string Config::Vio::pointTracker           = "Fast.OpticalflowLK";
+std::string Config::Vio::pointTracker           = "Fast.CVOpticalFlow";
+bool        Config::Vio::equalizeHistogram      = true;
 int         Config::Vio::minTrackedPoint        = 30;
 float       Config::Vio::minTrackedRatio        = 0.8;
 double      Config::Vio::epipolarThreashold     = 0.005;
@@ -83,12 +84,18 @@ void Config::parseConfig(const std::string& configFile) {
 
   auto feautreJson = frameTrackerJson["feature"];
 
-  auto pointJson              = feautreJson["point"];
-  bool point_on               = pointJson["on"];
-  Vio::patchSize              = pointJson["patchSize"];
-  Vio::rowGridCount           = pointJson["rowGridCount"];
-  Vio::colGridCount           = pointJson["colGridCount"];
-  Vio::pointTracker           = pointJson["tracker"];
+  auto pointJson           = feautreJson["point"];
+  bool point_on            = pointJson["on"];
+  Vio::patchSize           = pointJson["patchSize"];
+  Vio::rowGridCount        = pointJson["rowGridCount"];
+  Vio::colGridCount        = pointJson["colGridCount"];
+  Vio::pointTracker        = pointJson["tracker"];
+  const std::string target = "CVOpt";
+  size_t            found  = Vio::pointTracker.find(target);
+  if (found == std::string::npos) {
+    Vio::equalizeHistogram = false;
+  }
+
   Vio::minTrackedPoint        = pointJson["minTrackedPoint"];
   Vio::minTrackedRatio        = pointJson["minTrackedRatio"];
   Vio::epipolarThreashold     = pointJson["epipolarThreashold"];

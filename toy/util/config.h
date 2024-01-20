@@ -19,6 +19,7 @@ public:
     static int         rowGridCount;
     static int         colGridCount;
     static std::string pointTracker;
+    static bool        equalizeHistogram;
     static int         minTrackedPoint;
     static float       minTrackedRatio;
     static double      epipolarThreashold;

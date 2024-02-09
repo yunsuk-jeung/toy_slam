@@ -9,7 +9,9 @@ public:
   SampleRenderer();
   virtual ~SampleRenderer();
 
-  void buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx);
+  void buildCommandBuffer(vk::CommandBuffer cmd,
+                          uint32_t          idx,
+                          vk::DescriptorSet camDescSet);
 
 protected:
   virtual void createVertexBuffer() override;

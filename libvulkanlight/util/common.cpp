@@ -1,4 +1,4 @@
-#include "Utils.h"
+#include "common.h"
 #include <filesystem>
 
 namespace vkl {
@@ -106,7 +106,8 @@ void setImageLayout(vk::CommandBuffer         cmdBuffer,
     //Make sure any writes to the image have been finished
     //if (barrier.srcAccessMask == vk::AccessFlagBits::eNone) {
     //  barrier.srcAccessMask
-    //      = vk::AccessFlagBits::eHostWrite | vk::AccessFlagBits::eTransferWrite;
+    //      = vk::AccessFlagBits::eHostWrite |
+    //      vk::AccessFlagBits::eTransferWrite;
     //}
     barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
     break;
@@ -140,15 +141,15 @@ void convertImageLayout(vk::CommandBuffer         cmdBuffer,
   cmdBuffer.pipelineBarrier(srcStageMask, dstStageMask, {}, {}, {}, srcBarrier);
 }
 }  //namespace cmd
-
-vk::ImageCreateInfo Utils::createVkImageCI(vk::ImageType           type,
-                                           vk::Format              format,
-                                           vk::Extent3D            extent,
-                                           vk::ImageUsageFlags     usage,
-                                           uint32_t                mipLevels,
-                                           uint32_t                arrayLayers,
-                                           vk::SampleCountFlagBits smaples,
-                                           vk::ImageTiling         tilting) {
+namespace image {
+vk::ImageCreateInfo createVkImageCI(vk::ImageType           type,
+                                    vk::Format              format,
+                                    vk::Extent3D            extent,
+                                    vk::ImageUsageFlags     usage,
+                                    uint32_t                mipLevels,
+                                    uint32_t                arrayLayers,
+                                    vk::SampleCountFlagBits smaples,
+                                    vk::ImageTiling         tilting) {
   vk::ImageCreateInfo imageCI;
   imageCI.imageType = type;
   imageCI.format    = format;
@@ -163,12 +164,13 @@ vk::ImageCreateInfo Utils::createVkImageCI(vk::ImageType           type,
   return imageCI;
 }
 
-vk::ImageViewCreateInfo Utils::createVkImageViewCI(vk::ImageViewType    type,
-                                                   vk::ImageAspectFlags aspectMask,
-                                                   uint32_t             baseMipLevel,
-                                                   uint32_t             levelCount,
-                                                   uint32_t             baseArrayLayer,
-                                                   uint32_t             layerCount) {
+vk::ImageViewCreateInfo createVkImageViewCI(vk::ImageViewType    type,
+                                            vk::ImageAspectFlags aspectMask,
+                                            vk::Format           format,
+                                            uint32_t             baseMipLevel,
+                                            uint32_t             levelCount,
+                                            uint32_t             baseArrayLayer,
+                                            uint32_t             layerCount) {
   vk::ImageViewCreateInfo imageViewCI;
   imageViewCI.viewType                        = type;
   imageViewCI.subresourceRange.aspectMask     = aspectMask;
@@ -176,8 +178,10 @@ vk::ImageViewCreateInfo Utils::createVkImageViewCI(vk::ImageViewType    type,
   imageViewCI.subresourceRange.levelCount     = levelCount;
   imageViewCI.subresourceRange.baseArrayLayer = baseArrayLayer;
   imageViewCI.subresourceRange.layerCount     = layerCount;
+  imageViewCI.format                          = format;
 
   return imageViewCI;
 }
+}  //namespace image
 
 }  //namespace vkl

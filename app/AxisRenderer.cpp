@@ -5,7 +5,7 @@
 #include "DynamicUniformBuffer.h"
 #include "RenderContext.h"
 #include "PipelineLayout.h"
-#include "Pipeline.h"
+#include "GraphicsPipeline.h"
 #include "AxisRenderer.h"
 
 namespace vkl {
@@ -13,7 +13,8 @@ namespace vkl {
 AxisRenderer::AxisRenderer()
   : mMaxAixsSize{2000}
   , mSyncId{0}
-  , mSyncIds{} {
+  , mSyncIds{}
+  , mModelDesciptor{nullptr, {}, nullptr} {
   mName = "Axis Renderer";
 }
 
@@ -28,19 +29,20 @@ void AxisRenderer::updateSyndId() {
   ++mSyncId;
 }
 
-void AxisRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
+void AxisRenderer::buildCommandBuffer(vk::CommandBuffer cmd,
+                                      uint32_t          idx,
+                                      vk::DescriptorSet camDescSet) {
   if (mMwcsPtr->empty())
     return;
   auto size = mMwcsPtr->size();
 
   if (mSyncIds[idx] != mSyncId) {
-    mDUB->update(idx, size, sizeof(Eigen::Matrix4f), mMwcsPtr->data());
+    mModelDesciptor.DUB->update(idx, size, sizeof(Eigen::Matrix4f), mMwcsPtr->data());
     mSyncIds[idx] = mSyncId;
   }
 
   auto& vkBuffer     = mVB->vk();
-  auto& camDescSet   = mCamUB->getVkDescSet(idx);
-  auto& modelDescSet = mDUB->getVkDescSet(idx);
+  auto& modelDescSet = mModelDesciptor.DUB->getVkDescSet(idx);
 
   cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline->vk());
   cmd.bindVertexBuffers(0, {vkBuffer}, {0});
@@ -51,7 +53,7 @@ void AxisRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
                          {});
 
   for (int i = 0; i < size; i++) {
-    uint32_t offset = i * mDUB->getAlignment();
+    uint32_t offset = i * mModelDesciptor.DUB->getAlignment();
     cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                            mPipelineLayout->vk(),
                            1,
@@ -81,7 +83,7 @@ void AxisRenderer::createVertexBuffer() {
   mVB->update(vertices.data(), memSize, 0);
 }
 
-void AxisRenderer::createUniformBuffers() {
+void AxisRenderer::createUniformBuffer() {
   auto count = mRenderContext->getContextImageCount();
   mSyncIds.resize(count, 0);
 
@@ -96,19 +98,24 @@ void AxisRenderer::createUniformBuffers() {
     alignment = minVkMemoryAlignment;
 
     if (uniformSize > minVkMemoryAlignment)
-      VklLogE("you have to implement this part");
+      vklLogE("you have to implement this part");
+  }
+  mModelDesciptor.descLayout = mPipelineLayout->getDescriptorSetLayout(1u);
+
+  mModelDesciptor.descSets.resize(count);
+  for (size_t i = 0u; i < count; ++i) {
+    mModelDesciptor.descSets[i] = mDevice->vk()
+                                    .allocateDescriptorSets(
+                                      {mVkDescPool, mModelDesciptor.descLayout->vk()})
+                                    .front();
   }
 
-  auto descsetLayout = mPipelineLayout->getDescriptorSetLayout("modelMat");
-  auto memSize       = mMaxAixsSize * alignment;
-
-  mDUB = std::make_unique<DynamicUniformBuffer>(mDevice,
-                                                count,
-                                                memSize,
-                                                mVkDescPool,
-                                                descsetLayout,
-                                                0,
-                                                uniformSize,
-                                                alignment);
+  auto memSize        = mMaxAixsSize * alignment;
+  mModelDesciptor.DUB = std::make_unique<DynamicUniformBuffer>(mDevice,
+                                                               mModelDesciptor.descSets,
+                                                               0u,
+                                                               memSize,
+                                                               uniformSize,
+                                                               alignment);
 }
 }  //namespace vkl

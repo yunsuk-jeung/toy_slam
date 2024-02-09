@@ -1,13 +1,13 @@
 #pragma once
 #include "RendererBase.h"
 #include "macros.h"
-namespace ImGui {
-class Object;
-}
+
 namespace vkl {
-class InputCallback;
 class Window;
+class InputCallback;
 class Buffer;
+class Image;
+class GuiImpl;
 class GUI : public RendererBase {
 public:
   USING_SMART_PTR(GUI);
@@ -20,10 +20,10 @@ public:
                RenderContext*     context,
                vk::DescriptorPool descPool,
                vk::RenderPass     vkRenderPass,
-               Pipeline*          pipeline) override;
+               GraphicsPipeline*  pipeline) override;
 
   virtual void addInputCallback(InputCallback* cb);
-  void         addImGuiObjects(std::shared_ptr<ImGui::Object> objects);
+  void         addGuiImpls(std::shared_ptr<GuiImpl> objects);
 
   void onRender();
 
@@ -34,10 +34,8 @@ protected:
   void handleInputCallbacks();
 
   void createVertexBuffer() override;
-  void createIndexBuffers() override;
-  void createTextures() override;
-  void createDescriptorsets() override;
-  void updateDescriptorsets() override;
+  void createIndexBuffer() override;
+  void createTexture() override;
 
 protected:
   Window* mWindow;
@@ -52,6 +50,6 @@ protected:
   vk::Sampler                          mFontSampler;
   vk::DescriptorSet                    mFontDescSet;
 
-  std::vector<std::shared_ptr<ImGui::Object>> mImGuiObjects;
+  std::vector<std::shared_ptr<GuiImpl>> mGuiImpls;
 };
 }  //namespace vkl

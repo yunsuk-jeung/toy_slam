@@ -4,7 +4,7 @@
 namespace vkl {
 class Buffer;
 class DynamicUniformBuffer;
-
+class DescriptorSetLayout;
 class AxisRenderer : public RendererBase {
 public:
   AxisRenderer();
@@ -13,18 +13,25 @@ public:
 
   void setMwcs(std::vector<Eigen::Matrix4f>* pMwcs) { mMwcsPtr = pMwcs; }
   void updateSyndId();
-  void buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx);
+  void buildCommandBuffer(vk::CommandBuffer cmd,
+                          uint32_t          idx,
+                          vk::DescriptorSet camDescset);
 
 protected:
   virtual void createVertexBuffer() override;
-  virtual void createUniformBuffers() override;
+  virtual void createUniformBuffer() override;
 
 protected:
-  uint32_t                              mSyncId;
-  std::vector<uint32_t>                 mSyncIds;
-  std::unique_ptr<Buffer>               mVB;
-  std::unique_ptr<DynamicUniformBuffer> mDUB;
-  std::vector<Eigen::Matrix4f>*         mMwcsPtr;
+  uint32_t                      mSyncId;
+  std::vector<uint32_t>         mSyncIds;
+  std::unique_ptr<Buffer>       mVB;
+  std::vector<Eigen::Matrix4f>* mMwcsPtr;
+
+  struct ModelDesciptor {
+    DescriptorSetLayout*                  descLayout;
+    std::vector<vk::DescriptorSet>        descSets;
+    std::unique_ptr<DynamicUniformBuffer> DUB;
+  } mModelDesciptor;
 
   const int mMaxAixsSize;
 };

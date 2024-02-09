@@ -18,13 +18,13 @@ GraphicsCamera::GraphicsCamera(GraphcisAPI     _api,
                                float*          distortion,
                                int             orientation_,
                                DistortionModel model)
-
   : center{Eigen::Vector3f(0, 0, 0)}
   , distance{10.0f}
   , longitude{45.0f}
   , latitude{45.0f}
   , api{_api}
   , projMode{proj}
+  , projMatMethod{FOV}
   , hfov{60.0f}
   , inverseAspect{0.0f}
   , n{0.1f}
@@ -117,7 +117,8 @@ Eigen::Matrix4f GraphicsCamera::getCamUnprojection() {
 
 //void GraphicsCamera::setDistortion(float* distortion) {}
 
-//void GraphicsCamera::setDistortion(float k1, float k2, float k3, float k4, float k5) {}
+//void GraphicsCamera::setDistortion(float k1, float k2, float k3, float k4,
+//float k5) {}
 
 /**
  * @brief  projection matrix is derived when camera is looking at Z-direction

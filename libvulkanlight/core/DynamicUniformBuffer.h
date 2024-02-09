@@ -1,34 +1,31 @@
 #pragma once
 
-#include <vulkan/vulkan.hpp>
 #include <vector>
+#include <vulkan/vulkan.hpp>
 
 #include "Buffer.h"
-#include "Device.h"
 #include "BufferingBuffer.h"
+#include "Device.h"
 
 namespace vkl {
 class DynamicUniformBuffer : protected BufferingBuffer {
 public:
   DynamicUniformBuffer() = delete;
-  DynamicUniformBuffer(Device*                 device,
-                       uint32_t                bufferCount,
-                       uint64_t                size,
-                       vk::DescriptorPool      descPool,
-                       vk::DescriptorSetLayout layout,
-                       uint32_t                binding,
-                       uint32_t                uniformSize,
-                       uint32_t                alignment)
+  DynamicUniformBuffer(Device*                        device,
+                       std::vector<vk::DescriptorSet> descSets,
+                       uint32_t                       binding,
+                       uint64_t                       totalSize,
+                       uint32_t                       uniformSize,
+                       uint32_t                       alignment)
     : BufferingBuffer(device,
-                      bufferCount,
-                      size,
+                      descSets.size(),
+                      totalSize,
                       vk::BufferUsageFlagBits::eUniformBuffer,
                       vk::MemoryPropertyFlagBits::eHostVisible,
                       vk::MemoryPropertyFlagBits::eHostCoherent)
-    , mVkDescPool{descPool}
-    , mVkDescLayout{layout}
+    , mVkDescSets{descSets}
     , mBinding{binding}
-    , mUniformMemorySize{uniformSize}
+    , mUniformSize{uniformSize}
     , mAlignment{alignment} {
     createDescSets();
   }
@@ -39,7 +36,7 @@ public:
     uint8_t* src = (uint8_t*)data;
 
     for (int i = 0; i < count; i++) {
-      memcpy(dst, src, mUniformMemorySize);
+      memcpy(dst, src, mUniformSize);
       dst += mAlignment;
       src += dataAlignment;
     }
@@ -49,15 +46,8 @@ public:
 
 protected:
   virtual void createDescSets() {
-    mVkDescSets.resize(mBufferCount);
-    for (auto& descset : mVkDescSets) {
-      descset = mDevice->vk()
-                  .allocateDescriptorSets({mVkDescPool, mVkDescLayout})
-                  .front();
-    }
-
     for (size_t i = 0; i < mBufferCount; i++) {
-      vk::DescriptorBufferInfo descBufferInfo(mBuffers[i]->vk(), 0, mUniformMemorySize);
+      vk::DescriptorBufferInfo descBufferInfo(mBuffers[i]->vk(), 0, mUniformSize);
 
       vk::WriteDescriptorSet writeDescriptorSet(mVkDescSets[i],
                                                 mBinding,
@@ -70,13 +60,9 @@ protected:
   }
 
 protected:
-  vk::DescriptorSetLayout        mVkDescLayout;
-  std::vector<vk::DescriptorSet> mVkDescSets;
-  uint32_t                       mBinding;
-
-  vk::DescriptorPool mVkDescPool;
-
-  uint32_t mUniformMemorySize;
-  uint32_t mAlignment;
+  const std::vector<vk::DescriptorSet> mVkDescSets;
+  uint32_t                             mBinding;
+  uint32_t                             mUniformSize;
+  uint32_t                             mAlignment;
 };
 }  //namespace vkl

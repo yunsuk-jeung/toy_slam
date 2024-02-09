@@ -1,11 +1,10 @@
 #pragma once
-
-#include <string>
 #include <memory>
+#include <string>
 #include <volk.h>
 #include <vulkan/vulkan.hpp>
 #include "Buffer.h"
-#include "shaders/ShaderTypes.h"
+#include "ShaderTypes.h"
 #include "vkltypes.h"
 
 namespace vkl {
@@ -17,13 +16,14 @@ class Device;
 class RenderContext;
 class GraphicsCamera;
 class UniformBuffer;
+class DescriptorSetLayout;
 class App {
 public:
   App();
   virtual ~App();
 
   void addShaderPath(const std::string& shaderPath);
-  void addAssetPath(const std::string& shaderPath);
+  void addAssetPath(const std::string& assetPath);
 
   void registerWindow(std::unique_ptr<Window>& _window);
 
@@ -43,6 +43,7 @@ protected:
   virtual void createRenderPass();
   virtual void createFrameBuffer();
   virtual void createVkDescriptorPool();
+  virtual void createPipelines();
   virtual void createRenderers();
   virtual void createGUI();
   virtual void createGraphicsCamera();
@@ -55,8 +56,8 @@ protected:
   virtual void              updateCameraUniform(int idx);
   virtual void              updateUniform(int idx);
 
-  void prepareFrame();
-  void presentFrame();
+  virtual void prepareFrame();
+  virtual void presentFrame();
 
 protected:
   std::string mName;
@@ -83,7 +84,11 @@ protected:
 
   //used for camera
   std::unique_ptr<GraphicsCamera> mGraphicsCamera;
-  std::unique_ptr<UniformBuffer>  mCameraUB;
+  struct CameraDescriptorSet {
+    DescriptorSetLayout*           descLayout{nullptr};
+    std::vector<vk::DescriptorSet> descSets{};
+    std::unique_ptr<UniformBuffer> cameraUB{nullptr};
+  } mCameraDescriptor;
 
 public:
   Device*        getDevice() { return mDevice.get(); }

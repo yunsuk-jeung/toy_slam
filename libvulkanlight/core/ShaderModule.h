@@ -1,6 +1,6 @@
 #pragma once
-#include "VKObject.h"
 #include "Device.h"
+#include "VKObject.h"
 
 namespace vkl {
 enum class ShaderResourceType {

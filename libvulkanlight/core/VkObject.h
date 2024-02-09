@@ -1,6 +1,7 @@
 #pragma once
-#include <vulkan/vulkan.hpp>
 #include "macros.h"
+#include <vulkan/vulkan.hpp>
+
 namespace vkl {
 template <typename T>
 class VkObject {

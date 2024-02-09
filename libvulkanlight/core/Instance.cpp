@@ -4,7 +4,7 @@
 #include <volk.h>
 #include "Instance.h"
 #include "VklLogger.h"
-#include "VkSettings.h"
+#include "VklSettings.h"
 
 namespace vkl {
 namespace {
@@ -17,13 +17,13 @@ debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_se
                                void*                                       user_data) {
   //Log debug message
   if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-    VklLogW("{} - {}: {}",
+    vklLogW("{} - {}: {}",
             callback_data->messageIdNumber,
             callback_data->pMessageIdName,
             callback_data->pMessage);
   }
   else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-    VklLogE("{} - {}: {}",
+    vklLogE("{} - {}: {}",
             callback_data->messageIdNumber,
             callback_data->pMessageIdName,
             callback_data->pMessage);
@@ -40,16 +40,16 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
                                                      const char* message,
                                                      void* /*user_data*/) {
   if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
-    VklLogE("{}: {}", layer_prefix, message);
+    vklLogE("{}: {}", layer_prefix, message);
   }
   else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
-    VklLogW("{}: {}", layer_prefix, message);
+    vklLogW("{}: {}", layer_prefix, message);
   }
   else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
-    VklLogW("{}: {}", layer_prefix, message);
+    vklLogW("{}: {}", layer_prefix, message);
   }
   else {
-    VklLogI("{}: {}", layer_prefix, message);
+    vklLogI("{}: {}", layer_prefix, message);
   }
   return VK_FALSE;
 }
@@ -60,16 +60,17 @@ Instance::Instance(const std::string&              name,
                    const std::vector<const char*>& enabledExts,
                    const std::vector<const char*>& enabledLayers,
                    uint32_t                        apiVersion) {
-  auto& availableExtensions = VkSettings::availableInstanceExtProps;
+  auto& availableExtensions = VklSettings::availableInstanceExtProps;
 
-  VkSettings::addInstanceExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-                                   availableExtensions);
+  VklSettings::addInstanceExtension(
+    VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+    availableExtensions);
 
   vk::ApplicationInfo appInfo{name.c_str(), 0, "Vulkan App", 0, apiVersion};
 
   vk::InstanceCreateInfo instance_info({}, &appInfo, enabledLayers, enabledExts);
 
-  bool& debugEnabled = VkSettings::hasDebugUtil;
+  bool& debugEnabled = VklSettings::hasDebugUtil;
 
 #if defined(VKL_DEBUG) || defined(VKL_VALIDATION_LAYERS)
   vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;
@@ -98,7 +99,7 @@ Instance::Instance(const std::string&              name,
   vkInstance = vk::createInstance(instance_info);
 
   if (!vkInstance) {
-    VklLogW("Failed to create vkInstance");
+    vklLogW("Failed to create vkInstance");
     throw std::runtime_error("Failted to create vkInstance");
   }
 

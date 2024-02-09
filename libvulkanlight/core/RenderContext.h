@@ -1,6 +1,7 @@
 #pragma once
-#include <vector>
 #include <set>
+#include <vector>
+#include <tuple>
 #include <vulkan/vulkan.hpp>
 
 #include "Image.h"
@@ -14,7 +15,7 @@ class Window;
 class RenderContext {
 public:
   RenderContext() = delete;
-  RenderContext(Device* _device, Window* _window, vk::PresentModeKHR presentMode);
+  RenderContext(Device* _device, Window* _window, Queue* queue);
   virtual ~RenderContext();
 
   virtual void prepare();
@@ -22,51 +23,56 @@ public:
   void         createCommandBuffer(vk::CommandBufferLevel priority);
   virtual void resizeSwapChain();
 
-  vk::CommandBuffer getOneTimeCommandBuffer();
+  vk::CommandBuffer getOneTimeCommandBuffer(vk::CommandBufferLevel level,
+                                            bool                   begin = false);
   void              freeOneTimeCommandBuffer(vk::CommandBuffer cmd);
+
+  virtual std::tuple<uint32_t, vk::Fence, BufferingSemaphore> acquireNextImage();
 
 protected:
   virtual void prepareColor();
   virtual void prepareDepthStencil();
 
 protected:
-  Window* window{nullptr};
+  Window* mWindow{nullptr};
 
-  Device* device{nullptr};
-  Queue*  queue{nullptr};
+  Device* mDevice{nullptr};
+  Queue*  mQueue{nullptr};
 
-  ContextProps                     ctProps;
-  std::set<vk::ImageUsageFlagBits> vkImageUsageFlags;
-  vk::SwapchainKHR                 vkSwapchain{VK_NULL_HANDLE};
+  ContextProps                     mCtProps;
+  std::set<vk::ImageUsageFlagBits> mVkImageUsageFlags;
+  vk::SwapchainKHR                 mVkSwapchain{VK_NULL_HANDLE};
 
-  uint32_t                        cmdFenceIdx{0};
-  std::vector<vk::Fence>          cmdFences;
-  uint32_t                        bfSemaphoreIdx{0};
-  std::vector<BufferingSemaphore> bfSemaphores;
+  //uint32_t cmdFenceIdx{0};
+  //uint32_t bfSemaphoreIdx{0};
+  uint32_t                        mCurrentBufferingIdx;
+  std::vector<vk::Fence>          mCmdFences;
+  std::vector<BufferingSemaphore> mBfSemaphores;
 
-  std::vector<Image> colorImages;
-  std::vector<Image> depthStencilImages;
+  std::vector<Image> mColorImages;
+  std::vector<Image> mDepthStencilImages;
 
-  vk::CommandPool                renderCommandPool;
-  std::vector<vk::CommandBuffer> renderCommandBuffers;
+  vk::CommandPool                mRenderCommandPool;
+  std::vector<vk::CommandBuffer> mRenderCommandBuffers;
 
 public:
-  Window*          getWindow() { return window; }
-  Queue*           getQueue() { return queue; }
-  vk::SwapchainKHR getVkSwapchain() { return vkSwapchain; }
+  Window*          getWindow() { return mWindow; }
+  Queue*           getQueue() { return mQueue; }
+  vk::SwapchainKHR getVkSwapchain() { return mVkSwapchain; }
 
-  ContextProps&       getContextProps() { return ctProps; }
-  std::vector<Image>& getColorImages() { return colorImages; };
-  uint32_t            getContextImageCount() { return ctProps.imageCount; }
-  std::vector<Image>& getDepthStencilImage() { return depthStencilImages; }
+  ContextProps&       getContextProps() { return mCtProps; }
+  std::vector<Image>& getColorImages() { return mColorImages; };
+  uint32_t            getContextImageCount() { return mCtProps.imageCount; }
+  std::vector<Image>& getDepthStencilImage() { return mDepthStencilImages; }
 
   vk::Queue& getVkQueue();
 
-  vk::CommandPool&                getRenderCommandPool() { return renderCommandPool; }
+  vk::CommandPool&                getRenderCommandPool() { return mRenderCommandPool; }
   std::vector<vk::CommandBuffer>& getRenderCommandBuffers() {
-    return renderCommandBuffers;
+    return mRenderCommandBuffers;
   }
-  vk::Fence          getCurrCmdFence();
-  BufferingSemaphore getCurrBufferingSemaphore();
+
+  //vk::Fence getCurrCmdFence();
+  //BufferingSemaphore getCurrBufferingSemaphore();
 };
 }  //namespace vkl

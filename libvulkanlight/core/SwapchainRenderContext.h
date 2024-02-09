@@ -1,8 +1,7 @@
 #pragma once
-#include <vector>
 #include <set>
+#include <vector>
 #include <vulkan/vulkan.hpp>
-
 #include "RenderContext.h"
 
 namespace vkl {
@@ -15,11 +14,14 @@ public:
   SwapchainRenderContext() = delete;
   SwapchainRenderContext(Device*            _device,
                          Window*            _window,
+                         Queue*             _queue,
                          vk::PresentModeKHR presentMode);
   ~SwapchainRenderContext();
 
   void prepare() override;
   void resizeSwapChain() override;
+
+  virtual std::tuple<uint32_t, vk::Fence, BufferingSemaphore> acquireNextImage() override;
 
 protected:
   void prepareColor() override;

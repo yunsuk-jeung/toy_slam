@@ -4,7 +4,7 @@
 #include "RenderContext.h"
 #include "ShaderModule.h"
 #include "PipelineLayout.h"
-#include "Pipeline.h"
+#include "GraphicsPipeline.h"
 #include "ShaderTypes.h"
 #include "Buffer.h"
 #include "BufferingBuffer.h"
@@ -19,9 +19,9 @@ SampleRenderer::SampleRenderer()
 
 SampleRenderer::~SampleRenderer() {}
 
-void SampleRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
-  auto& camDescSet = mCamUB->getVkDescSet(idx);
-
+void SampleRenderer::buildCommandBuffer(vk::CommandBuffer cmd,
+                                        uint32_t          idx,
+                                        vk::DescriptorSet camDescSet) {
   cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                          mPipelineLayout->vk(),
                          0,

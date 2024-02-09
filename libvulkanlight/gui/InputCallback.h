@@ -1,8 +1,8 @@
 #pragma once
 
+#include "macros.h"
 #include <functional>
 #include <memory>
-#include "macros.h"
 
 namespace vkl {
 class InputCallback {

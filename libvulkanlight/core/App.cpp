@@ -1,6 +1,6 @@
 #include <iostream>
-#include <memory>
 #include <limits>
+#include <memory>
 
 #define VOLK_IMPLEMENTATION
 #include <volk.h>
@@ -10,23 +10,23 @@
 #include "App.h"
 #include "Window.h"
 
-#include "Instance.h"
 #include "Device.h"
-#include "SwapchainRenderContext.h"
+#include "Instance.h"
 #include "Queue.h"
-#include "UniformBuffer.h"
 #include "ResourcePool.h"
+#include "SwapchainRenderContext.h"
+#include "UniformBuffer.h"
 
 #include "GUI.h"
-#include "InputCallback.h"
 #include "GraphicsCamera.h"
-#include "Pipeline.h"
+#include "InputCallback.h"
+#include "GraphicsPipeline.h"
 
-#include "VkError.h"
-#include "VklLogger.h"
-#include "VkSettings.h"
-#include "shaders.h"
-#include "Utils.h"
+#include "VklError.h"
+#include "VklSettings.h"
+#include "common.h"
+#include "ShaderPool.h"
+
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 namespace vkl {
@@ -65,7 +65,7 @@ App::~App() {
     mVkDescPool = VK_NULL_HANDLE;
   }
 
-  mCameraUB.reset();
+  mCameraDescriptor.cameraUB.reset();
 
   mGUI.reset();
   //mGui.reset();
@@ -81,7 +81,7 @@ App::~App() {
 
   mRenderContext.reset();
 
-  ResourcePool::clear(mDevice.get());
+  ResourcePool::clear();
 
   mDevice.reset();
 
@@ -96,8 +96,8 @@ void App::addShaderPath(const std::string& shaderPath) {
   ResourcePool::addShaderPath(shaderPath);
 }
 
-void App::addAssetPath(const std::string& resourcePath) {
-  ResourcePool::addAssetPath(resourcePath);
+void App::addAssetPath(const std::string& assetPath) {
+  ResourcePool::addAssetPath(assetPath);
 }
 
 void App::registerWindow(std::unique_ptr<Window>& _window) {
@@ -109,7 +109,7 @@ void App::onWindowResized(int w, int h, int orientation) {
     return;
 
   if (!mRenderContext->getVkSwapchain()) {
-    VklLogW("Can't handle surface changes in headless mode, skipping.");
+    vklLogW("Can't handle surface changes in headless mode, skipping.");
     return;
   }
 
@@ -117,7 +117,7 @@ void App::onWindowResized(int w, int h, int orientation) {
                                               .getSurfaceCapabilitiesKHR(mVkSurface);
 
   if (surfaceProps.currentExtent.width == 0xFFFFFFFF) {
-    VklLogE("Surface Width is 0 ");
+    vklLogE("Surface Width is 0 ");
     return;
   }
 
@@ -156,12 +156,14 @@ bool App::prepare() {
   VkResult result = volkInitialize();
 
   if (result) {
-    VK_CHECK_ERROR(result, "Failed to initialize volk.");
+    VKL_CHECK_ERROR(result, "Failed to initialize volk.");
     return false;
   }
 
   createInstance();
   createDevice();
+
+  ResourcePool::init(mDevice.get());
 
   /*render context parts*/
   createRenderContext();
@@ -176,10 +178,13 @@ bool App::prepare() {
 
   createVkDescriptorPool();
 
+  ShaderPool::init();
+
+  createPipelines();
+  createRenderers();
+
   createGUI();
   createGraphicsCamera();
-
-  createRenderers();
 
   mPrepared = true;
   return mPrepared;
@@ -187,75 +192,78 @@ bool App::prepare() {
 
 void App::run() {}
 
-void App::end() {}
+void App::end() {
+  mEndApplication = true;
+}
 
 void App::onRender() {}
 
 void App::createInstance() {
-  VkSettings::availableInstanceExtProps = vk::enumerateInstanceExtensionProperties();
+  VklSettings::availableInstanceExtProps = vk::enumerateInstanceExtensionProperties();
 
-  auto& properties = VkSettings::availableInstanceExtProps;
+  auto& properties = VklSettings::availableInstanceExtProps;
 
   //get the surface extensions
   auto surfExtensions = mWindow->getRequiredSurfaceExtension();
   for (auto& surfExtension : surfExtensions) {
-    VkSettings::addInstanceExtension(surfExtension, properties);
+    VklSettings::addInstanceExtension(surfExtension, properties);
   }
 
 #ifdef VKL_DEBUG
 
-  VkSettings::hasDebugUtil =
-    VkSettings::addInstanceExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME, properties);
+  VklSettings::hasDebugUtil =
+    VklSettings::addInstanceExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME, properties);
   bool debugReport{false};
-  if (!VkSettings::hasDebugUtil)
-    debugReport = VkSettings::addInstanceExtension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
-                                                   properties);
+  if (!VklSettings::hasDebugUtil)
+    debugReport = VklSettings::addInstanceExtension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+                                                    properties);
 
-  if (!VkSettings::hasDebugUtil && !debugReport) {
-    VklLogW("Neither of {} or {} are available; disabling debug reporting",
+  if (!VklSettings::hasDebugUtil && !debugReport) {
+    vklLogW("Neither of {} or {} are available; disabling debug reporting",
             VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
             VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
   }
 #endif
-  bool& headless = VkSettings::headless;
+  bool& headless = VklSettings::headless;
   headless       = mWindow->getWindowInfo().mode == WindowInfo::Mode::Headless;
   if (headless) {
-    bool enable = VkSettings::addInstanceExtension(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME,
-                                                   properties);
+    bool
+      enable = VklSettings::addInstanceExtension(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME,
+                                                 properties);
     if (!enable) {
-      VkSettings::addInstanceExtension(VK_KHR_SURFACE_EXTENSION_NAME, properties);
+      VklSettings::addInstanceExtension(VK_KHR_SURFACE_EXTENSION_NAME, properties);
       headless = false;
     }
   }
 
 #ifdef VKL_VALIDATION_LAYERS
   {
-    VkSettings::availableLayers = vk::enumerateInstanceLayerProperties();
-    VklLogD("availableLayers : {}", VkSettings::availableLayers.size());
-    VkSettings::addLayer(VK_LAYER_KHRONOS_VALIDATION_NAME, VkSettings::availableLayers);
+    VklSettings::availableLayers = vk::enumerateInstanceLayerProperties();
+    vklLogD("availableLayers : {}", VklSettings::availableLayers.size());
+    VklSettings::addLayer(VK_LAYER_KHRONOS_VALIDATION_NAME, VklSettings::availableLayers);
   }
 #endif
 
   mInstance = std::make_unique<Instance>(mName,
-                                         VkSettings::enabledInstanceExtensions,
-                                         VkSettings::enabledLayers,
+                                         VklSettings::enabledInstanceExtensions,
+                                         VklSettings::enabledLayers,
                                          mApiVersion);
   if (!mInstance) {
-    VklLogE("failed to init mVkSurface");
+    vklLogE("failed to init mVkSurface");
     return;
   }
 }
 
 void App::createDevice() {
   mVkSurface     = mWindow->createSurface(mInstance.get());
-  bool& headless = VkSettings::headless;
+  bool& headless = VklSettings::headless;
 
   if (!mVkSurface && !headless)
     throw std::runtime_error("Failed to create mWindow surface.");
 
   auto deviceCands = mInstance->getVkInstance().enumeratePhysicalDevices();
   if (deviceCands.empty()) {
-    VklLogE("Could not find a physical mDevice");
+    vklLogE("Could not find a physical mDevice");
     throw std::runtime_error("Could not find a physical mDevice");
   }
 
@@ -277,45 +285,46 @@ void App::createDevice() {
                                      vkPhysicalDevice,
                                      mVkSurface);
 
-  VkSettings::availableDeviceExtensions = vkPhysicalDevice
-                                            .enumerateDeviceExtensionProperties();
+  VklSettings::availableDeviceExtensions = vkPhysicalDevice
+                                             .enumerateDeviceExtensionProperties();
 
-  auto& properties = VkSettings::availableDeviceExtensions;
+  auto& properties = VklSettings::availableDeviceExtensions;
 
-  bool instanceEnabledHeadless = VkSettings::isInInstanceExtension(
+  bool instanceEnabledHeadless = VklSettings::isInInstanceExtension(
     VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
 
   if (!headless || instanceEnabledHeadless) {
-    VkSettings::addDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME, properties);
+    VklSettings::addDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME, properties);
 
-    if (VkSettings::isInInstanceExtension(VK_KHR_DISPLAY_EXTENSION_NAME)) {
-      VkSettings::addDeviceExtension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, properties);
+    if (VklSettings::isInInstanceExtension(VK_KHR_DISPLAY_EXTENSION_NAME)) {
+      VklSettings::addDeviceExtension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME,
+                                      properties);
     }
   }
 
-  bool canGetMemroy = VkSettings::isAvailableDeviceExtension(
+  bool canGetMemroy = VklSettings::isAvailableDeviceExtension(
     VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 
-  bool hasDedicatedAlloc = VkSettings::isAvailableDeviceExtension(
+  bool hasDedicatedAlloc = VklSettings::isAvailableDeviceExtension(
     VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 
   if (canGetMemroy && hasDedicatedAlloc) {
-    VkSettings::addDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-    VkSettings::addDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+    VklSettings::addDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+    VklSettings::addDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
   }
 
-  //bool bufferDeivceAddr  = VkSettings::isAvailableDeviceExtension(
+  //bool bufferDeivceAddr  = VklSettings::isAvailableDeviceExtension(
   //    VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
   //bool deviceGroup =
-  //VkSettings::isAvailableDeviceExtension(VK_KHR_DEVICE_GROUP_EXTENSION_NAME);
+  //VklSettings::isAvailableDeviceExtension(VK_KHR_DEVICE_GROUP_EXTENSION_NAME);
 
   //if (bufferDeivceAddr && deviceGroup) {
-  //  VkSettings::addDeviceExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-  //  VkSettings::addDeviceExtension(VK_KHR_DEVICE_GROUP_EXTENSION_NAME);
+  //  VklSettings::addDeviceExtension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+  //  VklSettings::addDeviceExtension(VK_KHR_DEVICE_GROUP_EXTENSION_NAME);
   //}
 
 #ifdef VKL_DEBUG
-  if (!VkSettings::hasDebugUtil) {
+  if (!VklSettings::hasDebugUtil) {
     auto
       debugExtensionIt = std::find_if(properties.begin(),
                                       properties.end(),
@@ -325,7 +334,7 @@ void App::createDevice() {
                                                == 0;
                                       });
     if (debugExtensionIt != properties.end()) {
-      VklLogI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+      vklLogI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
       //YSTODO: debug marker
       //debug_utils =
       //std::make_unique<vkb::core::HPPDebugMarkerExtDebugUtils>();
@@ -344,19 +353,22 @@ void App::createRenderContext() {
                                       ? vk::PresentModeKHR::eFifo
                                       : vk::PresentModeKHR::eMailbox;
 
-  VkSettings::presentModePriorities = {vk::PresentModeKHR::eMailbox,
-                                       vk::PresentModeKHR::eFifo,
-                                       vk::PresentModeKHR::eImmediate};
+  VklSettings::presentModePriorities = {vk::PresentModeKHR::eMailbox,
+                                        vk::PresentModeKHR::eFifo,
+                                        vk::PresentModeKHR::eImmediate};
 
-  VkSettings::surfaceFormatPriorities = {
+  VklSettings::surfaceFormatPriorities = {
     {vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
     {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
     { vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
     { vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}
   };
 
+  auto& presentableQueue = mDevice->getPresentableQueue();
+
   mRenderContext = std::make_unique<SwapchainRenderContext>(mDevice.get(),
                                                             mWindow.get(),
+                                                            &presentableQueue,
                                                             present_mode);
 
   if (!mRenderContext)
@@ -455,7 +467,7 @@ void App::createFrameBuffer() {
   auto extent   = mRenderContext->getContextProps().extent;
 
   std::array<vk::ImageView, 2> attachments;
-  attachments[1] = mRenderContext->getDepthStencilImage().front().vkImageView;
+  attachments[1] = mRenderContext->getDepthStencilImage().front().vkImageView();
 
   vk::FramebufferCreateInfo framebufferCI({},
                                           mVkRenderPass,
@@ -469,7 +481,7 @@ void App::createFrameBuffer() {
   mVkFramebuffers.reserve(swapSize);
 
   for (auto& image : swapchainImages) {
-    attachments[0] = image.vkImageView;
+    attachments[0] = image.vkImageView();
     mVkFramebuffers.push_back(mDevice->vk().createFramebuffer(framebufferCI));
   }
 }
@@ -496,42 +508,28 @@ void App::createVkDescriptorPool() {
   //VkDescriptorPoolCreateInfo pool_info = {};
   //pool_info.sType                      =
   //VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO; pool_info.flags         =
-  //VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT; pool_info.maxSets       = 30 *
-  //11; pool_info.poolSizeCount = (uint32_t)11; pool_info.pPoolSizes    = pool_sizes;
-  //err = vkCreateDescriptorPool(g_Device, &pool_info, g_Allocator, &g_DescriptorPool);
-  //check_vk_result(err);
+  //VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT; pool_info.maxSets = 30 *
+  //11; pool_info.poolSizeCount = (uint32_t)11; pool_info.pPoolSizes    =
+  //pool_sizes; err = vkCreateDescriptorPool(g_Device, &pool_info, g_Allocator,
+  //&g_DescriptorPool); check_vk_result(err);
 }
 
 void App::createGUI() {
-  ShaderSourceType  type           = ShaderSourceType::SPV;
-  std::string       name           = "imgui";
-  const std::string vertexShader   = std::string((const char*)shader::imguiVertspv,
-                                               sizeof(shader::imguiVertspv));
-  const std::string fragmentShader = std::string((const char*)shader::imguiFragspv,
-                                                 sizeof(shader::imguiFragspv));
+  ShaderSourceType type = ShaderSourceType::SPV;
+  std::string      name = "imgui";
 
-  auto* vert = ResourcePool::loadShader(name,
-                                        mDevice.get(),
-                                        type,
-                                        vk::ShaderStageFlagBits::eVertex,
-                                        vertexShader);
+  auto* vert = ResourcePool::loadShader(name, type, vk::ShaderStageFlagBits::eVertex);
+  auto* frag = ResourcePool::loadShader(name, type, vk::ShaderStageFlagBits::eFragment);
 
-  auto* frag = ResourcePool::loadShader(name,
-                                        mDevice.get(),
-                                        type,
-                                        vk::ShaderStageFlagBits::eFragment,
-                                        fragmentShader);
-
-  auto* imguiPipelineLayout = ResourcePool::addPipelineLayout(mDevice.get(), vert, frag);
+  auto* imguiPipelineLayout = ResourcePool::addPipelineLayout(vert, frag);
 
   constexpr char plname[] = "imgui";
 
-  auto* guiPL = ResourcePool::addPipeline<ImGuiPipeline>(plname,
-                                                         mDevice.get(),
-                                                         mRenderContext.get(),
-                                                         mVkRenderPass,
-                                                         imguiPipelineLayout,
-                                                         0);
+  auto* guiPL = ResourcePool::addGraphicsPipeline(plname,
+                                                  mRenderContext.get(),
+                                                  mVkRenderPass,
+                                                  imguiPipelineLayout,
+                                                  0);
 
   mGUI = std::make_unique<GUI>();
   mGUI->prepare(mDevice.get(), mRenderContext.get(), mVkDescPool, mVkRenderPass, guiPL);
@@ -539,7 +537,7 @@ void App::createGUI() {
   mInputCallback   = std::make_unique<InputCallback>();
   auto keyCallback = [&](int key) {
     if (key == 526) {
-      this->mEndApplication = true;
+      this->end();
     }
   };
   mInputCallback->registerKeyPressed(std::move(keyCallback));
@@ -568,30 +566,47 @@ void App::createGraphicsCamera() {
                                             1,
                                             vk::ShaderStageFlagBits::eVertex};
 
-  auto layout = mDevice->vk().createDescriptorSetLayout({{}, camBinding});
-  ResourcePool::addDescriptorSetLayout("gui cam", layout);
+  mCameraDescriptor.descLayout = ResourcePool::addDescriptorSetLayout("GraphicsCamera",
+                                                                      {camBinding});
+  mCameraDescriptor.descSets.resize(count);
+  for (size_t i = 0u; i < count; ++i) {
+    mCameraDescriptor.descSets[i] = mDevice->vk()
+                                      .allocateDescriptorSets(
+                                        {mVkDescPool, mCameraDescriptor.descLayout->vk()})
+                                      .front();
+  }
 
   //mCameraUB = UniformBuffer::Uni(
-  //  new UniformBuffer(mDevice.get(), layout, mVkDescPool, 0, count, memSize));
-  mCameraUB = std::make_unique<UniformBuffer>(mDevice.get(),
-                                              mVkDescPool,
-                                              layout,
-                                              0,
-                                              count,
-                                              memSize);
+  //  new UniformBuffer(mDevice.get(), layout, mVkDescPool, 0, count,
+  //  memSize));
+  mCameraDescriptor.cameraUB = std::make_unique<UniformBuffer>(mDevice.get(),
+                                                               mCameraDescriptor.descSets,
+                                                               0,
+                                                               memSize);
   CameraUniform tmp;
   for (int i = 0; i < count; ++i) {
-    mCameraUB->update(i, &tmp, 0);
+    mCameraDescriptor.cameraUB->update(i, &tmp, 0);
   }
 }
+
+void App::createPipelines() {}
 
 void App::createRenderers() {}
 
 void App::requestGpuFeatures(Device* vkPhysicalDevice) {
-  VklLogD("This Function should be overriden by app");
+  vklLogD("This Function should be overriden by app");
 }
 
-void App::buildCommandBuffer() {}
+void App::buildCommandBuffer() {
+  auto cmd = beginCommandBuffer();
+  beginRenderPass(cmd);
+
+  if (mGUI)
+    mGUI->buildCommandBuffer(cmd, mCurrBufferingIdx);
+
+  cmd.endRenderPass();
+  cmd.end();
+}
 
 vk::CommandBuffer App::beginCommandBuffer() {
   //if you dont want to recycle
@@ -607,7 +622,7 @@ vk::CommandBuffer App::beginCommandBuffer() {
   uint32_t queFamilyIdx = mRenderContext->getQueue()->getFamilyIdx();
 
   vk::CommandBuffer& renderCmdBuffer = renderCmdBuffers[mCurrBufferingIdx];
-  vk::Image&         swapChainImage  = swapChainImages[mCurrBufferingIdx].vkImage;
+  vk::Image&         swapChainImage  = swapChainImages[mCurrBufferingIdx].vk();
 
   renderCmdBuffer.reset();
   renderCmdBuffer.begin(cmdBeginInfo);
@@ -646,32 +661,36 @@ void App::beginRenderPass(vk::CommandBuffer renderCmdBuffer) {
 void App::updateCameraUniform(int idx) {
   auto& camUniformData = mGraphicsCamera->cam;
   auto  memSize        = sizeof(CameraUniform);
-  mCameraUB->update(idx, &camUniformData, memSize);
+  mCameraDescriptor.cameraUB->update(idx, &camUniformData, memSize);
 }
 
 void App::updateUniform(int idx) {}
 
 void App::prepareFrame() {
-  auto vkSwapchain = mRenderContext->getVkSwapchain();
-  if (!vkSwapchain)
-    return;
+  //auto vkSwapchain = mRenderContext->getVkSwapchain();
+  //if (!vkSwapchain)
+  //  return;
 
-  mCurrBufferingSemaphore = mRenderContext->getCurrBufferingSemaphore();
+  std::tie(mCurrBufferingIdx,
+           mCurrCmdFence,
+           mCurrBufferingSemaphore) = mRenderContext->acquireNextImage();
 
-  auto& vkDevice = mDevice->vk();
+  //mCurrBufferingSemaphore           = mRenderContext->getCurrBufferingSemaphore();
 
-  auto result = vkDevice.acquireNextImageKHR(vkSwapchain,
-                                             0xFFFFFFFFFFFFFFFF,
-                                             mCurrBufferingSemaphore.available);
-  VK_CHECK_ERROR(static_cast<VkResult>(result.result), "acquireNextImageKHR");
+  //auto& vkDevice = mDevice->vk();
 
-  mCurrBufferingIdx = result.value;
-  mCurrCmdFence     = mRenderContext->getCurrCmdFence();
+  //auto result = vkDevice.acquireNextImageKHR(vkSwapchain,
+  //                                           0xFFFFFFFFFFFFFFFF,
+  //                                           mCurrBufferingSemaphore.available);
+  //VKL_CHECK_ERROR(static_cast<VkResult>(result.result), "acquireNextImageKHR");
 
-  if (vkDevice.getFenceStatus(mCurrCmdFence) == vk::Result::eNotReady) {
-    auto result = vkDevice.waitForFences({mCurrCmdFence}, VK_TRUE, UINT64_MAX);
-  }
-  vkDevice.resetFences({mCurrCmdFence});
+  //mCurrBufferingIdx = result.value;
+  //mCurrCmdFence     = mRenderContext->getCurrCmdFence();
+
+  //if (vkDevice.getFenceStatus(mCurrCmdFence) == vk::Result::eNotReady) {
+  //  auto result = vkDevice.waitForFences({mCurrCmdFence}, VK_TRUE, UINT64_MAX);
+  //}
+  //vkDevice.resetFences({mCurrCmdFence});
 }
 
 void App::presentFrame() {

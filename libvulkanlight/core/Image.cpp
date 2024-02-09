@@ -1,15 +1,20 @@
 #include "Image.h"
 #include "Device.h"
-#include "VkError.h"
-#include "VklLogger.h"
+#include "VklError.h"
+#include "Logger.h"
 
 namespace vkl {
 
 Image::Image(Device* _device, vk::Image image, vk::ImageViewCreateInfo imageViewCI)
-  : device(_device)
-  , vkImage(image) {
-  format      = imageViewCI.format;
-  vkImageView = device->vk().createImageView(imageViewCI);
+  : mDevice(_device)
+  , mImageCI{}
+  , mVmaAllocation{VK_NULL_HANDLE}
+  , mTiling{}
+  , mMapped{false}
+  , mMappedData{nullptr} {
+  mVkObject    = image;
+  mVkFormat    = imageViewCI.format;
+  mVkImageView = mDevice->vk().createImageView(imageViewCI);
 }
 
 Image::Image(Device*                 _device,
@@ -17,92 +22,96 @@ Image::Image(Device*                 _device,
              vk::MemoryPropertyFlags required,
              vk::MemoryPropertyFlags prefered,
              vk::ImageViewCreateInfo imageViewCI)
-  : device(_device) {
-  format             = imageCI.format;
-  tiling             = imageCI.tiling;
-  auto& vmaAllocator = device->getMemoryAllocator();
+  : mDevice(_device)
+  , mImageCI{imageCI}
+  , mVmaAllocation{VK_NULL_HANDLE}
+  , mVkImageView{VK_NULL_HANDLE}
+  , mMapped{false}
+  , mMappedData{nullptr} {
+  mVkFormat          = mImageCI.format;
+  mTiling            = mImageCI.tiling;
+  auto& vmaAllocator = mDevice->getMemoryAllocator();
 
   VmaAllocationCreateInfo memoryInfo{};
   memoryInfo.requiredFlags  = static_cast<VkMemoryPropertyFlags>(required);
   memoryInfo.preferredFlags = static_cast<VkMemoryPropertyFlags>(prefered);
 
   auto result = vmaCreateImage(vmaAllocator,
-                               reinterpret_cast<VkImageCreateInfo const*>(&imageCI),
+                               reinterpret_cast<VkImageCreateInfo const*>(&mImageCI),
                                &memoryInfo,
                                const_cast<VkImage*>(
-                                 reinterpret_cast<VkImage const*>(&vkImage)),
-                               &vmaAllocation,
+                                 reinterpret_cast<VkImage const*>(&mVkObject)),
+                               &mVmaAllocation,
                                nullptr);
-  VK_CHECK_ERROR(result, "create Image Fail");
+  VKL_CHECK_ERROR(result, "create Image Fail");
 
-  imageViewCI.image  = vkImage;
-  imageViewCI.format = format;
-  vkImageView        = device->vk().createImageView(imageViewCI);
+  imageViewCI.image  = mVkObject;
+  imageViewCI.format = mVkFormat;
+  mVkImageView       = mDevice->vk().createImageView(imageViewCI);
 }
 
 Image::Image(Image&& other) noexcept
-  : device(nullptr)
-  , vkImage(VK_NULL_HANDLE)
-  , vmaAllocation(VK_NULL_HANDLE)
-  , vkImageView(VK_NULL_HANDLE)
-  , format(vk::Format::eUndefined) {
+  : mDevice(nullptr)
+  , mVmaAllocation(VK_NULL_HANDLE)
+  , mVkImageView(VK_NULL_HANDLE)
+  , mVkFormat(vk::Format::eUndefined) {
   swap(other);
 }
 
 Image::~Image() {
-  if (vkImage && vmaAllocation) {
-    vmaDestroyImage(device->getMemoryAllocator(),
-                    static_cast<VkImage>(vkImage),
-                    vmaAllocation);
-    vkImage       = VK_NULL_HANDLE;
-    vmaAllocation = VK_NULL_HANDLE;
+  if (mVkObject && mVmaAllocation) {
+    vmaDestroyImage(mDevice->getMemoryAllocator(),
+                    static_cast<VkImage>(mVkObject),
+                    mVmaAllocation);
+    mVkObject      = VK_NULL_HANDLE;
+    mVmaAllocation = VK_NULL_HANDLE;
   }
 
-  if (vkImageView) {
-    device->vk().destroyImageView(vkImageView);
-    vkImageView = VK_NULL_HANDLE;
+  if (mVkImageView) {
+    mDevice->vk().destroyImageView(mVkImageView);
+    mVkImageView = VK_NULL_HANDLE;
   }
 }
 
 uint8_t* Image::map() {
-  if (!mapped_data) {
-    if (tiling != vk::ImageTiling::eLinear) {
-      VklLogW("Mapping image memory that is not linear");
+  if (!mMappedData) {
+    if (mTiling != vk::ImageTiling::eLinear) {
+      vklLogW("Mapping image memory that is not linear");
     }
 
-    auto result = vmaMapMemory(device->getMemoryAllocator(),
-                               vmaAllocation,
-                               reinterpret_cast<void**>(&mapped_data));
-    VK_CHECK_ERROR(result, "Image::map");
+    auto result = vmaMapMemory(mDevice->getMemoryAllocator(),
+                               mVmaAllocation,
+                               reinterpret_cast<void**>(&mMappedData));
+    VKL_CHECK_ERROR(result, "Image::map");
 
-    mapped = true;
+    mMapped = true;
   }
-  return mapped_data;
+  return mMappedData;
 }
 
 void Image::unmap() {
-  if (mapped) {
-    vmaUnmapMemory(device->getMemoryAllocator(), vmaAllocation);
-    mapped_data = nullptr;
-    mapped      = false;
+  if (mMapped) {
+    vmaUnmapMemory(mDevice->getMemoryAllocator(), mVmaAllocation);
+    mMappedData = nullptr;
+    mMapped     = false;
   }
 }
 
 void Image::swap(Image& image) {
-  vk::Image     tempImg  = vkImage;
-  vk::ImageView tempView = vkImageView;
-  VmaAllocation tempAllo = vmaAllocation;
+  vk::Image     tempImg  = mVkObject;
+  vk::ImageView tempView = mVkImageView;
+  VmaAllocation tempAllo = mVmaAllocation;
 
-  device        = (image.device);
-  vkImage       = (image.vkImage);
-  vmaAllocation = (image.vmaAllocation);
-  vkImageView   = (image.vkImageView);
-  format        = (image.format);
+  mDevice        = (image.mDevice);
+  mVkObject      = (image.mVkObject);
+  mVmaAllocation = (image.mVmaAllocation);
+  mVkImageView   = (image.mVkImageView);
+  mVkFormat      = (image.mVkFormat);
 
-  image.device        = device;
-  image.vkImage       = tempImg;
-  image.vmaAllocation = tempAllo;
-  image.vkImageView   = tempView;
+  image.mDevice        = mDevice;
+  image.mVkObject      = tempImg;
+  image.mVmaAllocation = tempAllo;
+  image.mVkImageView   = tempView;
 }
 
 //void Image::unmap() {

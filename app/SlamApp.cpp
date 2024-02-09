@@ -6,18 +6,29 @@
 #include "GraphicsCamera.h"
 #include "GUI.h"
 #include "Device.h"
-#include "VkShaderUtil.h"
-#include "shaders.h"
+#include "VklShaderUtil.h"
+#include "ShaderModule.h"
 #include "ResourcePool.h"
-#include "SlamObjectPipeline.h"
 #include "AxisRenderer.h"
 #include "PointCloudRenderer.h"
-#include "ImGuiObject.h"
+#include "GraphicsPipeline.h"
+#include "VklLogger.h"
+#include "GuiObject.h"
 #include "SLAMInfo.h"
 #include "SLAMApp.h"
 
 namespace vkl {
 namespace {
+enum eSHADERS {
+  BASIC_POINT = 0,
+  BASIC       = 1,
+
+};
+enum ePIPELINES { BASIC_POINT_PL, BASIC_LINE_PL };
+
+constexpr char* SHADERS[]   = {"basicPoint", "basic"};
+constexpr char* PIPELINES[] = {"basic_point", "basic_line"};
+
 template <typename Type, int Row>
 static std::string eigenVec(const Eigen::Matrix<Type, Row, 1>& vec, int precision = 4) {
   Eigen::IOFormat CleanVec(precision, 0, ", ", "\n", "[", "]");
@@ -48,7 +59,7 @@ SLAMApp::SLAMApp()
   std::string filePath = __FILE__;
   size_t      pos      = filePath.find_last_of("\\/");
   std::string dir      = (std::string::npos == pos) ? "" : filePath.substr(0, pos);
-  VklLogD("app directory : {}", dir);
+  vklLogD("app directory : {}", dir);
 
   addShaderPath(dir);
   addAssetPath(dir);
@@ -75,9 +86,7 @@ bool SLAMApp::prepare() {
   auto* simulator = (io::Simulator*)mSensor;
   simulator->setContinuosMode(true);
 
-  ImGui::Object::RenderImpl impl = [this, simulator]() {
-    ImGui::Begin("Simulator");
-
+  GuiImpl::RenderImpl impl = [this, simulator]() {
     if (ImGui::Button("change mode")) {
       simulator->changeContinousMode();
     }
@@ -93,12 +102,10 @@ bool SLAMApp::prepare() {
     if (ImGui::Button("next image")) {
       ((io::Simulator*)mSensor)->sendImage();
     }
-
-    ImGui::End();
   };
 
-  ImGui::Object::Ptr obj = std::make_shared<ImGui::Object>(impl);
-  mGUI->addImGuiObjects(obj);
+  GuiImpl::Ptr obj = std::make_shared<GuiImpl>(impl);
+  mGUI->addGuiImpls(obj);
 
   mSlamKeyCallback = std::make_unique<InputCallback>();
   auto keyCallback = [&](int key) {
@@ -130,6 +137,65 @@ void SLAMApp::run() {
   mSensor->stop();
 }
 
+void SLAMApp::createPipelines() {
+  {
+    ShaderSourceType type = ShaderSourceType::STRING_FILE;
+    constexpr char*  vert = SHADERS[BASIC_POINT];
+    constexpr char*  frag = SHADERS[BASIC];
+    constexpr char*  PLN  = PIPELINES[BASIC_POINT_PL];
+
+    using RP         = ResourcePool;
+    auto* vertShader = RP::loadShader(vert, type, vk::ShaderStageFlagBits::eVertex);
+    auto* fragShader = RP::loadShader(frag, type, vk::ShaderStageFlagBits::eFragment);
+    auto* PLL        = RP::addPipelineLayout(vertShader, fragShader);
+    auto* PL = RP::addGraphicsPipeline(PLN, mRenderContext.get(), mVkRenderPass, PLL);
+
+    std::vector<vk::VertexInputBindingDescription> bd{
+      {0, sizeof(Vertex4d), vk::VertexInputRate::eVertex}
+    };
+
+    std::vector<vk::VertexInputAttributeDescription> ad{
+      {0, 0, vk::Format::eR32G32B32A32Sfloat, 0},
+    };
+    PL->setVertexDescription(bd, ad);
+    PL->setPrimitiveTopology(vk::PrimitiveTopology::ePointList);
+    PL->prepare();
+  }
+  {
+    ShaderSourceType type = ShaderSourceType::STRING_FILE;
+    constexpr char*  vert = SHADERS[BASIC];
+    constexpr char*  frag = SHADERS[BASIC];
+    constexpr char*  PLN  = PIPELINES[BASIC_LINE_PL];
+
+    using RP         = ResourcePool;
+    auto* vertShader = RP::loadShader(vert, type, vk::ShaderStageFlagBits::eVertex);
+    auto* fragShader = RP::loadShader(frag, type, vk::ShaderStageFlagBits::eFragment);
+    auto& shaderResources = vertShader->getShaderResources();
+
+    for (auto& resource : shaderResources) {
+      if (resource.set != 1) {
+        continue;
+      }
+      resource.mode = ShaderResourceMode::Dynamic;
+    }
+    auto* PLL = RP::addPipelineLayout(vertShader, fragShader);
+    auto* PL  = RP::addGraphicsPipeline(PLN, mRenderContext.get(), mVkRenderPass, PLL);
+    std::vector<vk::VertexInputBindingDescription> bd{
+      {0, sizeof(VertexColor), vk::VertexInputRate::eVertex}
+    };
+
+    std::vector<vk::VertexInputAttributeDescription> ad{
+      {0, 0, vk::Format::eR32G32B32Sfloat, 0},
+      {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexColor, r)},
+    };
+    PL->setVertexDescription(bd, ad);
+    PL->setPrimitiveTopology(vk::PrimitiveTopology::eLineList);
+    auto& RCI = PL->getRasterizationStateCI();
+    RCI.lineWidth = 3.0f;
+    PL->prepare();
+  }
+}
+
 void SLAMApp::createRenderers() {
   createPointRenderer();
   createOriginRenderer();
@@ -154,13 +220,15 @@ void SLAMApp::buildCommandBuffer() {
   auto cmd = beginCommandBuffer();
   beginRenderPass(cmd);
 
-  mOriginAxisRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
-  mPointCloudRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
+  auto& idx = mCurrBufferingIdx;
 
-  mAxisRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
+  mOriginAxisRenderer->buildCommandBuffer(cmd, idx, mCameraDescriptor.descSets[idx]);
+  mPointCloudRenderer->buildCommandBuffer(cmd, idx, mCameraDescriptor.descSets[idx]);
+
+  mAxisRenderer->buildCommandBuffer(cmd, idx, mCameraDescriptor.descSets[idx]);
 
   if (mGUI)
-    mGUI->buildCommandBuffer(cmd, mCurrBufferingIdx);
+    mGUI->buildCommandBuffer(cmd, idx);
 
   cmd.endRenderPass();
   cmd.end();
@@ -171,118 +239,44 @@ void SLAMApp::updateUniform(int idx) {
 }
 
 void SLAMApp::createPointRenderer() {
-  ShaderSourceType type = ShaderSourceType::STRING_FILE;
-
-  constexpr char vert[]     = "basicPoint";
-  constexpr char vertFile[] = "basicPoint.vert";
-
-  constexpr char frag[]     = "basic";
-  constexpr char fragFile[] = "basic.frag";
-
-  using RP         = ResourcePool;
-  auto* vertShader = RP::loadShader(vert,
-                                    mDevice.get(),
-                                    type,
-                                    vk::ShaderStageFlagBits::eVertex,
-                                    vertFile);
-
-  auto* fragShader = RP::loadShader(frag,
-                                    mDevice.get(),
-                                    type,
-                                    vk::ShaderStageFlagBits::eFragment,
-                                    fragFile);
-
-  auto* basicPointLayout = RP::addPipelineLayout(mDevice.get(), vertShader, fragShader);
-
-  constexpr char pointPipelinename[] = "point_basic";
-
-  auto* pointPipeline = RP::addPipeline<BasicPointPipeline>(pointPipelinename,
-                                                            mDevice.get(),
-                                                            mRenderContext.get(),
-                                                            mVkRenderPass,
-                                                            basicPointLayout);
-
+  auto* PL            = ResourcePool::requestGraphicsPipeline(PIPELINES[BASIC_POINT_PL]);
   mPointCloudRenderer = std::make_unique<PointCloudRenderer>();
-  mPointCloudRenderer->setCamUB(mCameraUB.get());
   mPointCloudRenderer->setPointCloud(&mLocalPointClouds);
   mPointCloudRenderer->prepare(mDevice.get(),
                                mRenderContext.get(),
                                mVkDescPool,
                                mVkRenderPass,
-                               pointPipeline);
+                               PL);
 }
 
 void SLAMApp::createOriginRenderer() {
-  ShaderSourceType type = ShaderSourceType::STRING_FILE;
-
-  constexpr char vert[]     = "basicDynamic";
-  constexpr char vertFile[] = "basic.vert";
-
-  constexpr char frag[]     = "basic";
-  constexpr char fragFile[] = "basic.frag";
-
-  using RP              = ResourcePool;
-  auto* vertShader      = RP::loadShader(vert,
-                                    mDevice.get(),
-                                    type,
-                                    vk::ShaderStageFlagBits::eVertex,
-                                    vertFile);
-  auto& shaderResources = vertShader->getShaderResources();
-
-  for (auto& resource : shaderResources) {
-    if (resource.set != 1) {
-      continue;
-    }
-    resource.mode = ShaderResourceMode::Dynamic;
-  }
-
-  auto* fragShader = RP::loadShader(frag,
-                                    mDevice.get(),
-                                    type,
-                                    vk::ShaderStageFlagBits::eFragment,
-                                    fragFile);
-
-  auto* basicPointLayout = RP::addPipelineLayout(mDevice.get(), vertShader, fragShader);
-
-  constexpr char linePipelinename[] = "basic_line";
-
-  auto*           axisPipeline = RP::addPipeline<BasicLinePipeline>(linePipelinename,
-                                                          mDevice.get(),
-                                                          mRenderContext.get(),
-                                                          mVkRenderPass,
-                                                          basicPointLayout);
-  Eigen::Matrix4f S            = Eigen::Matrix4f::Identity();
-  S(0, 0)                      = 4.0f;
-  S(1, 1)                      = 4.0f;
-  S(2, 2)                      = 4.0f;
+  Eigen::Matrix4f S = Eigen::Matrix4f::Identity();
+  S(0, 0)           = 4.0f;
+  S(1, 1)           = 4.0f;
+  S(2, 2)           = 4.0f;
 
   mIs.push_back(S);
 
+  auto* PL            = ResourcePool::requestGraphicsPipeline(PIPELINES[BASIC_LINE_PL]);
   mOriginAxisRenderer = std::make_unique<AxisRenderer>(1);
-  mOriginAxisRenderer->setCamUB(mCameraUB.get());
   mOriginAxisRenderer->setMwcs(&mIs);
   mOriginAxisRenderer->prepare(mDevice.get(),
                                mRenderContext.get(),
                                mVkDescPool,
                                mVkRenderPass,
-                               axisPipeline);
+                               PL);
 }
 
 void SLAMApp::createAxisRenderer() {
-  using RP = ResourcePool;
-
-  constexpr char linePipelinename[] = "basic_line";
-  auto*          axisPipeline       = RP::requestPipeline(linePipelinename);
+  auto* PL = ResourcePool::requestGraphicsPipeline(PIPELINES[BASIC_LINE_PL]);
 
   mAxisRenderer = std::make_unique<AxisRenderer>(2000);
-  mAxisRenderer->setCamUB(mCameraUB.get());
+  mAxisRenderer->setMwcs(&mMWcs);
   mAxisRenderer->prepare(mDevice.get(),
                          mRenderContext.get(),
                          mVkDescPool,
                          mVkRenderPass,
-                         axisPipeline);
-
-  mAxisRenderer->setMwcs(&mMWcs);
+                         PL);
 }
 
 void SLAMApp::updateSLAMData() {
@@ -290,9 +284,9 @@ void SLAMApp::updateSLAMData() {
 
   if (info->getLocalPath(mMWcs)) {
     mAxisRenderer->updateSyndId();
-    //VklLogD("current local path size : {}", mMWcs.size());
+    //vklLogD("current local path size : {}", mMWcs.size());
     //Eigen::Vector3f vec = mMWcs.back().block<3, 1>(0, 3);
-    //VklLogD("latest frame pose : {} ", eigenVec(vec));
+    //vklLogD("latest frame pose : {} ", eigenVec(vec));
   }
 
   if (info->getLocalPoints(mLocalPointClouds)) {

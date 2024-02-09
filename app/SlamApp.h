@@ -19,6 +19,7 @@ public:
   bool prepare() override;
   void run() override;
 
+  void createPipelines() override;
   void createRenderers() override;
   void onRender() override;
 
@@ -45,7 +46,7 @@ protected:
   std::vector<Eigen::Matrix4f> mMWcs;
   std::vector<float>           mLocalPointClouds;
 
-  bool mContinousMode;
+  bool                           mContinousMode;
   std::unique_ptr<InputCallback> mSlamKeyCallback;
 
 public:

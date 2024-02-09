@@ -1,8 +1,8 @@
 #pragma once
 
+#include "VkObject.h"
 #include <memory>
 #include <vk_mem_alloc.h>
-#include "VkObject.h"
 
 namespace vkl {
 
@@ -35,6 +35,8 @@ public:
   void update(std::vector<uint8_t>& data, size_t offset);
   void update(void* data, size_t size, size_t offset);
   void update(uint8_t* data, size_t size, size_t offset);
+
+  const auto size() const { return mSize; }
 
 public:
   vk::DeviceMemory mMemory;

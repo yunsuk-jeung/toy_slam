@@ -1,9 +1,9 @@
-#include <iostream>
 #include "Buffer.h"
 #include "Device.h"
+#include <iostream>
 
-#include "VkError.h"
-#include "VklLogger.h"
+#include "VklError.h"
+#include "Logger.h"
 
 namespace vkl {
 //static int COUNTER = 0;
@@ -11,13 +11,13 @@ Buffer::~Buffer() {
   clear();
 }
 
-vkl::Buffer::Buffer(Device*                      _device,
-                    vk::DeviceSize               _size,
-                    vk::BufferUsageFlags         bufferUsage,
-                    vk::MemoryPropertyFlags      required,
-                    vk::MemoryPropertyFlags      prefered,
-                    VmaAllocationCreateFlagBits  flags,
-                    const std::vector<uint32_t>& queueIdxs)
+Buffer::Buffer(Device*                      _device,
+               vk::DeviceSize               _size,
+               vk::BufferUsageFlags         bufferUsage,
+               vk::MemoryPropertyFlags      required,
+               vk::MemoryPropertyFlags      prefered,
+               VmaAllocationCreateFlagBits  flags,
+               const std::vector<uint32_t>& queueIdxs)
   : mDevice(_device)
   , mSize(_size)
   , mCapacity(_size << 1)
@@ -56,7 +56,7 @@ vkl::Buffer::Buffer(Device*                      _device,
                                 &allocationInfo);
 
   if (result != VK_SUCCESS) {
-    VK_CHECK_ERROR(result, "vma create buffer fail");
+    VKL_CHECK_ERROR(result, "vma create buffer fail");
     throw std::runtime_error("failed to create buffer");
   }
 
@@ -73,7 +73,7 @@ Buffer::Buffer(Buffer&& src) noexcept {
   this->swap(src);
 }
 
-void vkl::Buffer::swap(Buffer& buffer) {
+void Buffer::swap(Buffer& buffer) {
   auto vkObject      = mVkObject;
   auto memory        = mMemory;
   auto size          = mSize;
@@ -133,16 +133,16 @@ void Buffer::clear() {
 
 uint8_t* Buffer::map() {
   if (!mMapped && !mMapped_data) {
-    VK_CHECK_ERROR(vmaMapMemory(mDevice->getMemoryAllocator(),
-                                mVmaAllocation,
-                                reinterpret_cast<void**>(&mMapped_data)),
-                   "");
+    VKL_CHECK_ERROR(vmaMapMemory(mDevice->getMemoryAllocator(),
+                                 mVmaAllocation,
+                                 reinterpret_cast<void**>(&mMapped_data)),
+                    "");
     mMapped = true;
   }
   return mMapped_data;
 }
 
-void vkl::Buffer::unmap() {
+void Buffer::unmap() {
   if (mMapped) {
     vmaUnmapMemory(mDevice->getMemoryAllocator(), mVmaAllocation);
     mMapped_data = nullptr;

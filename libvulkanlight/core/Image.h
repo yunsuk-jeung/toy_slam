@@ -1,19 +1,21 @@
 #pragma once
 
-#include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
+#include <vulkan/vulkan.hpp>
 #include "macros.h"
+#include "VkObject.h"
 
 namespace vkl {
 
 class Device;
-class Image {
+class Image : public VkObject<vk::Image> {
 public:
   USING_SMART_PTR(Image);
   Image() = default;
 
   //use to create image and allocate memroy at the same time
-  //explicit Image(Device* _device, vk::ImageCreateInfo imageCI, VmaMemoryUsage memUsage);
+  //explicit Image(Device* _device, vk::ImageCreateInfo imageCI, VmaMemoryUsage
+  //memUsage);
   explicit Image(Device*                 _device,
                  vk::ImageCreateInfo     imageCI,
                  vk::MemoryPropertyFlags required,
@@ -37,18 +39,20 @@ protected:
   void swap(Image& image);
   //void unmap();
 
-public:
-  vk::Image     vkImage       = VK_NULL_HANDLE;
-  VmaAllocation vmaAllocation = VK_NULL_HANDLE;
-  vk::ImageView vkImageView   = VK_NULL_HANDLE;
-  vk::Format    format        = vk::Format::eUndefined;
-
 protected:
-  Device* device = nullptr;
+  Device*             mDevice;
+  vk::ImageCreateInfo mImageCI;
+  vk::ImageView       mVkImageView;
+  vk::Format          mVkFormat;
+  VmaAllocation       mVmaAllocation;
+  vk::ImageTiling     mTiling;
+  bool                mMapped;
+  uint8_t*            mMappedData = nullptr;
 
-  vk::ImageTiling tiling;
-  bool            mapped      = false;
-  uint8_t*        mapped_data = nullptr;
+public:
+  const vk::ImageView& vkImageView() const { return mVkImageView; }
+  const vk::Format&    vkFormat() const { return mVkFormat; }
+  const vk::Extent3D&  extent() const { return mImageCI.extent; }
 };
 
 typedef std::unique_ptr<Image> ImagePtr;

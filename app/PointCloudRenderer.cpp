@@ -3,7 +3,7 @@
 #include "BufferingBuffer.h"
 #include "UniformBuffer.h"
 #include "PipelineLayout.h"
-#include "Pipeline.h"
+#include "GraphicsPipeline.h"
 #include "PointCloudRenderer.h"
 
 #include <random>
@@ -15,13 +15,12 @@ constexpr size_t initialSize = 4 * 100000;
 }
 PointCloudRenderer::PointCloudRenderer()
   : mBVB{nullptr}
-  , mUB{nullptr}
+  , mModelDescriptorSet{nullptr, {}, nullptr}
   , mSyncId{0} {
   mName = "PointCloud Renderer";
 }
 
 PointCloudRenderer::~PointCloudRenderer() {
-  mUB.reset();
   mBVB.reset();
 }
 
@@ -59,22 +58,29 @@ void PointCloudRenderer::createVertexBuffer() {
   //for (int i = 0; i < 3; i++) { mBVB->update(i, mPointBuffer.data(), memorySize, 0); }
 }
 
-void PointCloudRenderer::createUniformBuffers() {
-  auto count         = mRenderContext->getContextImageCount();
-  auto size          = sizeof(Eigen::Matrix4f);
-  auto descsetLayout = mPipelineLayout->getDescriptorSetLayout("modelMat");
+void PointCloudRenderer::createUniformBuffer() {
+  auto count                     = mRenderContext->getContextImageCount();
+  auto size                      = sizeof(Eigen::Matrix4f);
+  mModelDescriptorSet.descLayout = mPipelineLayout->getDescriptorSetLayout(1u);
 
-  mUB = std::make_unique<UniformBuffer>(mDevice,
-                                        mVkDescPool,
-                                        descsetLayout,
-                                        0,
-                                        count,
-                                        size);
+  mModelDescriptorSet.descSets.resize(count);
+  for (size_t i = 0u; i < count; ++i) {
+    mModelDescriptorSet.descSets[i] = mDevice->vk()
+                                        .allocateDescriptorSets(
+                                          {mVkDescPool,
+                                           mModelDescriptorSet.descLayout->vk()})
+                                        .front();
+  }
+
+  mModelDescriptorSet.mUB = std::make_unique<UniformBuffer>(mDevice,
+                                                            mModelDescriptorSet.descSets,
+                                                            0,
+                                                            size);
 
   Eigen::Matrix4f I = Eigen::Matrix4f::Identity();
 
   for (int i = 0; i < count; ++i) {
-    mUB->update(i, I.data());
+    mModelDescriptorSet.mUB->update(i, I.data());
   }
 }
 
@@ -82,7 +88,9 @@ void PointCloudRenderer::updateSyncId() {
   ++mSyncId;
 }
 
-void PointCloudRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
+void PointCloudRenderer::buildCommandBuffer(vk::CommandBuffer cmd,
+                                            uint32_t          idx,
+                                            vk::DescriptorSet camDescSet) {
   if (mPointBufferPtr->empty())
     return;
 
@@ -93,8 +101,7 @@ void PointCloudRenderer::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx)
   }
 
   auto& vkBuffer     = mBVB->getVkBuffer(idx);
-  auto& camDescSet   = mCamUB->getVkDescSet(idx);
-  auto& modelDescSet = mUB->getVkDescSet(idx);
+  auto& modelDescSet = mModelDescriptorSet.descSets[idx];
   auto  vertexCount  = mPointBufferPtr->size() >> 2;
 
   cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, mPipeline->vk());

@@ -1,9 +1,9 @@
 #include <SPIRV/GlslangToSpv.h>
 #include <glslang/Public/ResourceLimits.h>
 #include "Utils.h"
-#include "VkShaderUtil.h"
+#include "VklShaderUtil.h"
 #include "VklLogger.h"
-#include "VkError.h"
+#include "VklError.h"
 #include "ResourcePool.h"
 
 namespace vkl {
@@ -285,10 +285,10 @@ vk::ShaderStageFlagBits find_shader_stage(const std::string& ext) {
 }
 }  //namespace
 
-vk::ShaderModule VkShaderUtil::loadShader(vk::Device             device,
-                                          uint32_t*              src,
-                                          vk::DeviceSize         srcSize,
-                                          std::vector<uint32_t>& spirv) {
+vk::ShaderModule VklShaderUtil::loadShader(vk::Device             device,
+                                           uint32_t*              src,
+                                           vk::DeviceSize         srcSize,
+                                           std::vector<uint32_t>& spirv) {
   vk::ShaderModuleCreateInfo shaderCI;
   shaderCI.codeSize = srcSize;
   shaderCI.pCode    = src;
@@ -299,9 +299,9 @@ vk::ShaderModule VkShaderUtil::loadShader(vk::Device             device,
   return shader;
 }
 
-vk::ShaderModule VkShaderUtil::loadShader(vk::Device             device,
-                                          const std::string&     filename,
-                                          std::vector<uint32_t>& spirv) {
+vk::ShaderModule VklShaderUtil::loadShader(vk::Device             device,
+                                           const std::string&     filename,
+                                           std::vector<uint32_t>& spirv) {
   std::string              src   = readFileAsString(filename);
   std::vector<std::string> lines = replaceInclude(src);
   std::vector<uint8_t>     data  = convertStringsToBytes(lines);
@@ -313,10 +313,10 @@ vk::ShaderModule VkShaderUtil::loadShader(vk::Device             device,
   return compileShader(device, find_shader_stage(file_ext), data, "main", {}, spirv);
 }
 
-vk::ShaderModule VkShaderUtil::loadShader(vk::Device              device,
-                                          const std::string&      fileContents,
-                                          vk::ShaderStageFlagBits stage,
-                                          std::vector<uint32_t>&  spirv) {
+vk::ShaderModule VklShaderUtil::loadShader(vk::Device              device,
+                                           const std::string&      fileContents,
+                                           vk::ShaderStageFlagBits stage,
+                                           std::vector<uint32_t>&  spirv) {
   std::vector<std::string> lines = replaceInclude(fileContents);
   std::vector<uint8_t>     data  = convertStringsToBytes(lines);
   //std::vector<uint8_t>     data;
@@ -325,17 +325,17 @@ vk::ShaderModule VkShaderUtil::loadShader(vk::Device              device,
   return compileShader(device, stage, data, "main", {}, spirv);
 }
 
-vk::ShaderModule VkShaderUtil::compileShader(vk::Device                  device,
-                                             vk::ShaderStageFlagBits     stage,
-                                             const std::vector<uint8_t>& src,
-                                             const std::string&          entry_point,
-                                             const ShaderVariant&        shader_variant,
-                                             std::vector<uint32_t>&      spirv) {
+vk::ShaderModule VklShaderUtil::compileShader(vk::Device                  device,
+                                              vk::ShaderStageFlagBits     stage,
+                                              const std::vector<uint8_t>& src,
+                                              const std::string&          entry_point,
+                                              const ShaderVariant&        shader_variant,
+                                              std::vector<uint32_t>&      spirv) {
   std::string  info_log;
   GLSLCompiler glsl_compiler;
 
   if (!glsl_compiler.compile_to_spirv(stage, src, "main", {}, spirv, info_log)) {
-    VklLogE("Failed to compile shader from source, Error: {}", info_log.c_str());
+    vklLogE("Failed to compile shader from source, Error: {}", info_log.c_str());
     return VK_NULL_HANDLE;
   }
 
@@ -345,13 +345,13 @@ vk::ShaderModule VkShaderUtil::compileShader(vk::Device                  device,
   module_create_info.codeSize = spirv.size() * sizeof(uint32_t);
   module_create_info.pCode    = spirv.data();
 
-  VK_CHECK_ERROR(vkCreateShaderModule(device, &module_create_info, NULL, &shader_module),
-                 "shader module creation fail");
+  VKL_CHECK_ERROR(vkCreateShaderModule(device, &module_create_info, NULL, &shader_module),
+                  "shader module creation fail");
 
   return shader_module;
 }
 
-std::vector<std::string> VkShaderUtil::replaceInclude(const std::string& src) {
+std::vector<std::string> VklShaderUtil::replaceInclude(const std::string& src) {
   std::string              line_;
   std::vector<std::string> lines;
   char                     delim = '\n';
@@ -389,7 +389,7 @@ std::vector<std::string> VkShaderUtil::replaceInclude(const std::string& src) {
   return outs;
 }
 
-std::string VkShaderUtil::readFileAsString(const std::string& fileName) {
+std::string VklShaderUtil::readFileAsString(const std::string& fileName) {
   std::ifstream file;
   file.open(fileName, std::ios::in | std::ios::binary);
 
@@ -401,7 +401,7 @@ std::string VkShaderUtil::readFileAsString(const std::string& fileName) {
                      (std::istreambuf_iterator<char>()));
 }
 
-std::vector<uint8_t> VkShaderUtil::convertStringsToBytes(std::vector<std::string>& src) {
+std::vector<uint8_t> VklShaderUtil::convertStringsToBytes(std::vector<std::string>& src) {
   std::vector<uint8_t> bytes;
 
   for (const std::string& line : src) {

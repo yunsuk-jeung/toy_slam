@@ -1,10 +1,11 @@
 #pragma once
 
-#include <vector>
-#include <vulkan/vulkan.hpp>
-#include <vk_mem_alloc.h>
 #include "Queue.h"
 #include "VkObject.h"
+#include <vector>
+#include <vk_mem_alloc.h>
+#include <vulkan/vulkan.hpp>
+
 namespace vkl {
 
 class Device : public VkObject<vk::Device> {
@@ -20,6 +21,7 @@ public:
    */
   Queue& getPresentableQueue();
   Queue& getLowPrioritydQueue(vk::QueueFlags queueFlags);
+  Queue& getComputeQueue();
 
   vk::Format getSuitableDepthFormat();
   uint32_t   findMemoryTypeIndex(const vk::MemoryRequirements& requirements,

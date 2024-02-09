@@ -6,9 +6,9 @@
 
 #include "Queue.h"
 
-#include "VkSettings.h"
-#include "VklLogger.h"
-#include "VkError.h"
+#include "VklError.h"
+#include "Logger.h"
+#include "VklSettings.h"
 
 namespace vkl {
 
@@ -40,7 +40,7 @@ void Device::initLogicalDevice() {
 
     //if you need high priority graphics Queue,
     //set firt queue's priority bigger than others
-    if (VkSettings::highPriorityGraphicsQueue) {
+    if (VklSettings::highPriorityGraphicsQueue) {
       auto graphicsQueueFamily = getQueueFamilyIndex(vk::QueueFlagBits::eGraphics);
 
       if (graphicsQueueFamily == queueFamIdx) {
@@ -62,7 +62,7 @@ void Device::initLogicalDevice() {
     queueCreateInfo.pQueuePriorities = queuePriorities[queueFamIdx].data();
   }
 
-  std::vector<const char*>& extensions = VkSettings::enabledDeviceExtensions;
+  std::vector<const char*>& extensions = VklSettings::enabledDeviceExtensions;
 
   vk::PhysicalDeviceFeatures deviceFeatures;
   deviceFeatures.wideLines = true;
@@ -75,7 +75,7 @@ void Device::initLogicalDevice() {
 
   mVkObject = vkPhysicalDevice.createDevice(deviceCreateInfo);
   if (!mVkObject) {
-    VklLogE("Could not create vkDevice!");
+    vklLogE("Could not create vkDevice!");
     throw std::runtime_error("Could not create vkDevice");
   }
 
@@ -86,7 +86,6 @@ void Device::initLogicalDevice() {
 
     vk::Bool32 supportPresent = vkPhysicalDevice.getSurfaceSupportKHR(queueFamIdx,
                                                                       vkSurface);
-
     for (auto queueIndex = 0U; queueIndex < queueFamilyprop.queueCount; ++queueIndex) {
       queues[queueFamIdx].emplace_back(this,
                                        queueFamIdx,
@@ -106,7 +105,7 @@ void Device::initLogicalDevice() {
 
   //if (!vkPhysicalDevice.getSurfaceSupportKHR(primaryQueue.getFamilyIdx(),
   //                                           vkSurface)) {
-  //  VklLogW("This queue does not supprot SurfaceKHR");
+  //  vklLogW("This queue does not supprot SurfaceKHR");
   //  throw std::runtime_error("This queue does not supprot SurfaceKHR");
   //}
 
@@ -121,7 +120,7 @@ Queue& Device::getPresentableQueue() {
     uint32_t queueCount = frontQueue.getVkQueueFamilyProps()->queueCount;
 
     if (frontQueue.canPresent() && queueCount > 0) {
-      VklLogD("RETURNING Queue : {} - {}", queueFamIdx, 0);
+      vklLogD("RETURNING Queue : {} - {}", queueFamIdx, 0);
       return queues[queueFamIdx][0];
     }
   }
@@ -133,10 +132,14 @@ Queue& Device::getLowPrioritydQueue(vk::QueueFlags queueFlags) {
   return getQueueByFlags(queueFlags, 1);
 }
 
+Queue& Device::getComputeQueue() {
+  return getQueueByFlags(vk::QueueFlagBits::eCompute, 0);
+}
+
 vk::Format Device::getSuitableDepthFormat() {
   vk::Format depthFormat{vk::Format::eUndefined};
 
-  const auto& priorities = VkSettings::depthFormatPriorities;
+  const auto& priorities = VklSettings::depthFormatPriorities;
 
   for (auto& format : priorities) {
     vk::FormatProperties props = vkPhysicalDevice.getFormatProperties(format);
@@ -149,7 +152,7 @@ vk::Format Device::getSuitableDepthFormat() {
   }
 
   //if (depthFormat != vk::Format::eUndefined) {
-  //  VklLogI("Depth Format : {}", to_string(depthFormat).c_str());
+  //  vklLogI("Depth Format : {}", to_string(depthFormat).c_str());
   //}
   return depthFormat;
 }
@@ -174,13 +177,13 @@ void Device::checkVkMemoryStatus() {
   VmaTotalStatistics stats;
   vmaCalculateStatistics(vmaAllocator, &stats);
 
-  //VklLogE("Total device blockCount     : {} bytes.", stats.total.statistics.blockCount);
-  //VklLogE("Total device allocationCount: {} bytes.",
-  //stats.total.statistics.allocationCount); VklLogE("Total device blockBytes     : {}
-  //bytes.", stats.total.statistics.blockBytes);
-  VklLogE("Total device allocationBytes: {} bytes.",
+  //vklLogE("Total device blockCount     : {} bytes.",
+  //stats.total.statistics.blockCount); vklLogE("Total device allocationCount:
+  //{} bytes.", stats.total.statistics.allocationCount); vklLogE("Total device
+  //blockBytes     : {} bytes.", stats.total.statistics.blockBytes);
+  vklLogE("Total device allocationBytes: {} bytes.",
           stats.total.statistics.allocationBytes);
-  //VklLogW("----------------------------------------");
+  //vklLogW("----------------------------------------");
 }
 
 void Device::initVmaAllocator() {
@@ -210,10 +213,10 @@ void Device::initVmaAllocator() {
   allocator_info.device         = static_cast<VkDevice>(mVkObject);
   allocator_info.instance       = static_cast<VkInstance>(vkInstance);
 
-  bool canGetMemroy = VkSettings::isInDeviceExtension(
+  bool canGetMemroy = VklSettings::isInDeviceExtension(
     VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 
-  bool hasDedicatedAlloc = VkSettings::isInDeviceExtension(
+  bool hasDedicatedAlloc = VklSettings::isInDeviceExtension(
     VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 
   if (canGetMemroy && hasDedicatedAlloc) {
@@ -221,7 +224,7 @@ void Device::initVmaAllocator() {
     vmaVkFunc.vkGetBufferMemoryRequirements2KHR = vkGetBufferMemoryRequirements2KHR;
     vmaVkFunc.vkGetImageMemoryRequirements2KHR  = vkGetImageMemoryRequirements2KHR;
   }
-  bool hasBufferDeviceAddress = VkSettings::isInDeviceExtension(
+  bool hasBufferDeviceAddress = VklSettings::isInDeviceExtension(
     VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 
   if (hasBufferDeviceAddress) {
@@ -229,8 +232,8 @@ void Device::initVmaAllocator() {
   }
 
   allocator_info.pVulkanFunctions = &vmaVkFunc;
-  VK_CHECK_ERROR(vmaCreateAllocator(&allocator_info, &vmaAllocator),
-                 "Cannot create allocator");
+  VKL_CHECK_ERROR(vmaCreateAllocator(&allocator_info, &vmaAllocator),
+                  "Cannot create allocator");
 }
 
 uint32_t Device::getQueueFamilyIndex(vk::QueueFlagBits queueFlags) {
@@ -261,15 +264,15 @@ uint32_t Device::getQueueFamilyIndex(vk::QueueFlagBits queueFlags) {
     }
   }
 
-  //For other queue types or if no separate compute queue is present, return the
-  //first one to support the requested flags
+  //For other queue types or if no separate compute queue is present, return
+  //the first one to support the requested flags
   for (uint32_t i = 0; i < static_cast<uint32_t>(queueFamilyProps.size()); i++) {
     if ((queueFamilyProps[i].queueFlags & queueFlags) == queueFlags) {
       return i;
     }
   }
 
-  VklLogW("Cannot find queue Family for {}", static_cast<int>(queueFlags));
+  vklLogW("Cannot find queue Family for {}", static_cast<int>(queueFlags));
   throw std::runtime_error("Could not find a matching queue family index");
 }
 
@@ -284,12 +287,12 @@ Queue& Device::getQueueByFlags(vk::QueueFlags requiredFlags, uint32_t queueidx) 
 
     if (((queue_flags & requiredFlags) == requiredFlags)) {
       if (queueidx < queue_count) {
-        VklLogD("Using Queue : {} - {}", queueFamIdx, queueidx);
+        vklLogD("Using Queue : {} - {}", queueFamIdx, queueidx);
 
         return queues[queueFamIdx][queueidx];
       }
       else {
-        VklLogD("Using Queue : {} - {}", queueFamIdx, queue_count - 1);
+        vklLogD("Using Queue : {} - {}", queueFamIdx, queue_count - 1);
       }
       return queues[queueFamIdx][queue_count - 1];
     }

@@ -1,12 +1,14 @@
 #pragma once
-#include <string>
 #include <map>
+#include <string>
 #include <vulkan/vulkan.hpp>
-#include "macros.h"
 #include "VkObject.h"
+#include "macros.h"
+
 namespace vkl {
 class ShaderModule;
 class Device;
+class DescriptorSetLayout;
 class PipelineLayout : public VkObject<vk::PipelineLayout> {
 public:
   USING_SMART_PTR(PipelineLayout);
@@ -14,16 +16,16 @@ public:
   PipelineLayout(Device* device, std::vector<ShaderModule*>& shaderModules);
   ~PipelineLayout();
 
-  vk::DescriptorSetLayout getDescriptorSetLayout(const std::string& name);
+  DescriptorSetLayout* getDescriptorSetLayout(const uint32_t& setId);
 
 protected:
   std::vector<vk::DescriptorSetLayout> prepareDescSetLayouts();
 
 protected:
-  std::string                        mName;
-  Device*                            mDevice;
-  std::vector<ShaderModule*>         mShaderModules;
-  std::map<std::string, std::string> mDescsetNameMap;
+  std::string                     mName;
+  Device*                         mDevice;
+  std::vector<ShaderModule*>      mShaderModules;
+  std::map<uint32_t, std::string> mDescsetNameMap;
 
 public:
   std::vector<ShaderModule*>& getShaderModules() { return mShaderModules; }

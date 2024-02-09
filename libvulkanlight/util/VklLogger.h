@@ -29,9 +29,9 @@ public:
 };
 }  //namespace vkl
 
-#define VklLogD(fmt, ...) VklLogger::logD(fmt, ##__VA_ARGS__);
-#define VklLogI(fmt, ...) VklLogger::logI(fmt, ##__VA_ARGS__);
-#define VklLogW(fmt, ...) VklLogger::logW(fmt, ##__VA_ARGS__);
+#define vklLogD(fmt, ...) VklLogger::logD(fmt, ##__VA_ARGS__);
+#define vklLogI(fmt, ...) VklLogger::logI(fmt, ##__VA_ARGS__);
+#define vklLogW(fmt, ...) VklLogger::logW(fmt, ##__VA_ARGS__);
 
-#define VklLogE(fmt, ...)                                                                \
+#define vklLogE(fmt, ...)                                                                \
   VklLogger::logE(LogUtil::extractFileName(__FILE__), __LINE__, fmt, ##__VA_ARGS__);

@@ -1,10 +1,10 @@
 #pragma once
-
 #include <Eigen/Dense>
 #include <array>
 #include "InputCallback.h"
-#include "shaders/ShaderTypes.h"
+#include "ShaderTypes.h"
 #include "vkltypes.h"
+
 
 namespace vkl {
 

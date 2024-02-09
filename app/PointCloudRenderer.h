@@ -5,15 +5,18 @@
 namespace vkl {
 class BufferingBuffer;
 class UniformBuffer;
+class DescriptorSetLayout;
 class PointCloudRenderer : public RendererBase {
 public:
   PointCloudRenderer();
   ~PointCloudRenderer();
 
   virtual void createVertexBuffer() override;
-  virtual void createUniformBuffers() override;
+  virtual void createUniformBuffer() override;
   void         updateSyncId();
-  void         buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx);
+  void         buildCommandBuffer(vk::CommandBuffer cmd,
+                                  uint32_t          idx,
+                                  vk::DescriptorSet camDescSet);
 
   void setPointCloud(std::vector<float>* pointBuffer) { mPointBufferPtr = pointBuffer; }
 
@@ -22,6 +25,11 @@ protected:
   uint32_t                         mSyncId;
   std::vector<uint32_t>            mSyncIds;
   std::unique_ptr<BufferingBuffer> mBVB;
-  std::unique_ptr<UniformBuffer>   mUB;
+
+  struct ModelDescriptorSet {
+    DescriptorSetLayout*           descLayout;
+    std::vector<vk::DescriptorSet> descSets;
+    std::unique_ptr<UniformBuffer> mUB;
+  } mModelDescriptorSet;
 };
 }  //namespace vkl

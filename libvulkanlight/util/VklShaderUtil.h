@@ -219,7 +219,7 @@ public:
                         std::string&                info_log);
 };
 
-class VkShaderUtil {
+class VklShaderUtil {
 public:
   static vk::ShaderModule loadShader(vk::Device,
                                      uint32_t*              src,

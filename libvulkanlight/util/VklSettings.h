@@ -13,7 +13,7 @@
 //  "VK_KHR_get_physical_device_properties2"
 
 namespace vkl {
-class VkSettings {
+class VklSettings {
 public:
   static bool addInstanceExtension(
     const char*                                 requiredExtName,

@@ -3,15 +3,15 @@
 #include "GlfwWindow.h"
 #include "Device.h"
 #include "GUI.h"
-#include "VkShaderUtil.h"
+#include "VklShaderUtil.h"
 #include "App.h"
 #include "ResourcePool.h"
-#include "shaders.h"
 #include "ShaderModule.h"
+#include "ShaderPool.h"
 #include "PipelineLayout.h"
-#include "Pipeline.h"
+#include "GraphicsPipeline.h"
 #include "RenderContext.h"
-#include "VkError.h"
+#include "VklError.h"
 #include "Utils.h"
 
 namespace vkl {
@@ -50,20 +50,12 @@ protected:
   void createPipelines() override {
     App::createPipelines();
 
-    ShaderSourceType   type           = ShaderSourceType::STRING;
-    std::string        name           = "pcucmst";
-    const std::string& vertexShader   = shader::pose_color_uv_camera_model_vert;
-    const std::string& fragmentShader = shader::color_uv_material_sampler_texture;
-
-    //auto* basicPipelineLyout = ResourcePool::requestPipelineLayout(
-    //  "pcucmst_vert_pcucmst_frag");
-
-    //auto* basicTrianglePL = new TextureMaterialPipeline("triangle_pcucmst",
-    //                                                   mDevice.get(),
-    //                                                   mRenderContext.get(),
-    //                                                   mVkRenderPass,
-    //                                                   basicPipelineLyout);
-    //basicTrianglePL->prepare();
+    ShaderSourceType   type         = ShaderSourceType::STRING;
+    std::string        name         = "pcucmst";
+    const std::string& vertexShader = ShaderPool::requestShaderStr(
+      "pos_col_nuv_mvp_m_vert");
+    const std::string& fragmentShader = ShaderPool::requestShaderStr(
+      "col_uv_mat_tex_rgba_frag");
   }
 
   void onRender() override {

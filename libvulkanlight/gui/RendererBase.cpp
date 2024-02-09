@@ -1,8 +1,9 @@
-#include "ShaderModule.h"
-#include "PipelineLayout.h"
-#include "Pipeline.h"
-#include "ResourcePool.h"
 #include "RendererBase.h"
+#include "GraphicsPipeline.h"
+#include "PipelineLayout.h"
+#include "ResourcePool.h"
+#include "ShaderModule.h"
+
 namespace vkl {
 RendererBase::RendererBase()
   : mName{"Base Renderer"}
@@ -16,18 +17,38 @@ RendererBase::RendererBase()
   , mR{Eigen::Matrix4f::Identity()}
   , mT{Eigen::Matrix4f::Identity()}
   , mS{Eigen::Matrix4f::Identity()}
-  , mTRS{Eigen::Matrix4f::Identity()}
-  , mCamUB{nullptr} {}
+  , mTRS{Eigen::Matrix4f::Identity()} {}
 
 RendererBase::~RendererBase() {}
 
 void RendererBase::onWindowResized(int w, int h) {}
 
+void RendererBase::setM(const Eigen::Matrix4f& in) {
+  mM = in;
+}
+
+void RendererBase::setT(const Eigen::Matrix4f& in) {
+  mT   = in;
+  mTRS = mT * mR * mS;
+}
+
+void RendererBase::setR(const Eigen::Matrix4f& in) {
+  mR   = in;
+  mTRS = mT * mR * mS;
+}
+
+void RendererBase::setS(const Eigen::Matrix4f& in) {
+  mS   = in;
+  mTRS = mT * mR * mS;
+}
+
+void RendererBase::updateUniforms(uint32_t idx) {}
+
 void RendererBase::prepare(Device*            device,
                            RenderContext*     context,
                            vk::DescriptorPool descPool,
                            vk::RenderPass     renderPass,
-                           Pipeline*          pipeline) {
+                           GraphicsPipeline*  pipeline) {
   mDevice        = device;
   mRenderContext = context;
   mVkDescPool    = descPool;
@@ -37,18 +58,14 @@ void RendererBase::prepare(Device*            device,
   mPipelineLayout = mPipeline->getPipelineLayout();
 
   createVertexBuffer();
-  createIndexBuffers();
-  createUniformBuffers();
-  createTextures();
-  createDescriptorsets();
-  updateDescriptorsets();
+  createIndexBuffer();
+  createUniformBuffer();
+  createTexture();
 }
 
 void RendererBase::createVertexBuffer() {}
-void RendererBase::createIndexBuffers() {}
-void RendererBase::createUniformBuffers() {}
-void RendererBase::createTextures() {}
-void RendererBase::createDescriptorsets() {}
-void RendererBase::updateDescriptorsets() {}
+void RendererBase::createIndexBuffer() {}
+void RendererBase::createUniformBuffer() {}
+void RendererBase::createTexture() {}
 
 }  //namespace vkl

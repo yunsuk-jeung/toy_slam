@@ -1,10 +1,10 @@
 #pragma once
+#include "Buffer.h"
+#include "macros.h"
 #include <memory>
 #include <vector>
-#include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.h>
-#include "macros.h"
-#include "Buffer.h"
+#include <vulkan/vulkan.hpp>
 
 namespace vkl {
 class Device;

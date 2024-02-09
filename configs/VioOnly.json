@@ -1,60 +1,60 @@
 {
-  "sync": true,
+	"sync": true,
 
-  "vio": {
-    "on": true,
-    "tbb": false,
-    "debug": true,
-    "frameTracker": {
-      "maxPyramidLevel": 10,
-      "feature": {
-        "point": {
-          "patchSize": 31,
-          "rowGridCount": 10,
-          "colGridCount": 16,
-          "on": true,
-          "tracker": "Fast.PatchOpticalFlow",
-          "minTrackedPoint": 30,
-          "minTrackedRatio": 0.7,
-          "epipolarThreashold": 0.005,
-          "stereoTrackingInterval": 1,
-          "showExtraction": true,
-          "showMonoTracking": true,
-          "showStereoTracking": true  
-        },
-        "line": {
-          "on": false
-        }
-      },
-      "solvePose": false
-    },
-    "localTracker": {
-      "initializeMapPointCount": 30,
-      "minTriangulationBaseline": 0.05,
-      "newKeframeFeatureRatio": 0.7,
-      "margFeatureConnectionRatio": 0.2,
-      "minKeyFrameCount": 3,
-      "maxFrameSize": 2,
-      "maxKeyFrameSize": 7,
-      "minParallaxSqNorm": 400,
-      "vioSolver": {
-        "name": "SqrtLocalSolver",
-        "solverLogDebug": false,
-        "solverMinimumFrames": 4,
-        "reprojectionME": "huber",
-        "reprojectionMEConst": 1.0,
-        "standardFocalLength": 640.0,
-        "maxIteration": 10,
-        "compareLinearizedDiff": false,
-        "marginalizeAllMapPointInFrame": true
-      }
-    }
-  },
-  "mapper": {
-    "on": false
-  },
-  "basicSolver": {
-    "minDepth": 0.05,
-    "maxDepth": 140
-  }
+	"vio": {
+		"on": true,
+		"tbb": false,
+		"debug": true,
+		"frameTracker": {
+			"maxPyramidLevel": 10,
+			"feature": {
+				"point": {
+					"patchSize": 31,
+					"rowGridCount": 10,
+					"colGridCount": 16,
+					"on": true,
+					"tracker": "Fast.PatchOpticalFlow",
+					"minTrackedPoint": 30,
+					"minTrackedRatio": 0.7,
+					"epipolarThreashold": 0.005,
+					"stereoTrackingInterval": 1,
+					"showExtraction": false,
+					"showMonoTracking": false,
+					"showStereoTracking": false
+				},
+				"line": {
+					"on": false
+				}
+			},
+			"solvePose": false
+		},
+		"localTracker": {
+			"initializeMapPointCount": 30,
+			"minTriangulationBaseline": 0.05,
+			"newKeframeFeatureRatio": 0.7,
+			"margFeatureConnectionRatio": 0.2,
+			"minKeyFrameCount": 3,
+			"maxFrameSize": 2,
+			"maxKeyFrameSize": 7,
+			"minParallaxSqNorm": 400,
+			"vioSolver": {
+				"name": "SqrtLocalSolver",
+				"solverLogDebug": false,
+				"solverMinimumFrames": 4,
+				"reprojectionME": "huber",
+				"reprojectionMEConst": 1.0,
+				"standardFocalLength": 640.0,
+				"maxIteration": 10,
+				"compareLinearizedDiff": false,
+				"marginalizeAllMapPointInFrame": true
+			}
+		}
+	},
+	"mapper": {
+		"on": false
+	},
+	"basicSolver": {
+		"minDepth": 0.05,
+		"maxDepth": 140
+	}
 }

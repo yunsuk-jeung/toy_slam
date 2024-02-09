@@ -1,11 +1,14 @@
 #pragma once
 
 #include <vulkan/vulkan.hpp>
-
+#include "VkObject.h"
+#include "macros.h"
 namespace vkl {
 class Device;
-class Queue {
+class Queue : public VkObject<vk::Queue> {
 public:
+  USING_SMART_PTR(Queue);
+  DELETE_COPY_CONSTRUCTORS(Queue);
   Queue() = delete;
   Queue(Device*                    device,
         uint32_t                   family_index,
@@ -13,19 +16,21 @@ public:
         vk::Bool32                 supportPresent,
         uint32_t                   index);
 
-protected:
-  vk::Queue vkQueue{VK_NULL_HANDLE};
+  explicit Queue(Queue&& other) noexcept;
+  Queue& operator=(Queue&&) = delete;
 
-  Device*                    device{nullptr};
-  uint32_t                   familyIdx{0};
-  vk::QueueFamilyProperties* vkQueueFamilyProps{VK_NULL_HANDLE};
-  vk::Bool32                 supportPresent{false};
-  uint32_t                   index{0};
+protected:
+  Device*                    device;
+  uint32_t                   familyIdx;
+  vk::QueueFamilyProperties* vkQueueFamilyProps;
+  vk::Bool32                 supportPresent;
+  uint32_t                   index;
 
 public:
-  vk::Queue&                 getVkQueue() { return vkQueue; }
+  vk::Queue&                 vk() { return mVkObject; }
   vk::QueueFamilyProperties* getVkQueueFamiliyProps() { return vkQueueFamilyProps; }
 
+  const uint32_t             queueFamilyIdx() const { return familyIdx; }
   uint32_t                   getFamilyIdx() { return familyIdx; }
   vk::QueueFamilyProperties* getVkQueueFamilyProps() { return vkQueueFamilyProps; }
   vk::Bool32                 canPresent() { return supportPresent; }

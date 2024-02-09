@@ -32,9 +32,9 @@ using namespace toy;
 
 auto main() -> int {
   //util::foo();
-
+  LOGD("wtf");
   ToyLogger::init();
-  ToyLogI("Starting opticalflow module ");
+  ToyLogE("Starting opticalflow module ");
 
   std::string           currCpp = __FILE__;
   std::filesystem::path path(currCpp);

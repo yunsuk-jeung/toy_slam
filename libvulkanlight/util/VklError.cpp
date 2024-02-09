@@ -1,5 +1,5 @@
 
-#include "VkError.h"
+#include "VklError.h"
 
 static const char* v_result_to_string(VkResult res) {
   switch (res) {
@@ -57,12 +57,13 @@ static const char* v_result_to_string(VkResult res) {
   }
 #undef CASE
 }
+namespace vkl {
 
-void VkError::vkAssert(VkResult    code,
-                       const char* message,
-                       const char* file,
-                       int         line,
-                       bool        abort) {
+void Error::vkAssert(VkResult    code,
+                     const char* message,
+                     const char* file,
+                     int         line,
+                     bool        abort) {
   if (code != VK_SUCCESS) {
     fprintf(stderr,
             "vulkan assert: %s \n%s %s %d\n",
@@ -75,11 +76,12 @@ void VkError::vkAssert(VkResult    code,
       exit(code);
   }
 }
-void VkError::vkAssert2(vk::Result  code_,
-                        const char* message,
-                        const char* file,
-                        int         line,
-                        bool        abort) {
+void Error::vkAssert2(vk::Result  code_,
+                      const char* message,
+                      const char* file,
+                      int         line,
+                      bool        abort) {
   auto code = static_cast<VkResult>(code_);
   vkAssert(code, message, file, line, abort);
 }
+}  //namespace vkl

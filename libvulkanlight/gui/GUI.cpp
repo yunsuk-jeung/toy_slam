@@ -1,17 +1,18 @@
 #pragma once
-#include <imgui.h>
-#include "VklLogger.h"
-#include "Utils.h"
-#include "Device.h"
-#include "Window.h"
-#include "RenderContext.h"
-#include "PipelineLayout.h"
-#include "Pipeline.h"
-#include "Buffer.h"
-#include "ResourcePool.h"
-#include "InputCallback.h"
-#include "ImGuiObject.h"
 #include "GUI.h"
+#include "Buffer.h"
+#include "Device.h"
+#include "GuiObject.h"
+#include "InputCallback.h"
+#include "Logger.h"
+#include "DescriptorSetLayout.h"
+#include "GraphicsPipeline.h"
+#include "PipelineLayout.h"
+#include "RenderContext.h"
+#include "ResourcePool.h"
+#include "common.h"
+#include "Window.h"
+#include <imgui.h>
 
 namespace vkl {
 GUI::GUI()
@@ -22,7 +23,7 @@ GUI::GUI()
   , mVBs{}
   , mIBs{}
   , mFontImage{nullptr} {
-  mImGuiObjects.reserve(30);
+  mGuiImpls.reserve(30);
   mName = "GUI";
 }
 
@@ -42,7 +43,7 @@ void GUI::prepare(Device*            device,
                   RenderContext*     context,
                   vk::DescriptorPool descPool,
                   vk::RenderPass     vkRenderPass,
-                  Pipeline*          pipeline) {
+                  GraphicsPipeline*  pipeline) {
   mWindow = context->getWindow();
   ImGui::CreateContext();
 
@@ -63,6 +64,20 @@ void GUI::prepare(Device*            device,
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
   mWindow->prepareGUI();
 
+  std::vector<vk::VertexInputBindingDescription> bd{
+    {0, sizeof(ImDrawVert), vk::VertexInputRate::eVertex}
+  };
+
+  std::vector<vk::VertexInputAttributeDescription> ad{
+    {0, 0,  vk::Format::eR32G32Sfloat, IM_OFFSETOF(ImDrawVert, pos)},
+    {1, 0,  vk::Format::eR32G32Sfloat, IM_OFFSETOF(ImDrawVert,  uv)},
+    {2, 0, vk::Format::eR8G8B8A8Unorm, IM_OFFSETOF(ImDrawVert, col)}
+  };
+
+  pipeline->setVertexDescription(bd, ad);
+  pipeline->setPrimitiveTopology(vk::PrimitiveTopology::eTriangleList);
+  pipeline->prepare();
+
   RendererBase::prepare(device, context, descPool, vkRenderPass, pipeline);
 }
 
@@ -70,8 +85,8 @@ void GUI::addInputCallback(InputCallback* cb) {
   mInputCallbacks.push_back(cb);
 }
 
-void GUI::addImGuiObjects(std::shared_ptr<ImGui::Object> objects) {
-  mImGuiObjects.push_back(objects);
+void GUI::addGuiImpls(std::shared_ptr<GuiImpl> objects) {
+  mGuiImpls.push_back(objects);
 }
 
 void GUI::onRender() {
@@ -82,11 +97,12 @@ void GUI::onRender() {
   ImGuiIO& io = ImGui::GetIO();
   ImGui::Begin("status");
   ImGui::Text("fps: %f", io.Framerate);
+  for (const auto& impl : mGuiImpls) {
+    impl->render();
+  }
   ImGui::End();
 
-  for (const auto& obj : mImGuiObjects) {
-    obj->render();
-  }
+
 
   ImGui::Render();
 }
@@ -132,8 +148,8 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
   ImVec2 clipScale = dd->FramebufferScale;
 
   //Render command lists
-  //(Because we merged all buffers into a single one, we maintain our own offset into
-  //them)
+  //(Because we merged all buffers into a single one, we maintain our own offset
+  //into them)
   int global_vtx_offset = 0;
   int global_idx_offset = 0;
   for (int n = 0; n < dd->CmdListsCount; n++) {
@@ -146,7 +162,8 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
       ImVec2 clip_max((pcmd->ClipRect.z - clipOff.x) * clipScale.x,
                       (pcmd->ClipRect.w - clipOff.y) * clipScale.y);
 
-      //Clamp to viewport as vkCmdSetScissor() won't accept values that are off bounds
+      //Clamp to viewport as vkCmdSetScissor() won't accept values that are off
+      //bounds
       if (clip_min.x < 0.0f) {
         clip_min.x = 0.0f;
       }
@@ -173,8 +190,9 @@ void GUI::buildCommandBuffer(vk::CommandBuffer cmd, uint32_t idx) {
       //Bind DescriptorSet with font or user texture
       vk::DescriptorSet desc_set = {(VkDescriptorSet)pcmd->TextureId};
       if (sizeof(ImTextureID) < sizeof(ImU64)) {
-        //We don't support texture switches if ImTextureID hasn't been redefined to be
-        //64-bit. Do a flaky check that other textures haven't been used.
+        //We don't support texture switches if ImTextureID hasn't been
+        //redefined to be 64-bit. Do a flaky check that other textures haven't
+        //been used.
         IM_ASSERT(pcmd->TextureId == mFontDescSet);
         desc_set = mFontDescSet;
       }
@@ -274,7 +292,7 @@ void GUI::handleInputCallbacks() {
         continue;
 
       if (ImGui::IsKeyDown(key)) {
-        //VklLogI("key  is down {}",(int)key );
+        //vklLogI("key  is down {}",(int)key );
       }
       if (ImGui::IsKeyReleased(key)) {
         ImVec2 pos = ImGui::GetCursorScreenPos();
@@ -324,7 +342,7 @@ void GUI::createVertexBuffer() {
   mPrevIBSizes.resize(size, 0);
 }
 
-void GUI::createIndexBuffers() {
+void GUI::createIndexBuffer() {
   auto size = mRenderContext->getContextImageCount();
   mIBs.resize(size);
   for (auto& IB : mIBs) {
@@ -332,7 +350,7 @@ void GUI::createIndexBuffers() {
   }
 }
 
-void GUI::createTextures() {
+void GUI::createTexture() {
   ImGuiIO&     io = ImGui::GetIO();
   ImFontConfig fontCf;
   fontCf.SizePixels = 30.0f;
@@ -345,14 +363,15 @@ void GUI::createTextures() {
 
   vk::Extent3D fontExtent(uint32_t(width), uint32_t(height), 1u);
 
-  auto fontImgCI = Utils::createVkImageCI(vk::ImageType::e2D,
+  auto fontImgCI = image::createVkImageCI(vk::ImageType::e2D,
                                           vk::Format::eR8G8B8A8Unorm,
                                           fontExtent,
                                           vk::ImageUsageFlagBits::eSampled
                                             | vk::ImageUsageFlagBits::eTransferDst);
 
-  auto fontImgViewCI = Utils::createVkImageViewCI(vk::ImageViewType::e2D,
-                                                  vk::ImageAspectFlagBits::eColor);
+  auto fontImgViewCI = image::createVkImageViewCI(vk::ImageViewType::e2D,
+                                                  vk::ImageAspectFlagBits::eColor,
+                                                  vk::Format::eR8G8B8A8Unorm);
 
   mFontImage = Image::Uni(new Image(mDevice,
                                     fontImgCI,
@@ -381,7 +400,7 @@ void GUI::createTextures() {
   cmdBuffer.begin(beginInfo);
 
   cmd::setImageLayout(cmdBuffer,
-                      mFontImage->vkImage,
+                      mFontImage->vk(),
                       vk::ImageLayout::eUndefined,
                       vk::ImageLayout::eTransferDstOptimal,
                       fontImgViewCI.subresourceRange,
@@ -394,12 +413,12 @@ void GUI::createTextures() {
   region.imageExtent                 = fontImgCI.extent;
 
   cmdBuffer.copyBufferToImage(stagingBuffer.vk(),
-                              mFontImage->vkImage,
+                              mFontImage->vk(),
                               vk::ImageLayout::eTransferDstOptimal,
                               region);
 
   cmd::setImageLayout(cmdBuffer,
-                      mFontImage->vkImage,
+                      mFontImage->vk(),
                       vk::ImageLayout::eTransferDstOptimal,
                       vk::ImageLayout::eShaderReadOnlyOptimal,
                       fontImgViewCI.subresourceRange,
@@ -409,7 +428,7 @@ void GUI::createTextures() {
   cmdBuffer.end();
 
   vk::SubmitInfo submitInfo({}, {}, cmdBuffers, {});
-  mRenderContext->getQueue()->getVkQueue().submit(submitInfo);
+  mRenderContext->getQueue()->vk().submit(submitInfo);
   mDevice->vk().waitIdle();
 
   vk::SamplerCreateInfo samplerCI;
@@ -425,20 +444,15 @@ void GUI::createTextures() {
   samplerCI.maxAnisotropy = 1.0f;
 
   mFontSampler = mDevice->vk().createSampler(samplerCI);
-}
 
-void GUI::createDescriptorsets() {
-  auto l = ResourcePool::requestDescriptorSetLayout("imgui_frag_sTexture");
+  auto l = ResourcePool::requestDescriptorSetLayout("imgui_frag_0");
 
-  mFontDescSet = mDevice->vk().allocateDescriptorSets({mVkDescPool, l}).front();
+  mFontDescSet = mDevice->vk().allocateDescriptorSets({mVkDescPool, l->vk()}).front();
 
-  ImGuiIO& io = ImGui::GetIO();
   io.Fonts->SetTexID((ImTextureID)(VkDescriptorSet(mFontDescSet)));
-}
 
-void GUI::updateDescriptorsets() {
   vk::DescriptorImageInfo fontDescImageInfo(mFontSampler,
-                                            mFontImage->vkImageView,
+                                            mFontImage->vkImageView(),
                                             vk::ImageLayout::eShaderReadOnlyOptimal);
 
   vk::WriteDescriptorSet fontWriteDescSet(mFontDescSet,
@@ -449,5 +463,4 @@ void GUI::updateDescriptorsets() {
 
   mDevice->vk().updateDescriptorSets(fontWriteDescSet, {});
 }
-
 }  //namespace vkl

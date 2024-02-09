@@ -12,6 +12,21 @@ Queue::Queue(Device*                    _device,
   , vkQueueFamilyProps{&props}
   , supportPresent{supportPresent}
   , index{index} {
-  vkQueue = device->vk().getQueue(familyIdx, index);
+  mVkObject = device->vk().getQueue(familyIdx, index);
+}
+
+Queue::Queue(Queue&& src) noexcept
+  : device{src.device}
+  , familyIdx{src.familyIdx}
+  , vkQueueFamilyProps{src.vkQueueFamilyProps}
+  , supportPresent{src.supportPresent}
+  , index{src.index} {
+  mVkObject              = src.mVkObject;
+  src.mVkObject          = nullptr;
+  src.device             = nullptr;
+  src.familyIdx          = 0;
+  src.vkQueueFamilyProps = nullptr;
+  src.supportPresent     = false;
+  src.index              = 0;
 }
 }  //namespace vkl

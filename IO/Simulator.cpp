@@ -89,7 +89,7 @@ void Simulator::start() {
 
         mImageCallBack(imageData0, imageData1);
 
-        cv::imshow("111", image0);
+        cv::imshow("input", image0);
         cv::waitKey(1);
       }
       else {

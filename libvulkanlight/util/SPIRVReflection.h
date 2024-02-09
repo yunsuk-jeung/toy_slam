@@ -2,7 +2,7 @@
 #include <spirv_cross/spirv_glsl.hpp>
 #include <vulkan/vulkan.hpp>
 #include "ShaderModule.h"
-#include "VkShaderUtil.h"
+#include "VklShaderUtil.h"
 
 namespace vkl {
 

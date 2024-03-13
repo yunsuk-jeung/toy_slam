@@ -62,7 +62,7 @@ public:
         }
       }
 
-      auto* cam1 = curr->getCamera(0);
+      auto* cam1 = curr->getCamera(k);
       cam1->undistortPoints(uvs, undists);
 
       //std::vector<uchar> statusE;

@@ -18,9 +18,9 @@
           "minTrackedRatio": 0.7,
           "epipolarThreashold": 0.005,
           "stereoTrackingInterval": 1,
-          "showExtraction": true,
-          "showMonoTracking": true,
-          "showStereoTracking": true  
+          "showExtraction": false,
+          "showMonoTracking": false,
+          "showStereoTracking": false
         },
         "line": {
           "on": false

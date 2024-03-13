@@ -127,11 +127,11 @@ void LocalTracker::process() {
     //            createMPCount);
     //  }
 
-    //if (currFrame->id() > 49) {
-    //  drawDebugView(100, 0);
-    //  DEBUG_POINT();
-    //  cv::waitKey();
-    //}
+    if (currFrame->id() > 3600) {
+      drawDebugView(100, 0);
+      DEBUG_POINT();
+      cv::waitKey();
+    }
 
     //drawDebugView(101, 1040);
     //drawDebugView(101, 1040);
@@ -467,7 +467,7 @@ void LocalTracker::drawDebugView(int tag, int offset) {
   int id = 0;
   for (auto& [fid, f] : frames) {
     std::string name = std::to_string(tag) + "_" + std::to_string(k++);
-    f->drawReprojectionView(1, name, false);
+    f->drawReprojectionView(0, name, false);
 
     if (id < 5)
       cv::moveWindow(name, (xOffset * id), (offset));

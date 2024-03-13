@@ -117,7 +117,7 @@ void LocalTracker::process() {
       }
     }
 
-    drawDebugView(100, 0);
+    //drawDebugView(100, 0);
     //DEBUG_POINT();
     //cv::waitKey(1);
     //

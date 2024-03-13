@@ -11,6 +11,7 @@ class PointMatcher;
 namespace db {
 class Feature;
 class Frame;
+class KeyPoints;
 }  //namespace db
 class PointTracker {
 public:
@@ -49,7 +50,7 @@ protected:
   std::string                   mMatcherType;
   cv::Ptr<cv::Feature2D>        mPointDetector;
   std::shared_ptr<PointMatcher> mPointMatcher;
-  //std::set<int>                 mPrevIds;
   int                           mStereoTrackingIntervalCount;
+  std::shared_ptr<db::Feature>  mDetectedFeature;
 };
 }  //namespace toy

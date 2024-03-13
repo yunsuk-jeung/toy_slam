@@ -117,9 +117,9 @@ void LocalTracker::process() {
       }
     }
 
-    //drawDebugView(100, 0);
+    drawDebugView(100, 0);
     //DEBUG_POINT();
-    //cv::waitKey();
+    //cv::waitKey(1);
     //
     //if (newMp > 0) && createMPCount > 0) {
     //    ToyLogD("     Set KeyFrame : {} create Mp Count : {}",
@@ -467,7 +467,7 @@ void LocalTracker::drawDebugView(int tag, int offset) {
   int id = 0;
   for (auto& [fid, f] : frames) {
     std::string name = std::to_string(tag) + "_" + std::to_string(k++);
-    f->drawReprojectionView(0, name, false);
+    f->drawReprojectionView(1, name, false);
 
     if (id < 5)
       cv::moveWindow(name, (xOffset * id), (offset));

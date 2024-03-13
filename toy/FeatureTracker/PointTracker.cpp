@@ -7,6 +7,7 @@
 #include "Feature.h"
 #include "PointMatcher.h"
 #include "PointTracker.h"
+#include "Feature.h"
 
 namespace toy {
 PointTracker::PointTracker(std::string type)
@@ -26,12 +27,18 @@ PointTracker::PointTracker(std::string type)
   //                  * Config::Vio::minTrackedRatio * 2.0f;
 
   mGridStatus.resize(Config::Vio::rowGridCount * Config::Vio::colGridCount);
+  mDetectedFeature = std::make_shared<toy::db::Feature>();
 }
 
 PointTracker::~PointTracker() {}
 
 size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
   size_t trackedPtSize = match(prevFrame, currFrame);
+
+  //ToyLogD("currFrame id {} , {}  ",
+  //        currFrame->id(),
+  //        trackedPtSize);
+
   //size_t prevSize      = mPrevIds.size() + 1;
   //size_t newPt         = 0u;
 
@@ -210,14 +217,14 @@ size_t PointTracker::match(db::Frame* prev, db::Frame* curr) {
 }
 
 size_t PointTracker::matchStereo(db::Frame* frame) {
-  return mPointMatcher->matchStereo(frame);
+  return mPointMatcher->matchStereo(frame, mDetectedFeature);
 }
 
 void PointTracker::convertCVKeyPointsToFeature(Camera*                    cam,
                                                std::vector<cv::KeyPoint>& kpts,
                                                db::Feature*               feature) {
-  db::Feature newFeat;
-  auto&       newKpts = feature->getKeypoints();
+  auto& newKpts = mDetectedFeature->getKeypoints();
+  newKpts.clear();
   newKpts.reserve(kpts.size());
 
   auto& ids        = newKpts.mIds;
@@ -232,7 +239,7 @@ void PointTracker::convertCVKeyPointsToFeature(Camera*                    cam,
     points.push_back(kpt.pt);
     trackCount.push_back(0);
   }
-  //asdfasdf
+
   cam->undistortPoints(points, undists);
 
   auto& keypoints = feature->getKeypoints();

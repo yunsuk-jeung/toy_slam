@@ -155,9 +155,8 @@ void SLAMApp::buildCommandBuffer() {
   beginRenderPass(cmd);
 
   mOriginAxisRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
-  mPointCloudRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
-
   mAxisRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
+  mPointCloudRenderer->buildCommandBuffer(cmd, mCurrBufferingIdx);
 
   if (mGUI)
     mGUI->buildCommandBuffer(cmd, mCurrBufferingIdx);
@@ -266,6 +265,7 @@ void SLAMApp::createOriginRenderer() {
                                mVkDescPool,
                                mVkRenderPass,
                                axisPipeline);
+  mOriginAxisRenderer->updateSyndId();
 }
 
 void SLAMApp::createAxisRenderer() {
@@ -283,6 +283,7 @@ void SLAMApp::createAxisRenderer() {
                          axisPipeline);
 
   mAxisRenderer->setMwcs(&mMWcs);
+  mAxisRenderer->updateSyndId();
 }
 
 void SLAMApp::updateSLAMData() {

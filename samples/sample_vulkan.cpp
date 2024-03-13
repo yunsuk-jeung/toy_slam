@@ -47,24 +47,6 @@ public:
   }
 
 protected:
-  void createPipelines() override {
-    App::createPipelines();
-
-    ShaderSourceType   type           = ShaderSourceType::STRING;
-    std::string        name           = "pcucmst";
-    const std::string& vertexShader   = shader::pose_color_uv_camera_model_vert;
-    const std::string& fragmentShader = shader::color_uv_material_sampler_texture;
-
-    //auto* basicPipelineLyout = ResourcePool::requestPipelineLayout(
-    //  "pcucmst_vert_pcucmst_frag");
-
-    //auto* basicTrianglePL = new TextureMaterialPipeline("triangle_pcucmst",
-    //                                                   mDevice.get(),
-    //                                                   mRenderContext.get(),
-    //                                                   mVkRenderPass,
-    //                                                   basicPipelineLyout);
-    //basicTrianglePL->prepare();
-  }
 
   void onRender() override {
     mWindow->pollEvents();

@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include <opencv2/core.hpp>
 #include <Eigen/Dense>
 #include "macros.h"
@@ -48,6 +49,8 @@ public:
     std::vector<cv::Point2f> mUVs;
     std::vector<uint32_t>    mTrackCounts;
     std::vector<cv::Point2f> mUndists;
+    std::map<size_t, size_t> mIdIdx;  //for stereo
+
     //std::vector<uint8_t>     mFeatureType;  //0 1 2 is mono, stereo, depth
   };
 

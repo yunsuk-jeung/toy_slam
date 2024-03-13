@@ -15,6 +15,7 @@ LocalMap::~LocalMap() {}
 void LocalMap::reset() {
   mFrames.clear();
   mMapPoints.clear();
+  mMapPointCandidates.clear();
 }
 
 size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {

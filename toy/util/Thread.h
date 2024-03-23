@@ -12,15 +12,15 @@ public:
   using IPtr = std::shared_ptr<IN_>;
   using OPtr = std::shared_ptr<OUT_>;
 
-  tbb::concurrent_queue<IPtr>& getInQueue() { return mInQueue; }
-  void registerOutQueue(tbb::concurrent_queue<OPtr>* out) { mOutQueue = out; }
-  void insert(IPtr in) { mInQueue.push(in); }
+  tbb::concurrent_queue<IPtr>& getInQueue() { return in_queue_; }
+  void registerOutQueue(tbb::concurrent_queue<OPtr>* out) { out_queue_ = out; }
+  void insert(IPtr in) { in_queue_.push(in); }
 
 protected:
   IPtr getLatestInput() {
     IPtr out;
-    while (mInQueue.try_pop(out)) {
-      if (!mInQueue.empty())
+    while (in_queue_.try_pop(out)) {
+      if (!in_queue_.empty())
         continue;
       return out;
     }
@@ -28,8 +28,8 @@ protected:
   }
 
 protected:
-  tbb::concurrent_queue<IPtr>  mInQueue;
-  tbb::concurrent_queue<OPtr>* mOutQueue;
+  tbb::concurrent_queue<IPtr>  in_queue_;
+  tbb::concurrent_queue<OPtr>* out_queue_;
 };
 
 }  //namespace toy

@@ -9,9 +9,8 @@ namespace io {
 
 class Sensor {
 public:
-  using ImageCallback = std::function<void(ImageData&, ImageData&)>;
-
-  using ImuCallback = std::function<void(const uint64_t&, float*)>;
+  using ImageCallback = std::function<void(std::vector<ImageData>&)>;
+  using ImuCallback   = std::function<void(const uint64_t&, float*)>;
 
   Sensor()          = default;
   virtual ~Sensor() = default;
@@ -29,7 +28,7 @@ public:
   bool isSimulator() const { return mIsSimulator; };
 
 protected:
-  ImageCallback mImageCallBack = [](ImageData& imageData0, ImageData& ImageData1) {
+  ImageCallback mImageCallBack = [](std::vector<ImageData>& ImageDatas) {
     std::cout << "You forgot to register image Callback\n";
   };
 

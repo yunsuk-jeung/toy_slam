@@ -63,7 +63,7 @@ void FrameTracker::process() {
 
   db::Frame::Ptr out = currFrame->clonePtr();
 
-  mOutQueue->push(out);
+  out_queue_->push(out);
   mPrevFrame = currFrame;
 }
 

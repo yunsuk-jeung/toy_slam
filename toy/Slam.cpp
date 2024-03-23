@@ -36,13 +36,20 @@ void SLAM::prepare(const std::string& configFile) {
   mVioCore->prepare();
 }
 
-void SLAM::setNewImage(ImageData& imageData0, ImageData& imageData1) {
-  db::ImagePyramid::Uni imagePyramid0 = std::make_unique<db::ImagePyramid>(imageData0);
-  db::ImagePyramid::Uni imagePyramid1 = std::make_unique<db::ImagePyramid>(imageData1);
+void SLAM::setNewImages(std::vector<ImageData>& images) {
+  const auto imageCount = images.size();
 
-  db::ImagePyramidSet::Ptr set = std::make_shared<db::ImagePyramidSet>(imagePyramid0,
-                                                                       imagePyramid1);
-  mVioCore->insert(set);
+  std::vector<db::ImagePyramid::Ptr> imagePyramids;
+  imagePyramids.reserve(imageCount);
+
+  for (auto& image : images) {
+    imagePyramids.emplace_back(std::make_shared<db::ImagePyramid>(image));
+  }
+
+  db::ImagePyramidSet::Ptr imagePyramidSet = std::make_shared<db::ImagePyramidSet>(
+    imagePyramids);
+
+  mVioCore->insert(imagePyramidSet);
 
   if (Config::sync)
     mVioCore->processSync();

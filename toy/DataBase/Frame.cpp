@@ -12,7 +12,7 @@ size_t Frame::globalId = 0;
 Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   : mId{globalId++}
   , mIsKeyFrame{false}
-  , mImagePyramids{std::move(set->mImagePyramid0), std::move(set->mImagePyramid1)}
+  , mImagePyramids{set->images_[0], set->images_[1]}
   , mCameras{nullptr, nullptr}
   , mFeatures{std::make_unique<Feature>(), std::make_unique<Feature>()}
   , mFixed{false}
@@ -22,10 +22,8 @@ Frame::Frame(Frame* src) {
   this->mId         = src->mId;
   this->mIsKeyFrame = src->mIsKeyFrame;
 
-  db::ImagePyramid* pyramid0 = src->mImagePyramids[0]->clone();
-  db::ImagePyramid* pyramid1 = src->mImagePyramids[1]->clone();
-  this->mImagePyramids[0]    = std::unique_ptr<db::ImagePyramid>(pyramid0);
-  this->mImagePyramids[1]    = std::unique_ptr<db::ImagePyramid>(pyramid1);
+  this->mImagePyramids[0] = src->mImagePyramids[0];
+  this->mImagePyramids[1] = src->mImagePyramids[1];
 
   Camera* cam0      = src->mCameras[0]->clone();
   Camera* cam1      = src->mCameras[1]->clone();
@@ -47,9 +45,10 @@ Frame::Frame(Frame* src) {
 }
 
 Frame::~Frame() {
-  for (ImagePyramid::Uni& ptr : mImagePyramids) {
-    ptr.reset();
-  }
+  //for (ImagePyramid::Uni& ptr : mImagePyramids) {
+  //  ptr.reset();
+  //}
+
   for (Camera::Uni& ptr : mCameras) {
     ptr.reset();
   }

@@ -13,14 +13,14 @@ public:
 
   ImagePyramid() = default;
   ImagePyramid(const ImageData&);
+  ImagePyramid(const ImagePyramid* src);
 
   ~ImagePyramid();
 
   //static ImagePyramid* clone(ImagePyramid* src);
-  ImagePyramid* clone();
+  ImagePyramid::Ptr clone();
 
 protected:
-  ImagePyramid(const ImagePyramid* src);
   void        createImagePyrmid();
   static void convertToGray(cv::Mat& src, cv::Mat& dst);
 
@@ -41,15 +41,9 @@ public:
 
 class ImagePyramidSet {
 public:
-  ImagePyramidSet(std::unique_ptr<ImagePyramid>& i0, std::unique_ptr<ImagePyramid>& i1) {
-    mImagePyramid0 = std::move(i0);
-    mImagePyramid1 = std::move(i1);
-  }
-
   using Ptr = std::shared_ptr<ImagePyramidSet>;
-
-  ImagePyramid::Uni mImagePyramid0;
-  ImagePyramid::Uni mImagePyramid1;
+  ImagePyramidSet(std::vector<ImagePyramid::Ptr>& images) { images_.swap(images); }
+  std::vector<ImagePyramid::Ptr> images_;
 };
 
 };  //namespace db

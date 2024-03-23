@@ -135,7 +135,8 @@ public:
     return ids1.size();
   }
 
-  virtual size_t matchStereo(db::Frame* frame) override {
+  virtual size_t matchStereo(db::Frame*                   frame,
+                             std::shared_ptr<db::Feature> detectedFeature) override {
     auto& pyramid0    = frame->getImagePyramid(0)->getPyramids();
     auto& keyPoints0  = frame->getFeature(0)->getKeypoints();
     auto& ids0        = keyPoints0.mIds;

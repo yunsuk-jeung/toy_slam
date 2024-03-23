@@ -265,6 +265,7 @@ void SLAMApp::createOriginRenderer() {
                                mVkDescPool,
                                mVkRenderPass,
                                PL);
+  mOriginAxisRenderer->updateSyncId();
 }
 
 void SLAMApp::createAxisRenderer() {
@@ -283,7 +284,7 @@ void SLAMApp::updateSLAMData() {
   auto* info = toy::SLAMInfo::getInstance();
 
   if (info->getLocalPath(mMWcs)) {
-    mAxisRenderer->updateSyndId();
+    mAxisRenderer->updateSyncId();
     //vklLogD("current local path size : {}", mMWcs.size());
     //Eigen::Vector3f vec = mMWcs.back().block<3, 1>(0, 3);
     //vklLogD("latest frame pose : {} ", eigenVec(vec));

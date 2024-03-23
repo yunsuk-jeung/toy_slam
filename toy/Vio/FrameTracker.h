@@ -22,7 +22,7 @@ public:
 
 private:
   using Thread<db::ImagePyramidSet, db::Frame>::getLatestInput;
-  using Thread<db::ImagePyramidSet, db::Frame>::mInQueue;
+  using Thread<db::ImagePyramidSet, db::Frame>::in_queue_;
 
   std::shared_ptr<db::Frame> getLatestFrame();
   void                       trackPose();

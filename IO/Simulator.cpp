@@ -67,19 +67,13 @@ void Simulator::start() {
           continue;
         }
 
-        ImageData imageData0{type0,
-                             image0.type(),
-                             ns0,
-                             image0.data,
-                             image0.cols,
-                             image0.rows};
+        std::vector<ImageData> datas;
+        datas.reserve(2);
 
-        ImageData imageData1{type1,
-                             image1.type(),
-                             ns1,
-                             image1.data,
-                             image1.cols,
-                             image1.rows};
+        datas.emplace_back(
+          ImageData{type0, image0.type(), ns0, image0.data, image0.cols, image0.rows});
+        datas.emplace_back(
+          ImageData{type1, image1.type(), ns1, image1.data, image1.cols, image1.rows});
 
         if (!mContinuousMode) {
           std::unique_lock<std::mutex> ulock(mImageCallbackMutex);
@@ -87,7 +81,7 @@ void Simulator::start() {
           mSendImage = false;
         }
 
-        mImageCallBack(imageData0, imageData1);
+        mImageCallBack(datas);
 
         cv::imshow("input", image0);
         cv::waitKey(1);
@@ -118,6 +112,7 @@ void Simulator::spinOnce() {
   cv::Mat  image1;
 
   if (mDataReader->getImages(type0, ns0, image0, type1, ns1, image1)) {
+    /*
     ImageData imageData0{type0,
                          image0.type(),
                          ns0,
@@ -131,8 +126,17 @@ void Simulator::spinOnce() {
                          image1.data,
                          image1.cols,
                          image1.rows};
+    */
 
-    mImageCallBack(imageData0, imageData1);
+    std::vector<ImageData> datas;
+    datas.reserve(2);
+
+    datas.emplace_back(
+      ImageData{type0, image0.type(), ns0, image0.data, image0.cols, image0.rows});
+    datas.emplace_back(
+      ImageData{type1, image1.type(), ns1, image1.data, image1.cols, image1.rows});
+
+    mImageCallBack(datas);
 
     cv::imshow("input", image0);
     //cv::waitKey(33);

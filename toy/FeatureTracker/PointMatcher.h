@@ -5,6 +5,7 @@
 namespace toy {
 namespace db {
 class Frame;
+class Feature;
 }  //namespace db
 class PointMatcher {
 public:
@@ -12,8 +13,9 @@ public:
   PointMatcher()          = default;
   virtual ~PointMatcher() = default;
 
-  virtual size_t match(db::Frame* prev, db::Frame* curr) = 0;
-  virtual size_t matchStereo(db::Frame* frame)           = 0;
+  virtual size_t match(db::Frame* prev, db::Frame* curr)                   = 0;
+  virtual size_t matchStereo(db::Frame*                   frame,
+                             std::shared_ptr<db::Feature> detectedFeature) = 0;
 
 protected:
 };

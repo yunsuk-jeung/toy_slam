@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <map>
 #include "Thread.h"
 
 namespace toy {
@@ -23,7 +24,7 @@ public:
 
 private:
   using Thread<db::Frame, void>::getLatestInput;
-  using Thread<db::Frame, void>::mInQueue;
+  using Thread<db::Frame, void>::in_queue_;
 
   //int                        initializeMapPoints(std::shared_ptr<db::Frame> currFrame);
   int                        initializeMapPoints(std::shared_ptr<db::Frame> currFrame);
@@ -39,6 +40,7 @@ private:
   std::unique_ptr<db::LocalMap> mLocalMap;
   std::unique_ptr<VioSolver>    mVioSolver;
   int                           mKeyFrameAfter;
+  std::map<int64_t, int>        mNumCreatedPoints;
 };
 
 }  //namespace toy

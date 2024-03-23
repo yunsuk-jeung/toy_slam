@@ -15,6 +15,7 @@ LocalMap::~LocalMap() {}
 void LocalMap::reset() {
   mFrames.clear();
   mMapPoints.clear();
+  mMapPointCandidates.clear();
 }
 
 size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {
@@ -65,9 +66,10 @@ size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {
                                      {undist0.x, undist0.y, 1.0});
 
     if (size1 > 0) {
-      if (keyPoints1.mIds[i] == 1) {
-        auto& uv1     = keyPoints1.mUVs[i];
-        auto& undist1 = keyPoints1.mUndists[i];
+      if (keyPoints1.mIdIdx.count(id)) {
+        auto& idx     = keyPoints1.mIdIdx[id];
+        auto& uv1     = keyPoints1.mUVs[idx];
+        auto& undist1 = keyPoints1.mUndists[idx];
         factor.addStereo({uv1.x, uv1.y}, {undist1.x, undist1.y, 1.0});
       }
     }

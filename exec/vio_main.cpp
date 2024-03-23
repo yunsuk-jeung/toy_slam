@@ -9,14 +9,14 @@
 #include "SLAMApp.h"
 #include "GlfwWindow.h"
 
-vkl::SLAMApp*   app              = nullptr;
-io::Sensor*     sensor           = nullptr;
-io::DataReader* dataReader       = nullptr;
+vkl::SLAMApp*   app        = nullptr;
+io::Sensor*     sensor     = nullptr;
+io::DataReader* dataReader = nullptr;
 //std::string     dataPath         = "D:/dataset/EUROC/V1_01_easy";
-std::string     dataPath         = "D:/dataset/EUROC/MH_01_easy";
-std::string     configPath       = "D:/workspaceD/toy_vio/configs/";
-std::string     sensorConfigFile = "euroc_sensor.json";
-std::string     slamConfigFile   = "VioOnly.json";
+std::string dataPath         = "D:/dataset/EUROC/MH_01_easy";
+std::string configPath       = "D:/workspaceD/toy_vio/configs/";
+std::string sensorConfigFile = "euroc_sensor.json";
+std::string slamConfigFile   = "VioOnly.json";
 
 void setupSensor() {
   sensor = io::SensorFactory::createSensor(io::SensorFactory::SensorType::SIMULATOR);
@@ -25,14 +25,14 @@ void setupSensor() {
     dataReader = io::DataReader::createDataReader(io::DataReader::Type::EUROC);
     dataReader->openDirectory(sensorConfigFile, dataPath);
     ((io::Simulator*)sensor)->registerDataReader(dataReader);
-    ((io::Simulator*)sensor)->setSkip(80);
+    //((io::Simulator*)sensor)->setSkip(80);
   }
   sensor->prepare();
 }
 
 void registerCallbacks() {
-  auto imageCallback = [](ImageData& imageData0, ImageData& imageData1) {
-    toy::SLAM::getInstance()->setNewImage(imageData0, imageData1);
+  auto imageCallback = [](std::vector<ImageData>& s) {
+    toy::SLAM::getInstance()->setNewImages(s);
   };
 
   auto accCallback = [](const uint64_t& ns, float* acc) {

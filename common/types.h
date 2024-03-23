@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-enum ImageType { NONE = -1, MAIN = 0, SUB = 1, DEPTH = 2 };
+enum ImageType { NONE = -1, CAM0 = 0, CAM1 = 1, DEPTH = 2 };
 struct ImageData {
   int      type   = -1;
   int      format = 0;

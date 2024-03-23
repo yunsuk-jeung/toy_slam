@@ -5,6 +5,7 @@
 
 #include <sophus/se3.hpp>
 #include <sophus/so3.hpp>
+
 #include "usings.h"
 #include "macros.h"
 #include "Factor.h"
@@ -62,9 +63,9 @@ protected:
   size_t        mId;
   bool          mIsKeyFrame;
 
-  std::array<std::unique_ptr<ImagePyramid>, 2> mImagePyramids;
-  std::array<std::unique_ptr<Camera>, 2>       mCameras;
-  std::array<std::unique_ptr<Feature>, 2>      mFeatures;
+  std::array<std::shared_ptr<db::ImagePyramid>, 2> mImagePyramids;
+  std::array<std::unique_ptr<Camera>, 2>           mCameras;
+  std::array<std::unique_ptr<Feature>, 2>          mFeatures;
 
   MapPointFactorMap mMapPointFactorMap;
 

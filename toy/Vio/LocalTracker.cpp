@@ -108,10 +108,12 @@ void LocalTracker::process() {
 
     if (setKf) {
       int createMPCount = initializeMapPoints(currFrame);
+
       if (Config::Vio::debug)
         ToyLogD("{}th frame, createMP : {} ", currFrame->id(), createMPCount);
 
       if (createMPCount > 0 && mKeyFrameAfter > 1) {
+        mNumCreatedPoints[currFrame->id()] = createMPCount;
         currFrame->setKeyFrame();
         mKeyFrameAfter = 0;
       }
@@ -119,7 +121,7 @@ void LocalTracker::process() {
 
     //drawDebugView(100, 0);
     //DEBUG_POINT();
-    //cv::waitKey();
+    //cv::waitKey(1);
     //
     //if (newMp > 0) && createMPCount > 0) {
     //    ToyLogD("     Set KeyFrame : {} create Mp Count : {}",
@@ -127,11 +129,11 @@ void LocalTracker::process() {
     //            createMPCount);
     //  }
 
-    //if (currFrame->id() > 49) {
-    //  drawDebugView(100, 0);
-    //  DEBUG_POINT();
-    //  cv::waitKey();
-    //}
+    if (currFrame->id() > 3600) {
+      drawDebugView(100, 0);
+      DEBUG_POINT();
+      cv::waitKey();
+    }
 
     //drawDebugView(101, 1040);
     //drawDebugView(101, 1040);
@@ -144,6 +146,8 @@ void LocalTracker::process() {
     if (!marginalFrame) {
       break;
     }
+
+    mNumCreatedPoints.erase(marginalFrame->id());
 
     mVioSolver->marginalize(marginalFrame);
     mLocalMap->removeFrame(marginalFrame->id());
@@ -319,8 +323,10 @@ db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& al
   //  return frames.front();
   //}
 
+  auto latestFrame = allFrames.back();
+
   if (keyFrames.size() > Config::Vio::maxKeyFrameSize) {
-    auto& latestMap = keyFrames.back()->getMapPointFactorMap();
+    auto& latestMap = latestFrame->getMapPointFactorMap();
 
     for (auto& kf : keyFrames) {
       auto&  kfMap = kf->getMapPointFactorMap();
@@ -332,7 +338,12 @@ db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& al
         }
       }
 
-      float ratio = float(count) / kfMap.size();
+      float ratio = float(count) / mNumCreatedPoints[kf->id()];
+      ToyLogD("marg due to ratio : {} / {} = {} id: {}",
+              count,
+              mNumCreatedPoints[kf->id()],
+              ratio,
+              kf->id());
 
       if (ratio < Config::Vio::margFeatureConnectionRatio) {
         //if (Config::Vio::debug)
@@ -343,7 +354,7 @@ db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& al
 
         ToyLogD("marg due to ratio : {} / {} = {} id: {}",
                 count,
-                kfMap.size(),
+                mNumCreatedPoints[kf->id()],
                 ratio,
                 kf->id());
         return kf;

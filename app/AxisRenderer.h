@@ -12,7 +12,7 @@ public:
   ~AxisRenderer();
 
   void setMwcs(std::vector<Eigen::Matrix4f>* pMwcs) { mMwcsPtr = pMwcs; }
-  void updateSyndId();
+  void updateSyncId();
   void buildCommandBuffer(vk::CommandBuffer cmd,
                           uint32_t          idx,
                           vk::DescriptorSet camDescset);

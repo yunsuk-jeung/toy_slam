@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include <opencv2/core.hpp>
 #include <Eigen/Dense>
 #include "macros.h"
@@ -23,6 +24,15 @@ public:
     }
     size_t size() { return mIds.size(); }
 
+    void clear() {
+      mIds.clear();
+      mLevels.clear();
+      mUVs.clear();
+      mTrackCounts.clear();
+      mUndists.clear();
+      mIdIdx.clear();
+    }
+
     void reserve(size_t size) {
       mIds.reserve(size);
       mLevels.reserve(size);
@@ -34,11 +44,18 @@ public:
 
     void push_back(Keypoints& kpts) {
       // clang-format off
-      mIds.insert(mIds.end(), kpts.mIds.begin(), kpts.mIds.begin());
-      mLevels.insert(mLevels.end(), kpts.mLevels.begin(), kpts.mLevels.begin());
-      mUVs.insert(mUVs.end(), kpts.mUVs.begin(), kpts.mUVs.begin());
-      mTrackCounts.insert(mTrackCounts.end(), kpts.mTrackCounts.begin(), kpts.mTrackCounts.begin());
-      mUndists.insert(mUndists.end(), kpts.mUndists.begin(), kpts.mUndists.begin());
+      
+      auto idx = mIds.size();
+      mIds.insert(mIds.end(), kpts.mIds.begin(), kpts.mIds.end());
+      
+      for(; idx < mIds.size(); ++idx){
+        mIdIdx[mIds[idx]] = idx;
+      }
+
+      mLevels.insert(mLevels.end(), kpts.mLevels.begin(), kpts.mLevels.end());
+      mUVs.insert(mUVs.end(), kpts.mUVs.begin(), kpts.mUVs.end());
+      mTrackCounts.insert(mTrackCounts.end(), kpts.mTrackCounts.begin(), kpts.mTrackCounts.end());
+      mUndists.insert(mUndists.end(), kpts.mUndists.begin(), kpts.mUndists.end());
       //mFeatureType.insert(mFeatureType.end(), kpts.mFeatureType.begin(), kpts.mFeatureType.begin());
       // clang-format on
     }
@@ -48,6 +65,8 @@ public:
     std::vector<cv::Point2f> mUVs;
     std::vector<uint32_t>    mTrackCounts;
     std::vector<cv::Point2f> mUndists;
+    std::map<size_t, size_t> mIdIdx;
+
     //std::vector<uint8_t>     mFeatureType;  //0 1 2 is mono, stereo, depth
   };
 

@@ -25,7 +25,7 @@ AxisRenderer::AxisRenderer(int maxAxisSize)
 
 AxisRenderer::~AxisRenderer() {}
 
-void AxisRenderer::updateSyndId() {
+void AxisRenderer::updateSyncId() {
   ++mSyncId;
 }
 

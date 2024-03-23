@@ -14,8 +14,8 @@ ImagePyramid::ImagePyramid(const ImageData& imageData)
   switch (mType) {
   case ImageType::NONE:
     break;
-  case ImageType::MAIN:
-  case ImageType::SUB: {
+  case ImageType::CAM0:
+  case ImageType::CAM1: {
     cv::Mat in = cv::Mat(imageData.h, imageData.w, imageData.format, imageData.buffer)
                    .clone();
 
@@ -50,8 +50,8 @@ ImagePyramid::~ImagePyramid() {
   mPyramids.clear();
 }
 
-ImagePyramid* ImagePyramid::clone() {
-  ImagePyramid* out = new ImagePyramid(this);
+ImagePyramid::Ptr ImagePyramid::clone() {
+  auto out = std::make_shared<ImagePyramid>(this);
   return out;
 }
 

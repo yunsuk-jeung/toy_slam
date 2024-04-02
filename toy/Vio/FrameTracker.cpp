@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "ImagePyramid.h"
 #include "Frame.h"
+#include "FrameState.h"
 #include "LocalMap.h"
 #include "FeatureTracker.h"
 #include "VioSolver.h"
@@ -15,7 +16,7 @@ FrameTracker::FrameTracker()
   : mFeatureTracker{nullptr}
   , mFrameSolver{nullptr}
   , mStatus{Status::NONE}
-  , mPrevFrame{nullptr} {}
+  , mPrevFrameState{nullptr} {}
 
 FrameTracker::~FrameTracker() {
   delete mFeatureTracker;
@@ -33,12 +34,12 @@ void FrameTracker::prepare() {
 }
 
 void FrameTracker::process() {
-  db::Frame::Ptr currFrame = getLatestFrame();
-  if (!currFrame)
+  auto currFrameState = getLatestFrameState();
+  if (!currFrameState)
     return;
 
   bool OK{false};
-  OK = mFeatureTracker->process(mPrevFrame.get(), currFrame.get());
+  OK = mFeatureTracker->process(mPrevFrameState.get(), currFrameState.get());
 
   if (!OK) {
     ToyLogD("Do something like reject frame .. ")
@@ -56,24 +57,25 @@ void FrameTracker::process() {
     if (Config::Vio::frameTrackerSolvePose) {
       trackPose();
     }
-    //db::MemoryPointerPool::release(mPrevFrame);
+    //db::MemoryPointerPool::release(mPrevFrameState);
     break;
   }
   }
 
-  db::Frame::Ptr out = currFrame->clonePtr();
+  auto out = currFrameState->clone();
 
   out_queue_->push(out);
-  mPrevFrame = currFrame;
+  mPrevFrameState = currFrameState;
 }
 
-db::Frame::Ptr FrameTracker::getLatestFrame() {
+db::FrameState::Ptr FrameTracker::getLatestFrameState() {
   db::ImagePyramidSet::Ptr set = getLatestInput();
   if (!set)
     return nullptr;
 
-  Camera* cam0 = CameraFactory::createCamera(&Config::Vio::camInfo0);
-  Camera* cam1 = CameraFactory::createCamera(&Config::Vio::camInfo1);
+  std::vector<Camera::Ptr> cams;
+  auto                     cam0 = CameraFactory::createCamera(&Config::Vio::camInfo0);
+  auto                     cam1 = CameraFactory::createCamera(&Config::Vio::camInfo1);
 
   db::Frame::Ptr currFrame = std::make_shared<db::Frame>(set);
   currFrame->setCameras(cam0, cam1);

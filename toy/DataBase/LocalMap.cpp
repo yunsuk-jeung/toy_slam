@@ -1,7 +1,7 @@
 #include "config.h"
 #include "ToyAssert.h"
 #include "Feature.h"
-#include "Frame.h"
+#include "FrameState.h"
 #include "MapPoint.h"
 #include "LocalMap.h"
 #include "Factor.h"
@@ -13,73 +13,57 @@ LocalMap::LocalMap() {}
 LocalMap::~LocalMap() {}
 
 void LocalMap::reset() {
-  mFrames.clear();
+  mFrameStates.clear();
   mMapPoints.clear();
   mMapPointCandidates.clear();
 }
 
-size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {
-  int frameId = frame->id();
+size_t LocalMap::addFrameState(std::shared_ptr<FrameState> frameState) {
+  int frameId = frameState->id();
 
-  mFrames.insert({frameId, frame});
-  auto& keyPoints0 = frame->getFeature(0)->getKeypoints();
-  auto& keyPoints1 = frame->getFeature(1)->getKeypoints();
-
-  auto size0 = keyPoints0.size();
-  auto size1 = keyPoints1.size();
+  mFrameStates.insert({frameId, frameState});
 
   size_t connected = 0u;
-  for (size_t i = 0; i < size0; ++i) {
-    int id = keyPoints0.mIds[i];
+  for (auto& frame : frameState->getFrames()) {
+    auto& keyPoints = frame->getFeature()->getKeypoints();
+    auto  size      = keyPoints.size();
 
-    MapPoint::Ptr mp;
-    auto          it = mMapPoints.find(id);
+    for (size_t i = 0; i < size; ++i) {
+      int id = keyPoints.mIds[i];
 
-    auto& uv0     = keyPoints0.mUVs[i];
-    auto& undist0 = keyPoints0.mUndists[i];
+      MapPoint::Ptr mp;
+      auto          it = mMapPoints.find(id);
 
-    //bool exist = false;
-    if (it == mMapPoints.end()) {
-      auto candIt = mMapPointCandidates.find(id);
-      if (candIt == mMapPointCandidates.end()) {
-        mp = std::make_shared<MapPoint>(id);
-        mMapPointCandidates.insert({id, mp});
+      auto& uv     = keyPoints.mUVs[i];
+      auto& undist = keyPoints.mUndists[i];
+
+      if (it != mMapPoints.end()) {
+        auto candIt = mMapPointCandidates.find(id);
+        if (candIt == mMapPointCandidates.end()) {
+          mp = std::make_shared<MapPoint>(id);
+          mMapPointCandidates.insert({id, mp});
+        }
+        else {
+          mp = candIt->second;
+        }
       }
       else {
-        mp = candIt->second;
+        mp = it->second;
+        if (mp->status() == db::MapPoint::Status::INITIALING) {
+          mp->setState(db::MapPoint::Status::TRACKING);
+        }
+        mMapPoints.insert({mp->id(), mp});
+        ++connected;
       }
-      //mp->setUndist({undist0.x, undist0.y});
-    }
-    else {
-      mp = it->second;
-      if (mp->status() == db::MapPoint::Status::INITIALING) {
-        mp->setState(db::MapPoint::Status::TRACKING);
-      }
-      mMapPoints.insert({mp->id(), mp});
-      //exist = true;
-      ++connected;
-    }
 
-    auto factor = ReprojectionFactor(frame.get(),
-                                     mp.get(),
-                                     {uv0.x, uv0.y},
-                                     {undist0.x, undist0.y, 1.0});
-
-    if (size1 > 0) {
-      if (keyPoints1.mIdIdx.count(id)) {
-        auto& idx     = keyPoints1.mIdIdx[id];
-        auto& uv1     = keyPoints1.mUVs[idx];
-        auto& undist1 = keyPoints1.mUndists[idx];
-        factor.addStereo({uv1.x, uv1.y}, {undist1.x, undist1.y, 1.0});
-      }
+      auto factor = ReprojectionFactor(frame.get(),
+                                       mp.get(),
+                                       {uv.x, uv.y},
+                                       {undist.x, undist.y, 1.0});
+      mp->addFrameFactor(frame, factor);
+      frame->addMapPointFactor(mp, factor);
     }
-    mp->addFrameFactor(frame, factor);
-
-    //if (exist) {
-    frame->addMapPointFactor(mp, factor);
-    //}
   }
-
   return connected;
 }
 
@@ -88,14 +72,14 @@ void LocalMap::addMapPoint(std::shared_ptr<MapPoint> mp) {
   mMapPoints.insert({mp->id(), mp});
 }
 
-void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
-                                std::vector<MapPoint::Ptr>& trackingMapPoints,
-                                std::vector<MapPoint::Ptr>& marginedMapPoints) {
-  frames.reserve(mFrames.size());
+void LocalMap::getCurrentStates(std::vector<FrameState::Ptr>& frames,
+                                std::vector<MapPoint::Ptr>&   trackingMapPoints,
+                                std::vector<MapPoint::Ptr>&   marginedMapPoints) {
+  frames.reserve(mFrameStates.size());
   trackingMapPoints.reserve(mMapPoints.size());
-  marginedMapPoints.reserve(mFrames.size());
+  marginedMapPoints.reserve(mFrameStates.size());
 
-  for (auto& [id, frame] : mFrames) {
+  for (auto& [id, frame] : mFrameStates) {
     frames.push_back(frame);
   }
 
@@ -119,31 +103,32 @@ void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
 }
 
 void LocalMap::removeFrame(int id) {
-  auto it = mFrames.find(id);
-  TOY_ASSERT(it != mFrames.end());
+  auto it = mFrameStates.find(id);
+  TOY_ASSERT(it != mFrameStates.end());
 
-  Frame::Ptr& f = it->second;
-  for (auto it = mMapPoints.begin(); it != mMapPoints.end();) {
-    bool eraseMapPoint = it->second->eraseFrame(f);
-    if (eraseMapPoint) {
-      it = mMapPoints.erase(it);
+  for (auto& f : it->second->getFrames()) {
+    for (auto it = mMapPoints.begin(); it != mMapPoints.end();) {
+      bool eraseMapPoint = it->second->eraseFrame(f);
+      if (eraseMapPoint) {
+        it = mMapPoints.erase(it);
+      }
+      else {
+        ++it;
+      }
     }
-    else {
-      ++it;
+
+    for (auto it = mMapPointCandidates.begin(); it != mMapPointCandidates.end();) {
+      bool eraseMapPoint = it->second->eraseFrame(f);
+      if (eraseMapPoint) {
+        it = mMapPointCandidates.erase(it);
+      }
+      else {
+        ++it;
+      }
     }
   }
 
-  for (auto it = mMapPointCandidates.begin(); it != mMapPointCandidates.end();) {
-    bool eraseMapPoint = it->second->eraseFrame(f);
-    if (eraseMapPoint) {
-      it = mMapPointCandidates.erase(it);
-    }
-    else {
-      ++it;
-    }
-  }
-
-  mFrames.erase(it);
+  mFrameStates.erase(it);
 }
 
 }  //namespace db

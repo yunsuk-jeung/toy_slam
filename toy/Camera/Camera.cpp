@@ -48,11 +48,11 @@ Camera::Camera(Camera* src) {
   this->mED           = src->mED;
 }
 
-Camera* CameraFactory::createCamera(CameraInfo* camInfo) {
+Camera::Uni CameraFactory::createCamera(CameraInfo* camInfo) {
   switch (camInfo->cameraModel) {
   case 0 /*pinhole*/:
     if (camInfo->distortionModel == 0) {
-      return new PinholeRadialTangential(camInfo);
+      return std::make_unique<PinholeRadialTangential>(camInfo);
     }
 
     break;

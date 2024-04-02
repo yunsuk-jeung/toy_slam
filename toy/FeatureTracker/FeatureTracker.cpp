@@ -1,6 +1,7 @@
 #pragma once
 #include "ImagePyramid.h"
 #include "Frame.h"
+#include "FrameState.h"
 #include "PointTracker.h"
 #include "LineTracker.h"
 #include "FeatureTracker.h"
@@ -21,9 +22,10 @@ FeatureTracker::~FeatureTracker() {
   mLineTracker.reset();
 }
 
-bool FeatureTracker::process(db::Frame* prevFrame, db::Frame* currentFrame) {
+bool FeatureTracker::process(db::FrameState* prev,
+                             db::FrameState* curr) {
   //YSTODO maybe extract from pyramid...
-  mPointTracker->process(prevFrame, currentFrame);
+  mPointTracker->process(prev, curr);
 
   return true;
 }

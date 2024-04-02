@@ -6,14 +6,14 @@
 
 namespace toy {
 namespace db {
-class Frame;
+class FrameState;
 }
 class FeatureTracker;
 class FrameSolver;
-class FrameTracker : public Thread<db::ImagePyramidSet, db::Frame> {
+class FrameTracker : public Thread<db::ImagePyramidSet, db::FrameState> {
 public:
-  using Thread<db::ImagePyramidSet, db::Frame>::registerOutQueue;
-  using Thread<db::ImagePyramidSet, db::Frame>::insert;
+  using Thread<db::ImagePyramidSet, db::FrameState>::registerOutQueue;
+  using Thread<db::ImagePyramidSet, db::FrameState>::insert;
 
   FrameTracker();
   ~FrameTracker();
@@ -21,19 +21,19 @@ public:
   void process();
 
 private:
-  using Thread<db::ImagePyramidSet, db::Frame>::getLatestInput;
-  using Thread<db::ImagePyramidSet, db::Frame>::in_queue_;
+  using Thread<db::ImagePyramidSet, db::FrameState>::getLatestInput;
+  using Thread<db::ImagePyramidSet, db::FrameState>::in_queue_;
 
-  std::shared_ptr<db::Frame> getLatestFrame();
-  void                       trackPose();
+  std::shared_ptr<db::FrameState> getLatestFrameState();
+  void                            trackPose();
 
 private:
   enum class Status { NONE = -1, INITIALIZING = 0, TRACKING = 1 };
 
-  Status                     mStatus;
-  FeatureTracker*            mFeatureTracker;
-  FrameSolver*               mFrameSolver;
-  std::shared_ptr<db::Frame> mPrevFrame;
+  Status                          mStatus;
+  FeatureTracker*                 mFeatureTracker;
+  FrameSolver*                    mFrameSolver;
+  std::shared_ptr<db::FrameState> mPrevFrameState;
 };
 
 }  //namespace toy

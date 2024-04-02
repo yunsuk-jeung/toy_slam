@@ -39,6 +39,6 @@ protected:
 
 class CameraFactory {
 public:
-  static Camera* createCamera(CameraInfo* camInfo);
+  static std::unique_ptr<Camera> createCamera(CameraInfo* camInfo);
 };
 }  //namespace toy

@@ -6,13 +6,14 @@
 #include "DebugUtil.h"
 #include "SqrtProblem.h"
 #include "MapPoint.h"
+#include "FrameState.h"
 #include "CostFunction.h"
 #include "SqrtMarginalizationCost.h"
 #include "MapPointLinearization.h"
 namespace toy {
 namespace {
 static constexpr auto COST_SIZE = ReprojectionCost::SIZE;
-static constexpr auto POSE_SIZE = db::Frame::PARAMETER_SIZE;
+static constexpr auto POSE_SIZE = db::FrameState::PARAMETER_SIZE;
 static constexpr auto MP_SIZE   = db::MapPoint::PARAMETER_SIZE;
 }  //namespace
 SqrtProblem::Option::Option()
@@ -100,7 +101,7 @@ std::vector<MapPointLinearization::Ptr> SqrtProblem::grepMarginMapPointLineariza
 bool SqrtProblem::solve() {
   const auto& frames = *mFrames;
   //const auto  iTwb0  = frames.front()->getTwb();
-  
+
   //prepare solving
   const int Hrows = frames.size() * db::Frame::PARAMETER_SIZE;
   mH.resize(Hrows, Hrows);

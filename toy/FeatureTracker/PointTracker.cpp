@@ -4,6 +4,7 @@
 #include "Camera.h"
 #include "ImagePyramid.h"
 #include "Frame.h"
+#include "FrameState.h"
 #include "Feature.h"
 #include "PointMatcher.h"
 #include "PointTracker.h"
@@ -32,72 +33,39 @@ PointTracker::PointTracker(std::string type)
 
 PointTracker::~PointTracker() {}
 
-size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
-  size_t trackedPtSize = match(prevFrame, currFrame);
+size_t PointTracker::process(db::FrameState* prevFrameState,
+                             db::FrameState* currFrameState) {
+  auto&               prevFrames = prevFrameState->getFrames();
+  auto&               currFrames = currFrameState->getFrames();
+  auto                frameSize  = prevFrames.size();
+  std::vector<size_t> trackedPtSize(frameSize);
 
-  //ToyLogD("currFrame id {} , {}  ",
-  //        currFrame->id(),
-  //        trackedPtSize);
+  for (size_t i = 0; i < frameSize; ++i) {
+    if (prevFrames[i]->getImagePyramid()->type() >= DEPTH)
+      continue;
 
-  //size_t prevSize      = mPrevIds.size() + 1;
-  //size_t newPt         = 0u;
-
-  //int   found  = 0;
-  //auto& kptIds = currFrame->getFeature(0)->getKeypoints().mIds;
-  //for (auto& id : kptIds) {
-  //  if (mPrevIds.count(id)) {
-  //    ++found;
-  //  }
-  //}
-  //if (prevSize > mMaxFeatureSize) {
-  //  prevSize = mMaxFeatureSize;
-  //}
-
-  //float ratio = float(found) / float(prevSize);
-
-  //bool bTrackStereo = false;
-
-  //if (mStereoTrackingIntervalCount == Config::Vio::stereoTrackingInterval) {
-  //  mStereoTrackingIntervalCount = 0;
-  //  bTrackStereo                 = true;
-  //}
-  //else {
-  //  ++mStereoTrackingIntervalCount;
-  //}
-
-  //ToyLogD("currFrame id {} , ratio : {} = {} /{}  ",
-  //        currFrame->id(),
-  //        ratio,
-  //        trackedPtSize,
-  //        prevSize);
-
-  //if (ratio < Config::Vio::minTrackedRatio
-  //    || trackedPtSize < Config::Vio::minTrackedPoint) {
-  //ToyLogD("currFrame id {} , extracting new Feature : {} = {} /{}  ",
-  //        currFrame->id(),
-  //        ratio,
-  //        trackedPtSize,
-  //        prevSize);
-  size_t newPt = detect(currFrame);
-  //mPrevIds.clear();
-
-  //for (auto& id : kptIds) {
-  //  mPrevIds.insert(id);
-  //}
-  //bTrackStereo = true;
-  //}
-
-  if (currFrame->getImagePyramid(1)->type() == 1) {
-    size_t stereo = matchStereo(currFrame);
+    trackedPtSize[i] = match(prevFrames[i].get(), currFrames[i].get());
   }
 
-  return trackedPtSize;
+  size_t newPt = detect(currFrames.front().get());
+
+  if (newPt > 0) {
+    for (size_t i = 1; i < frameSize; ++i) {
+      size_t stereo = matchStereo(currFrames[0].get(), currFrames[i].get());
+
+      if (Config::Vio::debug) {
+        ToyLogD("newPt {:3}, detected stereo : {:3}", newPt, stereo);
+      }
+    }
+  }
+
+  return trackedPtSize[0];
 }
 
 size_t PointTracker::detect(db::Frame* frame) {
-  cv::Mat&     origin  = frame->getImagePyramid(0)->getOrigin();
-  db::Feature* feature = frame->getFeature(0);
-  Camera*      cam     = frame->getCamera(0);
+  cv::Mat&     origin  = frame->getImagePyramid()->getOrigin();
+  db::Feature* feature = frame->getFeature();
+  Camera*      cam     = frame->getCamera();
 
   //cv::Mat mask = createMask(origin, feature);
   checkEmptyGrid(origin, feature);
@@ -216,8 +184,8 @@ size_t PointTracker::match(db::Frame* prev, db::Frame* curr) {
   return mPointMatcher->match(prev, curr);
 }
 
-size_t PointTracker::matchStereo(db::Frame* frame) {
-  return mPointMatcher->matchStereo(frame, mDetectedFeature);
+size_t PointTracker::matchStereo(db::Frame* src, db::Frame* dst) {
+  return mPointMatcher->matchStereo(src, dst, mDetectedFeature);
 }
 
 void PointTracker::convertCVKeyPointsToFeature(Camera*                    cam,

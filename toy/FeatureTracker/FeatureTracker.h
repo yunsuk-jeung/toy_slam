@@ -16,7 +16,7 @@ public:
   ~FeatureTracker();
 
   //reject frame when process is false?
-  bool process(db::Frame* prevFrame, db::Frame* currentFrame);
+  bool process(db::FrameState* prevFrameState, db::FrameState* currFrameState);
 
 protected:
   std::unique_ptr<PointTracker> mPointTracker;

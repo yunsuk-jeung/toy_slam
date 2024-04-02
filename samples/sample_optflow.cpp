@@ -57,35 +57,35 @@ auto main() -> int {
     ImageData data0{0, CV_8UC1, ns, image.data, image.cols, image.rows};
     ImageData data1{-1, CV_8UC1, ns, nullptr, image.cols, image.rows};
 
-  db::ImagePyramid::Uni    pyr0  = std::make_unique<db::ImagePyramid>(data0);
-  db::ImagePyramid::Uni    pyr1  = std::make_unique<db::ImagePyramid>(data1);
-  db::ImagePyramidSet::Ptr set   = std::make_shared<db::ImagePyramidSet>(pyr0, pyr1);
-  db::Frame::Ptr           frame = std::make_shared<db::Frame>(set);
-  frames.push_back(frame);
+    db::ImagePyramid::Uni    pyr0  = std::make_unique<db::ImagePyramid>(data0);
+    db::ImagePyramid::Uni    pyr1  = std::make_unique<db::ImagePyramid>(data1);
+    db::ImagePyramidSet::Ptr set   = std::make_shared<db::ImagePyramidSet>(pyr0, pyr1);
+    db::Frame::Ptr           frame = std::make_shared<db::Frame>(set);
+    frames.push_back(frame);
 
-  std::vector<float> Mbc(16);
-  Eigen::Matrix4f    I = Eigen::Matrix4f::Identity();
-  memcpy(Mbc.data(), I.data(), sizeof(float) * 16);
-  float f  = image.rows;
-  float cx = float(image.cols) / 2.0f;
-  float cy = float(image.rows) / 2.0f;
+    std::vector<float> Mbc(16);
+    Eigen::Matrix4f    I = Eigen::Matrix4f::Identity();
+    memcpy(Mbc.data(), I.data(), sizeof(float) * 16);
+    float f  = image.rows;
+    float cx = float(image.cols) / 2.0f;
+    float cy = float(image.rows) / 2.0f;
 
-  CameraInfo camInfo0;
-  camInfo0.id              = 0;
-  camInfo0.w               = image.cols;
-  camInfo0.h               = image.rows;
-  camInfo0.cameraModel     = 0;
-  camInfo0.intrinsics      = {f, f, cx, cy};
-  camInfo0.distortionModel = 0;
-  camInfo0.distortions     = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-  camInfo0.Mbc             = Mbc;
-  auto camInfo1            = camInfo0;
-  camInfo1.id              = -1;
+    CameraInfo camInfo0;
+    camInfo0.id              = 0;
+    camInfo0.w               = image.cols;
+    camInfo0.h               = image.rows;
+    camInfo0.cameraModel     = 0;
+    camInfo0.intrinsics      = {f, f, cx, cy};
+    camInfo0.distortionModel = 0;
+    camInfo0.distortions     = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+    camInfo0.Mbc             = Mbc;
+    auto camInfo1            = camInfo0;
+    camInfo1.id              = -1;
 
-  Camera* cam0 = CameraFactory::createCamera(&camInfo0);
-  Camera* cam1 = CameraFactory::createCamera(&camInfo1);
+    auto cam0 = CameraFactory::createCamera(&camInfo0);
+    auto cam1 = CameraFactory::createCamera(&camInfo1);
 
-  frame->setCameras(cam0, cam1);
+    frame->setCameras(cam0, cam1);
   }
 
   auto* pointTracker = new toy::PointTracker("Fast.PatchOpticalFlow");

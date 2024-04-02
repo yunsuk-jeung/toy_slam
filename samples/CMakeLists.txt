@@ -13,6 +13,7 @@ add_executable(sample_vulkan "sample_vulkan.cpp" )
 add_executable(sample_custom_fmt "sample_custom_fmt.cpp")
 add_executable(sample_sparse_matrix_draw "sample_sparse_matrix_draw.cpp")
 add_executable(sample_tbb "sample_tbb.cpp")
+add_executable(sample_cv_mat "sample_cv_mat.cpp")
 
 target_compile_options(sample_vulkan PUBLIC
   $<$<CONFIG:Debug>:/MDd>
@@ -23,6 +24,7 @@ target_link_libraries(sample_vulkan PRIVATE libs vulkanLight::vulkanLight)
 target_link_libraries(sample_custom_fmt PRIVATE libs)
 target_link_libraries(sample_sparse_matrix_draw PRIVATE libs toy::toy)
 target_link_libraries(sample_tbb PRIVATE libs)
+target_link_libraries(sample_cv_mat PRIVATE libs)
 
 # target_link_libraries(sample_optflow PRIVATE io)
 # if(WIN32)
@@ -43,4 +45,8 @@ if(WIN32)
 
   copy_tbb_dlls_to_dir(sample_sparse_matrix_draw ${EXTERNAL_LIB_DIR} ${SAMPLE_OUT_DIR})
   copy_cv34_dlls_to_dir(sample_sparse_matrix_draw ${EXTERNAL_LIB_DIR} ${SAMPLE_OUT_DIR})
+
+  copy_tbb_dlls_to_dir(sample_cv_mat ${EXTERNAL_LIB_DIR} ${SAMPLE_OUT_DIR})
+  copy_cv34_dlls_to_dir(sample_cv_mat ${EXTERNAL_LIB_DIR} ${SAMPLE_OUT_DIR})
+
 endif()

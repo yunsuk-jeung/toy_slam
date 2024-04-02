@@ -64,7 +64,7 @@ bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
         if (nextIt != mFrameFactors.end()) {
           auto            Pwx = getPwx();
           auto            kf  = nextIt->first.lock();
-          Eigen::Vector3d Pcx = kf->getTwc(0).inverse() * Pwx;
+          Eigen::Vector3d Pcx = kf->getTwc().inverse() * Pwx;
           this->mInvDepth     = 1.0 / Pcx.z();
           this->mUndist       = Pcx.head(2) * this->mInvDepth;
           if (mFrameFactors.size() > 2) {
@@ -97,7 +97,7 @@ Eigen::Vector3d MapPoint::getPwx() {
   auto fPtr              = frameW.lock();
 
   Eigen::Vector3d Pc0x = Eigen::Vector3d(mUndist.x(), mUndist.y(), 1.0) / mInvDepth;
-  return fPtr->getTwc(0) * Pc0x;
+  return fPtr->getTwc() * Pc0x;
 }
 
 }  //namespace db

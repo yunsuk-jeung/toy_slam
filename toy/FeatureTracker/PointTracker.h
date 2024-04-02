@@ -18,7 +18,7 @@ public:
   PointTracker(std::string type);
   ~PointTracker();
 
-  size_t process(db::Frame* prev, db::Frame* curr);
+  size_t process(db::FrameState* prevFrameState, db::FrameState* currFrameState);
 
 protected:
   size_t detect(db::Frame* frame);
@@ -37,7 +37,7 @@ protected:
                                    db::Feature*               feature);
 
   size_t match(db::Frame* prev, db::Frame* curr);
-  size_t matchStereo(db::Frame* frame);
+  size_t matchStereo(db::Frame* src, db::Frame* dst);
 
   void           checkEmptyGrid(const cv::Mat& origin, db::Feature* feature);
   static cv::Mat createMask(const cv::Mat& origin, db::Feature* feature);

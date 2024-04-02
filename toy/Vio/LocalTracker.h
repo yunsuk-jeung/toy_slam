@@ -8,28 +8,28 @@ class VioSolver;
 class BasicSolver;
 namespace db {
 class LocalMap;
-class Frame;
+class FrameState;
 }  //namespace db
 
 class FeatureTracker;
 class FrameSolver;
-class LocalTracker : public Thread<db::Frame, void> {
+class LocalTracker : public Thread<db::FrameState, void> {
 public:
-  using Thread<db::Frame, void>::registerOutQueue;
-  using Thread<db::Frame, void>::insert;
+  using Thread<db::FrameState, void>::registerOutQueue;
+  using Thread<db::FrameState, void>::insert;
   LocalTracker();
   ~LocalTracker();
   void prepare();
   void process();
 
 private:
-  using Thread<db::Frame, void>::getLatestInput;
-  using Thread<db::Frame, void>::in_queue_;
+  using Thread<db::FrameState, void>::getLatestInput;
+  using Thread<db::FrameState, void>::in_queue_;
 
   //int                        initializeMapPoints(std::shared_ptr<db::Frame> currFrame);
-  int                        initializeMapPoints(std::shared_ptr<db::Frame> currFrame);
-  std::shared_ptr<db::Frame> selectMarginalFrame(
-    std::vector<std::shared_ptr<db::Frame>>& frames);
+  int initializeMapPoints(std::shared_ptr<db::FrameState> currFrame);
+  std::shared_ptr<db::FrameState> selectMarginalFrame(
+    std::vector<std::shared_ptr<db::FrameState>>& frames);
   void setDataToInfo();
 
   void drawDebugView(int tag, int offset = 0);

@@ -22,62 +22,41 @@ size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {
   int frameId = frame->id();
 
   mFrames.insert({frameId, frame});
-  auto& keyPoints0 = frame->getFeature(0)->getKeypoints();
-  auto& keyPoints1 = frame->getFeature(1)->getKeypoints();
-
-  auto size0 = keyPoints0.size();
-  auto size1 = keyPoints1.size();
-
   size_t connected = 0u;
-  for (size_t i = 0; i < size0; ++i) {
-    int id = keyPoints0.mIds[i];
 
-    MapPoint::Ptr mp;
-    auto          it = mMapPoints.find(id);
+  auto& features = frame->getFeatures();
+  for (size_t i = 0; i < features.size(); ++i) {
+    auto& keyPoints    = frame->getFeature(i)->getKeypoints();
+    auto  keyPointSize = keyPoints.size();
 
-    auto& uv0     = keyPoints0.mUVs[i];
-    auto& undist0 = keyPoints0.mUndists[i];
+    for (size_t j = 0; j < keyPointSize; ++j) {
+      int id = keyPoints.mIds[j];
 
-    //bool exist = false;
-    if (it == mMapPoints.end()) {
-      auto candIt = mMapPointCandidates.find(id);
-      if (candIt == mMapPointCandidates.end()) {
-        mp = std::make_shared<MapPoint>(id);
-        mMapPointCandidates.insert({id, mp});
+      MapPoint::Ptr mp;
+      auto          it = mMapPoints.find(id);
+
+      if (it == mMapPoints.end()) {
+        auto candIt = mMapPointCandidates.find(id);
+        if (candIt == mMapPointCandidates.end()) {
+          TOY_ASSERT_MESSAGE(i == 0, " adding mp in sub frame");
+          mp = std::make_shared<MapPoint>(id);
+          mMapPointCandidates.insert({id, mp});
+        }
+        else {
+          mp = candIt->second;
+        }
       }
-      else {
-        mp = candIt->second;
-      }
-      //mp->setUndist({undist0.x, undist0.y});
+
+      auto& uv     = keyPoints.mUVs[i];
+      auto& undist = keyPoints.mUndists[i];
+      auto  factor = ReprojectionFactor(frame,
+                                       i,
+                                       mp,
+                                        {uv.x, uv.y},
+                                        {undist.x, undist.y, 1.0});
+      mp->addFrameFactor(frame, factor);
+      frame->addMapPointFactor(mp, factor);
     }
-    else {
-      mp = it->second;
-      if (mp->status() == db::MapPoint::Status::INITIALING) {
-        mp->setState(db::MapPoint::Status::TRACKING);
-      }
-      mMapPoints.insert({mp->id(), mp});
-      //exist = true;
-      ++connected;
-    }
-
-    auto factor = ReprojectionFactor(frame.get(),
-                                     mp.get(),
-                                     {uv0.x, uv0.y},
-                                     {undist0.x, undist0.y, 1.0});
-
-    if (size1 > 0) {
-      if (keyPoints1.mIdIdx.count(id)) {
-        auto& idx     = keyPoints1.mIdIdx[id];
-        auto& uv1     = keyPoints1.mUVs[idx];
-        auto& undist1 = keyPoints1.mUndists[idx];
-        factor.addStereo({uv1.x, uv1.y}, {undist1.x, undist1.y, 1.0});
-      }
-    }
-    mp->addFrameFactor(frame, factor);
-
-    //if (exist) {
-    frame->addMapPointFactor(mp, factor);
-    //}
   }
 
   return connected;
@@ -110,7 +89,7 @@ void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
       continue;
     }
 
-    if (mp->getFrameFactors().size() < 2) {
+    if (mp->frameFactorMap().size() < 2) {
       continue;
     }
 
@@ -122,7 +101,9 @@ void LocalMap::removeFrame(int id) {
   auto it = mFrames.find(id);
   TOY_ASSERT(it != mFrames.end());
 
-  Frame::Ptr& f = it->second;
+  Frame::Ptr& f                  = it->second;
+  auto&       mapPointFactorMaps = f->mapPointFactorMaps();
+
   for (auto it = mMapPoints.begin(); it != mMapPoints.end();) {
     bool eraseMapPoint = it->second->eraseFrame(f);
     if (eraseMapPoint) {

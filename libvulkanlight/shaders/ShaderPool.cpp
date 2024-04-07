@@ -213,7 +213,7 @@ void main() {
   key = hasher(name);
   shaderMap.insert({key, shader});
 }
-const std::string& const ShaderPool::requestShaderStr(const std::string& name) {
+const std::string& ShaderPool::requestShaderStr(const std::string& name) {
   std::hash<std::string> hasher;
   size_t                 key = hasher(name);
 

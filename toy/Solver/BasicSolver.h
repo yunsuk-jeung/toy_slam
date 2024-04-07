@@ -10,7 +10,7 @@
 #include <tbb/blocked_range.h>
 #include "ToyLogger.h"
 #include "config.h"
-#include "usings.h"
+#include "CustomTypes.h"
 #include "Frame.h"
 #include "MapPoint.h"
 #include "CostFunction.h"

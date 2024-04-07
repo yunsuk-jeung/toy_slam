@@ -6,7 +6,7 @@
 #include <sophus/se3.hpp>
 #include <sophus/so3.hpp>
 
-#include "usings.h"
+#include "CustomTypes.h"
 #include "macros.h"
 #include "Factor.h"
 
@@ -33,7 +33,7 @@ public:
 
   void setCameras(Camera* cam0, Camera* cam1);
   //void setLbc(float*, float*);
-  void setSbc(float*, float*);
+  void setTbc(float*, float*);
 
   void addMapPointFactor(std::shared_ptr<db::MapPoint> mp, ReprojectionFactor factor);
 
@@ -54,11 +54,8 @@ public:
   }
 
 protected:
+  using MapPointFactorMap = std::map<size_t, ReprojectionFactor>;
 
-protected:
-  using MapPointFactorMap = std::map<std::weak_ptr<db::MapPoint>,
-                                     ReprojectionFactor,
-                                     std::owner_less<std::weak_ptr<db::MapPoint>>>;
   static size_t globalId;
   size_t        mId;
   bool          mIsKeyFrame;
@@ -67,13 +64,7 @@ protected:
   std::array<std::unique_ptr<Camera>, 2>           mCameras;
   std::array<std::unique_ptr<Feature>, 2>          mFeatures;
 
-  MapPointFactorMap mMapPointFactorMap;
-
-  ////L : lie
-  //Eigen::Vector6d                mLwb;
-  //std::array<Eigen::Vector6d, 2> mLbcs;
-  //Eigen::Vector6d&   getLbc(int i) { return mLbcs[i]; }
-
+  std::vector<MapPointFactorMap> mMapPointFactorMaps;
   //S : se3
   std::array<Sophus::SE3d, 2> mTbcs;
 
@@ -90,20 +81,22 @@ public:
   const size_t        id() const { return mId; }
   void                setKeyFrame() { mIsKeyFrame = true; }
   const bool          isKeyFrame() const { return mIsKeyFrame; }
-  ImagePyramid*       getImagePyramid(int i) { return mImagePyramids[i].get(); }
-  Camera*             getCamera(int i) { return mCameras[i].get(); }
-  Feature*            getFeature(int i) { return mFeatures[i].get(); }
+  ImagePyramid*       getImagePyramid(size_t i) { return mImagePyramids[i].get(); }
+  Camera*             getCamera(size_t i) { return mCameras[i].get(); }
+  Feature*            getFeature(size_t i) { return mFeatures[i].get(); }
+  auto&               getFeatures() { return mFeatures; }
   void                setTwb(const Sophus::SE3d& Swb) { mTwb = Swb; }
   const Sophus::SE3d& Twb() const { return mTwb; }
   Sophus::SE3d&       getTwb() { return mTwb; }
-  Sophus::SE3d        getTwc(int i) { return mTwb * mTbcs[i]; }
-  Sophus::SE3d&       getTbc(int i) { return mTbcs[i]; }
-  MapPointFactorMap&  getMapPointFactorMap() { return mMapPointFactorMap; }
-  const bool          fixed() const { return mFixed; }
-  void                setFixed(bool fixed) { mFixed = fixed; }
-  void                setLinearized(bool linearized) { mLinearized = linearized; }
-  bool                isLinearized() { return mLinearized; }
-  Eigen::Vector6d     getDelta() { return mDelta; };
+  Sophus::SE3d        getTwc(size_t i) { return mTwb * mTbcs[i]; }
+  Sophus::SE3d&       getTbc(size_t i) { return mTbcs[i]; }
+  std::vector<MapPointFactorMap>& mapPointFactorMaps() { return mMapPointFactorMaps; }
+  MapPointFactorMap& mapPointFactorMap(size_t i) { return mMapPointFactorMaps[i]; }
+  const bool         fixed() const { return mFixed; }
+  void               setFixed(bool fixed) { mFixed = fixed; }
+  void               setLinearized(bool linearized) { mLinearized = linearized; }
+  bool               isLinearized() { return mLinearized; }
+  Eigen::Vector6d    getDelta() { return mDelta; };
 };
 
 }  //namespace db

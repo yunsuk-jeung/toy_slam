@@ -88,7 +88,7 @@ void Frame::setCameras(Camera* cam0, Camera* cam1) {
 //mLbcs[1].tail(3)   = Tbc1;
 //}
 
-void Frame::setSbc(float* pfbc0, float* pfbc1) {
+void Frame::setTbc(float* pfbc0, float* pfbc1) {
   Eigen::Matrix4f Mbc0(pfbc0);
   Eigen::Matrix4f Mbc1(pfbc1);
 
@@ -107,7 +107,8 @@ void Frame::setSbc(float* pfbc0, float* pfbc1) {
 
 void Frame::addMapPointFactor(std::shared_ptr<db::MapPoint> mp,
                               ReprojectionFactor            factor) {
-  mMapPointFactorMap.insert({mp, factor});
+  auto& idx = factor.camIdx();
+  mMapPointFactorMaps[idx].insert({mp->id(), factor});
 }
 
 void Frame::resetDelta() {
@@ -138,10 +139,9 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
   auto img = mImagePyramids[idx]->getOrigin().clone();
   cv::cvtColor(img, img, CV_GRAY2BGR);
 
-  auto Tcw = getTwc(idx).inverse();
+  for (auto& [mpId, factor] : mMapPointFactorMaps[idx]) {
+    auto mp = factor.mapPoint();
 
-  for (auto& [mpw, factor] : mMapPointFactorMap) {
-    auto mp = mpw.lock();
     if (!mp) {
       continue;
     }
@@ -160,10 +160,10 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
       color = {255, 255, 0};
       break;
     }
-    case db::MapPoint::Status::INITIALING: {
-      color = {0, 255, 0};
-      break;
-    }
+    //case db::MapPoint::Status::INITIALING: {
+    //  color = {0, 255, 0};
+    //  break;
+    //}
     case db::MapPoint::Status::TRACKING: {
       color = {0, 0, 255};
       break;
@@ -173,15 +173,13 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
     Eigen::Vector3d undist;
 
     if (idx == 0) {
-      undist = factor.undist0();
-    }
-    else {
-      undist = factor.undist1();
+      undist = factor.undist();
     }
 
     auto meaUV = mCameras[idx]->project(undist);
     cv::circle(img, meaUV, 6, {255, 0, 0}, -1);
 
+    auto            Tcw  = getTwc(idx).inverse();
     Eigen::Vector3d Xcx  = Tcw * mp->getPwx();
     Eigen::Vector3d nXcx = Xcx / Xcx.z();
 

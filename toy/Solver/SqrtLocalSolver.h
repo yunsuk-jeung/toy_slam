@@ -1,6 +1,6 @@
 #pragma once
 #include "sophus/se3.hpp"
-#include "usings.h"
+#include "CustomTypes.h"
 #include "VioSolver.h"
 
 namespace toy {

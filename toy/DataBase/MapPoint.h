@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include "macros.h"
 #include "Factor.h"
+#include "CustomTypes.h"
 
 namespace toy {
 namespace db {
@@ -18,7 +19,6 @@ public:
   MapPoint() = delete;
   MapPoint(size_t id);
 
-  //void setHost(std::shared_ptr<db::Frame> host);
   void addFrameFactor(std::shared_ptr<db::Frame> frame, ReprojectionFactor factor);
 
   void backup();
@@ -32,33 +32,35 @@ protected:
 
 public:
   enum class Status {
-    DELETING   = -2,
-    NONE       = 0,
-    MARGINED   = 1,
-    INITIALING = 2,
-    TRACKING   = 3,
+    DELETING = -2,
+    NONE     = 0,
+    MARGINED = 1,
+    TRACKING = 2,
   };
 
 protected:
-  using FrameFactorPair = std::pair<std::weak_ptr<db::Frame>, ReprojectionFactor>;
+  using FrameFactorMap = std::unordered_map<FrameCamId, ReprojectionFactor>;
 
-  size_t mId;
-  //size_t                       mHostFrameId;
-  Status                       mStatus;
-  std::vector<FrameFactorPair> mFrameFactors;
-  Eigen::Vector2d              mUndist;
-  double                       mInvDepth;
-  Eigen::Vector2d              mBackupUndist;
-  double                       mBackupInvD;
-  bool                         mFixed;
-  Eigen::Vector3d              mMarginedPwx;
+  size_t                     mId;
+  Status                     mStatus;
+  std::shared_ptr<db::Frame> mHostFrame;
+  Eigen::Vector2d            mUndist;
+  double                     mInvDepth;
+  Eigen::Vector2d            mBackupUndist;
+  double                     mBackupInvD;
+  bool                       mFixed;
+  Eigen::Vector3d            mMarginedPwx;
+  FrameFactorMap             mFrameFactorMap;
 
 public:
   const size_t  id() const { return mId; }
   const Status& status() const { return mStatus; }
   void          setState(Status status) { mStatus = status; }
 
-  std::vector<FrameFactorPair>& getFrameFactors() { return mFrameFactors; }
+  FrameFactorMap& frameFactorMap() { return mFrameFactorMap; }
+
+  void                       setHost(std::shared_ptr<db::Frame> host);
+  std::shared_ptr<db::Frame> hostFrame() { return mHostFrame; }
 
   const Eigen::Vector2d& undist() const { return mUndist; }
   void                   setUndist(const Eigen::Vector2d& undist) { mUndist = undist; }

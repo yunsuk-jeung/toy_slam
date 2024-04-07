@@ -1,6 +1,6 @@
 #pragma once
 #include "macros.h"
-#include "usings.h"
+#include "CustomTypes.h"
 #include "ToyAssert.h"
 #include "Frame.h"
 #include "MapPoint.h"

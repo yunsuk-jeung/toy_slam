@@ -78,8 +78,8 @@ bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
   mProblem->setMapPoints(mMapPoints);
 
   //reprojection cost
-  MEstimator::Ptr reProjME    = createReprojectionMEstimator();
-  const double&   focalLength = Config::Vio::standardFocalLength;
+  MEstimator::Ptr reProjME       = createReprojectionMEstimator();
+  const double&   stdFocalLength = Config::Vio::standardFocalLength;
 
   //add margin mappoints for anchor
   //{
@@ -111,79 +111,32 @@ bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
   //}
 
   for (auto& mp : *mMapPoints) {
-    auto& frameFactors = mp->getFrameFactors();
+    auto& frameFactors = mp->frameFactorMap();
 
     std::vector<ReprojectionCost::Ptr> costs;
     costs.reserve(frameFactors.size());
 
-    auto it  = frameFactors.begin();
-    auto end = frameFactors.end();
+    //auto it  = frameFactors.begin();
+    //auto end = frameFactors.end();
 
-    db::Frame::Ptr frame0 = (*it).first.lock();
+    db::Frame::Ptr frame0 = mp->hostFrame();
     Sophus::SE3d&  Tbc0   = frame0->getTbc(0);
 
-    //add prior for uv
-    {
-      Eigen::Vector3d undist0 = it->second.undist0();
-
-      ReprojectionCost::Ptr cost = std::make_shared<ReprojectionPriorCost>(frame0,
-                                                                           Tbc0,
-                                                                           frame0,
-                                                                           Tbc0,
-                                                                           mp,
-                                                                           undist0,
-                                                                           reProjME,
-                                                                           focalLength);
-      costs.push_back(cost);
-    }
-    //add stereo reprojection cost for sub cam
-    if (it->second.type() == db::ReprojectionFactor::Type::STEREO) {
-      Sophus::SE3d&    Tbc1    = frame0->getTbc(1);
-      Eigen::Vector3d& undist1 = it->second.undist1();
-
-      ReprojectionCost::Ptr cost = std::make_shared<StereoReprojectionCost>(frame0,
-                                                                            Tbc0,
-                                                                            frame0,
-                                                                            Tbc1,
-                                                                            mp,
-                                                                            undist1,
-                                                                            reProjME,
-                                                                            focalLength);
-      costs.push_back(cost);
-    }
-
-    //add other reporjection cost
-    ++it;
-    for (; it != end; ++it) {
-      db::Frame::Ptr   frame1  = (*it).first.lock();
-      Sophus::SE3d&    Tbc1    = frame1->getTbc(0);
-      Eigen::Vector3d& undist0 = it->second.undist0();
+    for (auto& [frameCamId, factor] : frameFactors) {
+      db::Frame::Ptr frame1 = factor.frame();
+      auto&          camId  = frameCamId.camId;
+      Sophus::SE3d&  Tbc1   = frame1->getTbc(camId);
+      auto&          undist = factor.undist();
 
       ReprojectionCost::Ptr cost = std::make_shared<ReprojectionCost>(frame0,
                                                                       Tbc0,
                                                                       frame1,
                                                                       Tbc1,
                                                                       mp,
-                                                                      undist0,
+                                                                      undist,
                                                                       reProjME,
-                                                                      focalLength);
+                                                                      stdFocalLength);
       costs.push_back(cost);
-
-      if (it->second.type() != db::ReprojectionFactor::Type::STEREO)
-        continue;
-
-      Sophus::SE3d&    Tbc2    = frame1->getTbc(1);
-      Eigen::Vector3d& undist1 = it->second.undist1();
-
-      ReprojectionCost::Ptr cost2 = std::make_shared<ReprojectionCost>(frame0,
-                                                                       Tbc0,
-                                                                       frame1,
-                                                                       Tbc2,
-                                                                       mp,
-                                                                       undist1,
-                                                                       reProjME,
-                                                                       focalLength);
-      costs.push_back(cost2);
     }
 
     mProblem->addReprojectionCost(mp, costs);
@@ -206,7 +159,7 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
 
   //greb mp which host frame is marginalFrame
   for (auto& mp : *mMapPoints) {
-    auto frameId = mp->getFrameFactors().front().first.lock()->id();
+    auto frameId = mp->hostFrame()->id();
     if (frameId == marginFrameId) {
       marginMps.push_back(mp);
     }

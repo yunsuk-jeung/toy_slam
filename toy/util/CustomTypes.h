@@ -3,6 +3,7 @@
 #include <bitset>
 #include <cstdint>
 #include <Eigen/Dense>
+#include "ToyHash.h"
 
 namespace Eigen {
 using Matrix3Pf = Eigen::Matrix<float, 3, 52>;
@@ -37,6 +38,12 @@ inline std::ostream& operator<<(std::ostream& os, const FrameCamId& tcid) {
   return os;
 }
 
+inline bool operator<(const FrameCamId& o1, const FrameCamId& o2) {
+  if (o1.frameId == o2.frameId)
+    return o1.camId < o2.camId;
+  return o1.frameId < o2.frameId;
+}
+
 inline bool operator==(const FrameCamId& o1, const FrameCamId& o2) {
   return o1.frameId == o2.frameId && o1.camId == o2.camId;
 }
@@ -46,3 +53,16 @@ inline bool operator!=(const FrameCamId& o1, const FrameCamId& o2) {
 }
 
 }  //namespace toy
+
+namespace std {
+
+template <>
+struct hash<toy::FrameCamId> {
+  size_t operator()(const toy::FrameCamId& x) const {
+    size_t seed = 0;
+    toy::combineHash(seed, x.frameId);
+    toy::combineHash(seed, x.camId);
+    return seed;
+  }
+};
+}  //namespace std

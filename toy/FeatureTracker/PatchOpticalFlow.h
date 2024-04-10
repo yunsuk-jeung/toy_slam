@@ -96,7 +96,7 @@ public:
       if (k == 0) {
         trackedCount = ids1.size();
       }
-      if (Config::Vio::showMonoTracking && k == 1) {
+      if (Config::Vio::showMonoTracking && k == 0) {
         cv::Mat image0 = pyramid0[0].clone();
         cv::Mat image1 = pyramid1[0].clone();
         cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);

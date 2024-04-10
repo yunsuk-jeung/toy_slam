@@ -16,7 +16,9 @@ Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   , mCameras{nullptr, nullptr}
   , mFeatures{std::make_unique<Feature>(), std::make_unique<Feature>()}
   , mFixed{false}
-  , mLinearized{false} {}
+  , mLinearized{false} {
+  mMapPointFactorMaps.resize(mImagePyramids.size());
+}
 
 Frame::Frame(Frame* src) {
   this->mId         = src->mId;
@@ -35,13 +37,14 @@ Frame::Frame(Frame* src) {
   this->mFeatures[0] = std::unique_ptr<Feature>(feature0);
   this->mFeatures[1] = std::unique_ptr<Feature>(feature1);
 
-  this->mTbcs        = src->mTbcs;
-  this->mTwb         = src->mTwb;
-  this->mBackupTwb   = src->mBackupTwb;
-  this->mDelta       = src->mDelta;
-  this->mBackupDelta = src->mBackupDelta;
-  this->mFixed       = src->mFixed;
-  this->mLinearized  = src->mLinearized;
+  this->mTbcs               = src->mTbcs;
+  this->mTwb                = src->mTwb;
+  this->mBackupTwb          = src->mBackupTwb;
+  this->mDelta              = src->mDelta;
+  this->mBackupDelta        = src->mBackupDelta;
+  this->mFixed              = src->mFixed;
+  this->mLinearized         = src->mLinearized;
+  this->mMapPointFactorMaps = src->mMapPointFactorMaps;
 }
 
 Frame::~Frame() {
@@ -109,6 +112,12 @@ void Frame::addMapPointFactor(std::shared_ptr<db::MapPoint> mp,
                               ReprojectionFactor            factor) {
   auto& idx = factor.camIdx();
   mMapPointFactorMaps[idx].insert({mp->id(), factor});
+}
+
+void Frame::eraseMapPointFactor(size_t mapPointId) {
+  for (auto& mpFactorMap : mMapPointFactorMaps) {
+    mpFactorMap.erase(mapPointId);
+  }
 }
 
 void Frame::resetDelta() {

@@ -38,7 +38,10 @@ size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {
       if (it == mMapPoints.end()) {
         auto candIt = mMapPointCandidates.find(id);
         if (candIt == mMapPointCandidates.end()) {
-          TOY_ASSERT_MESSAGE(i == 0, " adding mp in sub frame");
+          //TOY_ASSERT_MESSAGE(i == 0, " adding mp in sub frame");
+          if (i != 0) {
+            continue;
+          }
           mp = std::make_shared<MapPoint>(id);
           mMapPointCandidates.insert({id, mp});
         }
@@ -46,14 +49,21 @@ size_t LocalMap::addFrame(std::shared_ptr<Frame> frame) {
           mp = candIt->second;
         }
       }
+      else {
+        if (i == 0) {
+          ++connected;
+        }
+        mp = it->second;
+      }
 
-      auto& uv     = keyPoints.mUVs[i];
-      auto& undist = keyPoints.mUndists[i];
+      auto& uv     = keyPoints.mUVs[j];
+      auto& undist = keyPoints.mUndists[j];
       auto  factor = ReprojectionFactor(frame,
                                        i,
                                        mp,
                                         {uv.x, uv.y},
                                         {undist.x, undist.y, 1.0});
+
       mp->addFrameFactor(frame, factor);
       frame->addMapPointFactor(mp, factor);
     }
@@ -100,13 +110,19 @@ void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
 void LocalMap::removeFrame(int id) {
   auto it = mFrames.find(id);
   TOY_ASSERT(it != mFrames.end());
-
-  Frame::Ptr& f                  = it->second;
-  auto&       mapPointFactorMaps = f->mapPointFactorMaps();
+  std::forward_list<size_t> mpIds;
+  Frame::Ptr&               f                  = it->second;
+  auto&                     mapPointFactorMaps = f->mapPointFactorMaps();
 
   for (auto it = mMapPoints.begin(); it != mMapPoints.end();) {
-    bool eraseMapPoint = it->second->eraseFrame(f);
-    if (eraseMapPoint) {
+    auto eraseMapPoint = it->second->eraseFrame(f);
+
+    if (eraseMapPoint == 1u) {
+      mMapPointCandidates.emplace(it->first, it->second);
+      it = mMapPoints.erase(it);
+    }
+    else if (eraseMapPoint == 2u) {
+      mpIds.push_front(it->first);
       it = mMapPoints.erase(it);
     }
     else {
@@ -115,9 +131,11 @@ void LocalMap::removeFrame(int id) {
   }
 
   for (auto it = mMapPointCandidates.begin(); it != mMapPointCandidates.end();) {
-    bool eraseMapPoint = it->second->eraseFrame(f);
-    if (eraseMapPoint) {
+    auto eraseMapPoint = it->second->eraseFrame(f);
+
+    if (eraseMapPoint == 2u) {
       it = mMapPointCandidates.erase(it);
+      mpIds.push_front(it->first);
     }
     else {
       ++it;
@@ -125,6 +143,12 @@ void LocalMap::removeFrame(int id) {
   }
 
   mFrames.erase(it);
+
+  for (auto& [fId, frame] : mFrames) {
+    for (auto& mpId : mpIds) {
+      frame->eraseMapPointFactor(mpId);
+    }
+  }
 }
 
 }  //namespace db

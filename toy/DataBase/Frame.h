@@ -32,10 +32,10 @@ public:
   Frame::Ptr clonePtr();
 
   void setCameras(Camera* cam0, Camera* cam1);
-  //void setLbc(float*, float*);
   void setTbc(float*, float*);
 
   void addMapPointFactor(std::shared_ptr<db::MapPoint> mp, ReprojectionFactor factor);
+  void eraseMapPointFactor(size_t mapPointId);
 
   void resetDelta();
   void backup();

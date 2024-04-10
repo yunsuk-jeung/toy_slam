@@ -16,7 +16,8 @@ constexpr bool NO_IMU = true;
 LocalTracker::LocalTracker()
   : mStatus{Status::NONE}
   , mLocalMap{nullptr}
-  , mKeyFrameAfter{100} {}
+  , mKeyFrameAfter{0}
+  , mSetKeyFrame{false} {}
 
 LocalTracker::~LocalTracker() {
   mLocalMap.reset();
@@ -88,10 +89,8 @@ void LocalTracker::process() {
     //frames.front()->setFixed(true);
     mVioSolver->solve(frames, trackingMapPoints, {});
 
-    bool setKf = false;
-
     //float ratio = float(connected) / float(mLocalMap->getMapPoints().size());
-    float ratio = float(connected) / float(currFrame->getMapPointFactorMap(0u).size());
+    float ratio = float(connected) / float(currFrame->mapPointFactorMap(0u).size());
 
     if (ratio < 0.8) {
       if (Config::Vio::debug)
@@ -99,17 +98,17 @@ void LocalTracker::process() {
                 currFrame->id(),
                 ratio,
                 connected,
-                currFrame->getMapPointFactorMap(0).size());
-      setKf = true;
+                currFrame->mapPointFactorMap(0).size());
+      mSetKeyFrame = true;
     }
 
-    if (setKf) {
+    if (mSetKeyFrame && mKeyFrameAfter > 1) {
       int createMPCount = initializeMapPoints(currFrame);
 
       if (Config::Vio::debug)
         ToyLogD("{}th frame, createMP : {} ", currFrame->id(), createMPCount);
 
-      if (createMPCount > 0 && mKeyFrameAfter > 1) {
+      if (createMPCount > 0) {
         mNumCreatedPoints[currFrame->id()] = createMPCount;
         currFrame->setKeyFrame();
         mKeyFrameAfter = 0;
@@ -245,6 +244,31 @@ int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
         auto Twc1  = factor1.frame()->getTwc(frameCamId1.camId);
         auto Tc1c0 = Twc1.inverse() * Twc0;
 
+        //auto image0 = factor0.frame()
+        //                ->getImagePyramid(frameCamId0.camId)
+        //                ->getOrigin()
+        //                .clone();
+        //auto image1 = factor1.frame()
+        //                ->getImagePyramid(frameCamId1.camId)
+        //                ->getOrigin()
+        //                .clone();
+
+        //cv::cvtColor(image0, image0, CV_GRAY2BGR);
+        //cv::cvtColor(image1, image1, CV_GRAY2BGR);
+        //cv::circle(image0,
+        //           cv::Point2f(factor0.uv().x(), factor0.uv().y()),
+        //           4,
+        //           {255, 0, 0},
+        //           -1);
+        //cv::circle(image1,
+        //           cv::Point2f(factor1.uv().x(), factor1.uv().y()),
+        //           4,
+        //           {255, 0, 0},
+        //           -1);
+        //cv::imshow("0", image0);
+        //cv::imshow("1", image1);
+        //cv::waitKey();
+
         initSuccess |= BasicSolver::triangulate(factor0.undist(),
                                                 factor1.undist(),
                                                 Tc1c0,
@@ -312,10 +336,10 @@ db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& al
   auto latestFrame = allFrames.back();
 
   if (keyFrames.size() > Config::Vio::maxKeyFrameSize) {
-    auto& latestMap = latestFrame->getMapPointFactorMap(0);
+    auto& latestMap = latestFrame->mapPointFactorMap(0u);
 
     for (auto& kf : keyFrames) {
-      auto&  kfMap = kf->getMapPointFactorMap(0);
+      auto&  kfMap = kf->mapPointFactorMap(0u);
       size_t count = 0;
 
       for (auto& [mpId, f] : latestMap) {

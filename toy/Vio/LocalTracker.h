@@ -41,6 +41,7 @@ private:
   std::unique_ptr<VioSolver>    mVioSolver;
   int                           mKeyFrameAfter;
   std::map<int64_t, int>        mNumCreatedPoints;
+  bool                          mSetKeyFrame;
 };
 
 }  //namespace toy

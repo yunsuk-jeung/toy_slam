@@ -18,21 +18,27 @@ class MapPoint;
 
 class Factor {
 public:
-  Factor() = delete;
+  enum class Type { NONE = 0, REPROJECTION = 1, DEPTH = 2 };
+
+  Factor()
+    : mType{Type::NONE}
+    , mFrame{nullptr}
+    , mCamId{0}
+    , mMapPoint{nullptr} {};
+  Factor(Type                      type,
+         std::shared_ptr<Frame>    frame,
+         size_t                    camId,
+         std::shared_ptr<MapPoint> mapPoint)
+    : mType{type}
+    , mFrame{frame}
+    , mCamId{camId}
+    , mMapPoint{mapPoint} {}
   virtual ~Factor() {
     mFrame    = nullptr;
     mMapPoint = nullptr;
   }
 
-  Factor(std::shared_ptr<Frame> frame, size_t camId, std::shared_ptr<MapPoint> mapPoint)
-    : mFrame{frame}
-    , mCamId{camId}
-    , mMapPoint{mapPoint} {}
-
-  enum class Type { NONE = 0, REPROJECTION = 1, DEPTH = 2 };
-
 protected:
-  virtual void              setType() = 0;
   Type                      mType;
   std::shared_ptr<Frame>    mFrame;
   size_t                    mCamId;
@@ -89,22 +95,18 @@ public:
 
 class ReprojectionFactor : public Factor {
 public:
-  ReprojectionFactor()  = delete;
+  ReprojectionFactor()  = default;
   ~ReprojectionFactor() = default;
   ReprojectionFactor(std::shared_ptr<Frame>    frame,
                      size_t                    camId,
                      std::shared_ptr<MapPoint> mapPoint,
                      Eigen::Vector2d           uv,
                      Eigen::Vector3d           unidst)
-    : Factor{frame, camId, mapPoint}
+    : Factor{Type::REPROJECTION, frame, camId, mapPoint}
     , mUV{uv}
-    , mUndist{unidst} {
-    setType();
-  }
+    , mUndist{unidst} {}
 
 protected:
-  void setType() override { mType = Type::REPROJECTION; }
-
   Eigen::Vector2d mUV;
   Eigen::Vector3d mUndist;
 

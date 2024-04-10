@@ -11,7 +11,6 @@ MapPoint::MapPoint(size_t id)
   , mInvDepth{1.0}
   , mBackupInvD{1.0}
   , mFixed{false} {
-  mFrameFactorMap.reserve(10);
   mMarginedPwx.setZero();
 }
 
@@ -48,24 +47,28 @@ void MapPoint::update(const double& delta) {
   mInvDepth = std::max(1e-5, mInvDepth + delta);
 }
 
-bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
+uint8_t MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
   TOY_ASSERT(!mFrameFactorMap.empty());
 
-  bool REMOVE_THIS = false;
+  uint8_t out = 0;
 
   size_t camSize = frame->getFeatures().size();
-  if (frame != mHostFrame) {
-    this->mStatus    = Status::NONE;
-    bool REMOVE_THIS = true;
-  }
 
   for (size_t i = 0; i < camSize; ++i) {
     mFrameFactorMap.erase({frame->id(), i});
   }
 
-  mHostFrame = nullptr;
+  if (frame == mHostFrame) {
+    mHostFrame    = nullptr;
+    this->mStatus = Status::NONE;
+    out           = 1u;
+  }
 
-  return !REMOVE_THIS;
+  if (mFrameFactorMap.empty()) {
+    out = 2u;
+  }
+
+  return out;
 }
 
 Eigen::Vector3d MapPoint::getPwx() {

@@ -26,7 +26,7 @@ public:
   void update(const Eigen::Vector3d& delta);
   void update(const double& delta);
 
-  bool eraseFrame(std::shared_ptr<db::Frame> frame);
+  uint8_t eraseFrame(std::shared_ptr<db::Frame> frame);
 
 protected:
 
@@ -39,7 +39,7 @@ public:
   };
 
 protected:
-  using FrameFactorMap = std::unordered_map<FrameCamId, ReprojectionFactor>;
+  using FrameFactorMap = std::map<FrameCamId, ReprojectionFactor>;
 
   size_t                     mId;
   Status                     mStatus;

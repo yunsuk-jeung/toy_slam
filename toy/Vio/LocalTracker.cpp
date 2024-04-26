@@ -102,7 +102,7 @@ void LocalTracker::process() {
       mSetKeyFrame = true;
     }
 
-    if (mSetKeyFrame && mKeyFrameAfter > 1) {
+    if (mSetKeyFrame && mKeyFrameAfter > Config::Vio::newKeyFrameAfter) {
       int createMPCount = initializeMapPoints(currFrame);
 
       if (Config::Vio::debug)

@@ -1,5 +1,5 @@
 {
-	"sync": true,
+  "sync": true,
 
   "vio": {
     "on": true,
@@ -31,7 +31,8 @@
     "localTracker": {
       "initializeMapPointCount": 30,
       "minTriangulationBaseline": 0.05,
-      "newKeframeFeatureRatio": 0.7,
+      "newKeyFrameFeatureRatio": 0.7,
+      "newKeyFrameAfter": 1,
       "margFeatureConnectionRatio": 0.2,
       "minKeyFrameCount": 3,
       "maxFrameSize": 2,

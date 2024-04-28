@@ -65,7 +65,7 @@ uint8_t MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
   }
 
   if (mFrameFactorMap.empty()) {
-    out = 2u;
+    out           = 2u;
   }
 
   return out;

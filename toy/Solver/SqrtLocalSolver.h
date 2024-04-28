@@ -14,10 +14,11 @@ public:
 
   virtual bool solve(
     const std::vector<std::shared_ptr<db::Frame>>&    frames,
-    const std::vector<std::shared_ptr<db::MapPoint>>& trackingMapPoints,
-    const std::vector<std::shared_ptr<db::MapPoint>>& marginedMapPoints) override;
+    const std::vector<std::shared_ptr<db::MapPoint>>& trackingMapPoints) override;
 
-  virtual void marginalize(std::shared_ptr<db::Frame> frame) override;
+  virtual void marginalize(
+    std::vector<std::shared_ptr<db::Frame>>&          marginalkeyFrames,
+    std::forward_list<std::shared_ptr<db::MapPoint>>& lostMapPoints) override;
 
 protected:
 

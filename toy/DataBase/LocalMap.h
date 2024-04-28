@@ -18,8 +18,7 @@ public:
   size_t addFrame(std::shared_ptr<Frame> in);
   void   addMapPoint(std::shared_ptr<MapPoint> in);
   void   getCurrentStates(std::vector<std::shared_ptr<Frame>>&    frames,
-                          std::vector<std::shared_ptr<MapPoint>>& trackingMapPoints,
-                          std::vector<std::shared_ptr<MapPoint>>& marginedMapPoints);
+                          std::vector<std::shared_ptr<MapPoint>>& trackingMapPoints);
 
   void removeFrame(int64_t id);
 

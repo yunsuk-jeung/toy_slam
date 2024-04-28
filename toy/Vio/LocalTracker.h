@@ -41,8 +41,8 @@ private:
   std::map<int64_t, int>        mNumCreatedPoints;
   bool                          mSetKeyFrame;
 
-  std::vector<int64_t> mMarginalFrameIds;
-  std::vector<int64_t> mMarginalKeyFrameIds;
+  std::vector<int64_t>                    mMarginalFrameIds;
+  std::vector<std::shared_ptr<db::Frame>> mMarginalKeyFrames;
 };
 
 }  //namespace toy

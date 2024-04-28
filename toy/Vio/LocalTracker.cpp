@@ -84,14 +84,13 @@ void LocalTracker::process() {
     //YSTODO: check quality with createdMPCount
     std::vector<db::Frame::Ptr>    frames;
     std::vector<db::MapPoint::Ptr> trackingMapPoints;
-    std::vector<db::MapPoint::Ptr> marginedMapPoints;
-    mLocalMap->getCurrentStates(frames, trackingMapPoints, marginedMapPoints);
+    mLocalMap->getCurrentStates(frames, trackingMapPoints);
 
     BasicSolver::solveFramePose(currFrame);
 
-    //mVioSolver->solve(frames, trackingMapPoints, {});
-
-    float ratio = float(connected) / float(currFrame->mapPointFactorMap(0u).size());
+    mVioSolver->solve(frames, trackingMapPoints);
+    auto& currFactorMap = currFrame->mapPointFactorMap(0u);
+    float ratio         = float(connected) / float(currFactorMap.size());
 
     if (ratio < 0.8) {
       if (Config::Vio::debug)
@@ -143,16 +142,26 @@ void LocalTracker::process() {
 
     selectMarginalFrame(frames);
 
-    //mVioSolver->marginalize(marginalFrame);
+    std::forward_list<db::MapPoint::Ptr> lostMapPoints;
+    for (auto& mp : trackingMapPoints) {
+      if (currFactorMap.count(mp->id())) {
+        lostMapPoints.push_front(mp);
+        mp->setState(db::MapPoint::Status::MARGINED);
+      }
+    }
+
+    mVioSolver->marginalize(mMarginalKeyFrames, lostMapPoints);
 
     for (auto id : mMarginalFrameIds) {
-      auto& fr = mLocalMap->getFrames();
       mLocalMap->removeFrame(id);
     }
-    for (auto id : mMarginalKeyFrameIds) {
-      mNumCreatedPoints.erase(id);
-      mLocalMap->removeFrame(id);
+    for (auto f : mMarginalKeyFrames) {
+      mNumCreatedPoints.erase(f->id());
+      mLocalMap->removeFrame(f->id());
     }
+
+    mMarginalFrameIds.clear();
+    mMarginalKeyFrames.clear();
     break;
   }
   }
@@ -319,9 +328,6 @@ int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
 }
 
 void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
-  mMarginalKeyFrameIds.clear();
-  mMarginalFrameIds.clear();
-
   std::vector<db::Frame::Ptr> keyFrames;
   keyFrames.reserve(Config::Vio::maxKeyFrameSize);
 
@@ -338,9 +344,10 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
     }
   }
 
-  if (keyFrames.size() > Config::Vio::maxKeyFrameSize) {
+  while (keyFrames.size() - mMarginalKeyFrames.size() > Config::Vio::maxKeyFrameSize) {
     auto& latestMap = latestFrame->mapPointFactorMap(0u);
 
+    bool selected = false;
     for (auto& kf : keyFrames) {
       auto&  kfMap = kf->mapPointFactorMap(0u);
       size_t count = 0;
@@ -359,19 +366,21 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
                 mNumCreatedPoints[kf->id()],
                 ratio,
                 kf->id());
-        mMarginalKeyFrameIds.push_back(kf->id());
+        mMarginalKeyFrames.push_back(kf);
+        selected = true;
         break;
       }
     }
 
-    if (!mMarginalKeyFrameIds.empty()) {
-      return;
+    if (selected) {
+      continue;
     }
 
     auto lastKeyFrame = keyFrames.back();
 
-    float   minScore = std::numeric_limits<float>::max();
-    int64_t minId    = -1;
+    float          minScore = std::numeric_limits<float>::max();
+    db::Frame::Ptr minKeyFrame;
+    int64_t        minId = -1;
 
     auto endIt = std::prev(keyFrames.end(), 2);
     for (auto it1 = keyFrames.begin(); it1 < endIt; ++it1) {
@@ -391,15 +400,15 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
       ) * denom;
       // clang-format on
       if (score < minScore) {
-        minId    = (*it1)->id();
-        minScore = score;
+        minKeyFrame = *it1;
+        minScore    = score;
       }
     }
 
     TOY_ASSERT(minId >= 0);
 
     ToyLogD("marginalize due to : distance score");
-    mMarginalKeyFrameIds.push_back(minId);
+    mMarginalKeyFrames.push_back(minKeyFrame);
   }
 }
 

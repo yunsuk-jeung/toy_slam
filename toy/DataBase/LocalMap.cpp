@@ -78,11 +78,9 @@ void LocalMap::addMapPoint(std::shared_ptr<MapPoint> mp) {
 }
 
 void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
-                                std::vector<MapPoint::Ptr>& trackingMapPoints,
-                                std::vector<MapPoint::Ptr>& marginedMapPoints) {
+                                std::vector<MapPoint::Ptr>& trackingMapPoints) {
   frames.reserve(mFrames.size());
   trackingMapPoints.reserve(mMapPoints.size());
-  marginedMapPoints.reserve(mFrames.size());
 
   for (auto& [id, frame] : mFrames) {
     frames.push_back(frame);
@@ -91,11 +89,6 @@ void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
   for (auto& [id, mp] : mMapPoints) {
     int status = static_cast<int>(mp->status());
     if (status < static_cast<int>(MapPoint::Status::TRACKING)) {
-      continue;
-    }
-
-    if (mp->status() == MapPoint::Status::MARGINED) {
-      marginedMapPoints.push_back(mp);
       continue;
     }
 

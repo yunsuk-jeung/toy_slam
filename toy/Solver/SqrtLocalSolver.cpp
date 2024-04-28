@@ -58,8 +58,7 @@ SqrtLocalSolver::SqrtLocalSolver() {
 SqrtLocalSolver::~SqrtLocalSolver() {}
 
 bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
-                            const std::vector<db::MapPoint::Ptr>& trackingMapPoints,
-                            const std::vector<db::MapPoint::Ptr>& marginedMapPoints) {
+                            const std::vector<db::MapPoint::Ptr>& trackingMapPoints) {
   if (frames.size() < Config::Vio::solverMinimumFrames)
     return false;
 
@@ -151,7 +150,37 @@ bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
   return result;
 }
 
-void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
+void SqrtLocalSolver::marginalize(std::vector<db::Frame::Ptr>&          marginalkeyFrames,
+                                  std::forward_list<db::MapPoint::Ptr>& lostMapPoints) {
+  std::set<int64_t>              frameIds;
+  std::vector<db::Frame::Ptr>    frames;
+  std::set<int64_t>              mpIds;
+  std::vector<db::MapPoint::Ptr> mapPoints;
+
+  frames.reserve(marginalkeyFrames.size() + Config::Vio::maxKeyFrameSize);
+  mapPoints.reserve(marginalkeyFrames.front()->mapPointFactorMap(0u).size()
+                    * marginalkeyFrames.size());
+
+  for (auto& f : marginalkeyFrames) {
+    auto& factorMap = f->mapPointFactorMap(0u);
+    for (auto& [mpId, factor] : factorMap) {
+      if (factor.mapPoint()->status() != db::MapPoint::Status::TRACKING) {
+        continue;
+      }
+
+      if (mpIds.count(mpId) == 0) {
+        mpIds.insert(mpId);
+        mapPoints.push_back(factor.mapPoint());
+      }
+
+      auto& frame = factor.frame();
+      if (frameIds.count(frame->id()) == 0) {
+        frames.push_back(frame);
+        frameIds.insert(frame->id());
+      }
+    }
+  }
+
   std::vector<db::MapPoint::Ptr> marginMps;
   marginMps.reserve(marginalFrame->getFeature(0)->getKeypoints().size());
 

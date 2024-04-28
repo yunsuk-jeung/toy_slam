@@ -10,8 +10,8 @@ static constexpr auto COST_SIZE = ReprojectionCost::SIZE;
 static constexpr auto POSE_SIZE = db::Frame::PARAMETER_SIZE;
 static constexpr auto MP_SIZE   = db::MapPoint::PARAMETER_SIZE;
 }  //namespace
-MapPointLinearization::MapPointLinearization(db::MapPoint::Ptr         mp,
-                                             std::map<size_t, size_t>* frameIdColMap,
+MapPointLinearization::MapPointLinearization(db::MapPoint::Ptr          mp,
+                                             std::map<int64_t, size_t>* frameIdColMap,
                                              std::vector<ReprojectionCost::Ptr>& costs)
   : mMapPoint{mp}
   , mFrameIdColumnMapRp{frameIdColMap} {

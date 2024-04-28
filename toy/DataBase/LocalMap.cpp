@@ -107,7 +107,7 @@ void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
   }
 }
 
-void LocalMap::removeFrame(int id) {
+void LocalMap::removeFrame(int64_t id) {
   auto it = mFrames.find(id);
   TOY_ASSERT(it != mFrames.end());
   std::forward_list<size_t> mpIds;

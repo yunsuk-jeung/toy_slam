@@ -16,7 +16,7 @@ public:
   USING_SMART_PTR(MapPointLinearization);
   MapPointLinearization() = delete;
   MapPointLinearization(std::shared_ptr<db::MapPoint>                   mp,
-                        std::map<size_t, size_t>*                       frameIdColMap,
+                        std::map<int64_t, size_t>*                      frameIdColMap,
                         std::vector<std::shared_ptr<ReprojectionCost>>& costs);
   MapPointLinearization(MapPointLinearization&& src) noexcept;
 
@@ -31,11 +31,11 @@ protected:
   std::shared_ptr<db::MapPoint>                  mMapPoint;
   std::vector<std::shared_ptr<ReprojectionCost>> mReprojectionCosts;
 
-  std::map<size_t, size_t>* mFrameIdColumnMapRp;
-  Eigen::MatrixXd           mJ;
-  Eigen::VectorXd           mRes;
-  int                       mRows;
-  int                       mCols;
+  std::map<int64_t, size_t>* mFrameIdColumnMapRp;
+  Eigen::MatrixXd            mJ;
+  Eigen::VectorXd            mRes;
+  int                        mRows;
+  int                        mCols;
 
 public:
   const std::shared_ptr<db::MapPoint>& mp() const { return mMapPoint; }

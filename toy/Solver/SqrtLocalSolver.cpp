@@ -155,7 +155,7 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
   std::vector<db::MapPoint::Ptr> marginMps;
   marginMps.reserve(marginalFrame->getFeature(0)->getKeypoints().size());
 
-  const size_t marginFrameId = marginalFrame->id();
+  const auto marginFrameId = marginalFrame->id();
 
   //greb mp which host frame is marginalFrame
   for (auto& mp : *mMapPoints) {
@@ -235,8 +235,8 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
     currRow += J.rows();
   }
 
-  std::map<size_t, size_t>& frameColumnMap = mProblem->getFrameIdColumnMap();
-  auto                      marginColStart = frameColumnMap[marginFrameId];
+  std::map<int64_t, size_t>& frameColumnMap = mProblem->getFrameIdColumnMap();
+  auto                       marginColStart = frameColumnMap[marginFrameId];
 
   Eigen::VectorXi indices(cols);
   auto            indexBegin = indices.begin();

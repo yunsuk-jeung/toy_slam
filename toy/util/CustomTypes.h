@@ -25,12 +25,12 @@ struct FrameCamId {
     : frameId(0)
     , camId(0) {}
 
-  FrameCamId(const size_t& frameId, const size_t& camId)
+  FrameCamId(const int64_t& frameId, const size_t& camId)
     : frameId(frameId)
     , camId(camId) {}
 
-  size_t frameId;
-  size_t camId;
+  int64_t frameId;
+  size_t  camId;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const FrameCamId& tcid) {

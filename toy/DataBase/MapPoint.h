@@ -17,7 +17,7 @@ public:
   DELETE_MOVE_CONSTRUCTORS(MapPoint);
 
   MapPoint() = delete;
-  MapPoint(size_t id);
+  MapPoint(int64_t id);
 
   void addFrameFactor(std::shared_ptr<db::Frame> frame, ReprojectionFactor factor);
 
@@ -41,7 +41,7 @@ public:
 protected:
   using FrameFactorMap = std::map<FrameCamId, ReprojectionFactor>;
 
-  size_t                     mId;
+  int64_t                    mId;
   Status                     mStatus;
   std::shared_ptr<db::Frame> mHostFrame;
   Eigen::Vector2d            mUndist;
@@ -53,7 +53,7 @@ protected:
   FrameFactorMap             mFrameFactorMap;
 
 public:
-  const size_t  id() const { return mId; }
+  const int64_t id() const { return mId; }
   const Status& status() const { return mStatus; }
   void          setState(Status status) { mStatus = status; }
 

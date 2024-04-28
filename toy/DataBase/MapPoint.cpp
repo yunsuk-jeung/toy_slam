@@ -5,7 +5,7 @@
 namespace toy {
 namespace db {
 
-MapPoint::MapPoint(size_t id)
+MapPoint::MapPoint(int64_t id)
   : mId{id}  //, mHostFrameId{-1}
   , mStatus{Status::NONE}
   , mInvDepth{1.0}

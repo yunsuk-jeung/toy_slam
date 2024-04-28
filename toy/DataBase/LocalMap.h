@@ -21,7 +21,7 @@ public:
                           std::vector<std::shared_ptr<MapPoint>>& trackingMapPoints,
                           std::vector<std::shared_ptr<MapPoint>>& marginedMapPoints);
 
-  void removeFrame(int id);
+  void removeFrame(int64_t id);
 
 protected:
 

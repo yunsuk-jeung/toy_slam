@@ -8,7 +8,7 @@
 
 namespace toy {
 namespace db {
-size_t Frame::globalId = 0;
+int64_t Frame::globalId = 0;
 Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   : mId{globalId++}
   , mIsKeyFrame{false}

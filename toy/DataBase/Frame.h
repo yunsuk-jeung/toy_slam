@@ -54,11 +54,11 @@ public:
   }
 
 protected:
-  using MapPointFactorMap = std::map<size_t, ReprojectionFactor>;
+  using MapPointFactorMap = std::map<int64_t, ReprojectionFactor>;
 
-  static size_t globalId;
-  size_t        mId;
-  bool          mIsKeyFrame;
+  static int64_t globalId;
+  int64_t        mId;
+  bool           mIsKeyFrame;
 
   std::array<std::shared_ptr<db::ImagePyramid>, 2> mImagePyramids;
   std::array<std::unique_ptr<Camera>, 2>           mCameras;
@@ -78,7 +78,7 @@ protected:
   bool mLinearized;
 
 public:
-  const size_t        id() const { return mId; }
+  const int64_t       id() const { return mId; }
   void                setKeyFrame() { mIsKeyFrame = true; }
   const bool          isKeyFrame() const { return mIsKeyFrame; }
   ImagePyramid*       getImagePyramid(size_t i) { return mImagePyramids[i].get(); }

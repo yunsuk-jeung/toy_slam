@@ -58,7 +58,7 @@ public:
 protected:
   //std::map<int, FrameParameter>*                      mFrameParameterMapRpt;
   //std::map<int, MapPointParameter>*                   mMapPointParameterMapRpt;
-  std::map<size_t, size_t>                          mFrameIdColumnMap;
+  std::map<int64_t, size_t>                         mFrameIdColumnMap;
   const std::vector<std::shared_ptr<db::Frame>>*    mFrames;
   const std::vector<std::shared_ptr<db::MapPoint>>* mMapPoints;
 
@@ -75,6 +75,6 @@ public:
     return mSqrtMarginalizationCost;
   }
 
-  std::map<size_t, size_t>& getFrameIdColumnMap() { return mFrameIdColumnMap; };
+  std::map<int64_t, size_t>& getFrameIdColumnMap() { return mFrameIdColumnMap; };
 };
 }  //namespace toy

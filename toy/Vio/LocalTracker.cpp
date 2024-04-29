@@ -18,7 +18,7 @@ LocalTracker::LocalTracker()
   , mLocalMap{nullptr}
   , mKeyFrameAfter{0}
   , mSetKeyFrame{false} {
-  mMarginalKeyFrameIds.reserve(Config::Vio::maxKeyFrameSize);
+  mMarginalKeyFrames.reserve(Config::Vio::maxKeyFrameSize);
   mMarginalFrameIds.reserve(Config::Vio::maxKeyFrameSize);
 }
 
@@ -144,7 +144,7 @@ void LocalTracker::process() {
 
     std::forward_list<db::MapPoint::Ptr> lostMapPoints;
     for (auto& mp : trackingMapPoints) {
-      if (currFactorMap.count(mp->id())) {
+      if (!currFactorMap.count(mp->id())) {
         lostMapPoints.push_front(mp);
         mp->setState(db::MapPoint::Status::MARGINED);
       }
@@ -168,58 +168,6 @@ void LocalTracker::process() {
 
   setDataToInfo();
 }
-
-//int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
-//  auto& mapPointFactorMap = currFrame->getMapPointFactorMap();
-//
-//  auto            Twc0  = currFrame->getTwc(0);
-//  auto            Twc1  = currFrame->getTwc(1);  //identity for mono or depth..
-//  auto            Tc1c0 = Twc1.inverse() * Twc0;
-//  Eigen::Vector3d Pc0x;
-//
-//  int successCount = 0;
-//  int tryCount     = 0;
-//  for (auto& [mpWeak, factor] : mapPointFactorMap) {
-//    auto mp = mpWeak.lock();
-//    if (mp->status() != db::MapPoint::Status::INITIALING)
-//      continue;
-//    ++tryCount;
-//
-//    switch (factor.type()) {
-//    case db::ReprojectionFactor::Type::MONO: {
-//      break;
-//    }
-//    case db::ReprojectionFactor::Type::STEREO: {
-//      if (!BasicSolver::triangulate(factor.undist0(), factor.undist1(), Tc1c0, Pc0x)) {
-//        continue;
-//      }
-//
-//      double invD = 1.0 / Pc0x.z();
-//      //Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
-//      //mp->setUndist(nuv);
-//      mp->setInvDepth(invD);
-//      mp->setState(db::MapPoint::Status::INITIALING);
-//      ++successCount;
-//      break;
-//    }
-//    case db::ReprojectionFactor::Type::DEPTH: {
-//      break;
-//    }
-//    }
-//  }
-//
-//  if (Config::Vio::debug) {
-//    ToyLogD("triangulation successed {} / {}", successCount, tryCount);
-//  }
-//
-//  if (Config::Vio::showStereoTracking) {
-//    currFrame->drawReprojectionView(0, "tri0");
-//    currFrame->drawReprojectionView(1, "tri1");
-//    cv::waitKey();
-//  }
-//
-//  return successCount;
-//}
 
 int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
   auto& mpCands = mLocalMap->getMapPointCandidiates();

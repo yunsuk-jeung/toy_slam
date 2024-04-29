@@ -152,14 +152,16 @@ bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
 
 void SqrtLocalSolver::marginalize(std::vector<db::Frame::Ptr>&          marginalkeyFrames,
                                   std::forward_list<db::MapPoint::Ptr>& lostMapPoints) {
-  std::set<int64_t>              frameIds;
-  std::vector<db::Frame::Ptr>    frames;
-  std::set<int64_t>              mpIds;
-  std::vector<db::MapPoint::Ptr> mapPoints;
-
+  std::set<int64_t>                    frameIds;
+  std::vector<db::Frame::Ptr>          frames;
+  std::set<int64_t>                    mpIds;
+  std::vector<db::MapPoint::Ptr>       mapPoints;
+  std::vector<ReprojectionCost::Ptr>   costs;
+  std::vector<db::ReprojectionFactor*> factors;
   frames.reserve(marginalkeyFrames.size() + Config::Vio::maxKeyFrameSize);
   mapPoints.reserve(marginalkeyFrames.front()->mapPointFactorMap(0u).size()
                     * marginalkeyFrames.size());
+  factors.reserve(mFrames->size() * mMapPoints->size());
 
   for (auto& f : marginalkeyFrames) {
     auto& factorMap = f->mapPointFactorMap(0u);
@@ -167,7 +169,6 @@ void SqrtLocalSolver::marginalize(std::vector<db::Frame::Ptr>&          marginal
       if (factor.mapPoint()->status() != db::MapPoint::Status::TRACKING) {
         continue;
       }
-
       if (mpIds.count(mpId) == 0) {
         mpIds.insert(mpId);
         mapPoints.push_back(factor.mapPoint());
@@ -178,7 +179,27 @@ void SqrtLocalSolver::marginalize(std::vector<db::Frame::Ptr>&          marginal
         frames.push_back(frame);
         frameIds.insert(frame->id());
       }
+      factors.push_back(&factor);
     }
+  }
+
+  for (auto& mp : lostMapPoints) {
+    mapPoints.push_back(mp);
+    auto& factorMap = mp->frameFactorMap();
+    for (auto& [frameCamId, factor] : factorMap) {
+      if (frameIds.count(frameCamId.frameId) == 0) {
+        frames.push_back(factor.frame());
+        frameIds.insert(frameCamId.frameId);
+      }
+      factors.push_back(&factor);
+    }
+  }
+
+  SqrtProblem problem;
+  problem.setFrames(&frames);
+  problem.setMapPoints(&mapPoints);
+
+  for (auto& factor : factors) {
   }
 
   std::vector<db::MapPoint::Ptr> marginMps;

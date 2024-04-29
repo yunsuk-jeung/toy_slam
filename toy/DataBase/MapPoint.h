@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <unordered_map>
+#include <map>
 #include <Eigen/Dense>
 #include "macros.h"
 #include "Factor.h"

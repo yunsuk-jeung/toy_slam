@@ -224,11 +224,6 @@ public:
     mPc1b1     = Tc1b1.translation();
   }
 
-  static std::shared_ptr<ReprojectionCost> create(db::ReprojectionFactor& factor) {
-    
-    return std::make_shared<ReprojectionCost>(factor.frame());
-  }
-
   virtual double linearlize(bool updateState) {
     const Sophus::SE3d& Twb0 = mF0->Twb();
     const Sophus::SE3d  Tb1w = mF1->Twb().inverse();

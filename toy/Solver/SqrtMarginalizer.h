@@ -37,6 +37,7 @@ protected:
   std::vector<std::shared_ptr<db::Frame>> mFrames;
 
 public:
+  auto&                  frames() { return mFrames; }
   const Eigen::MatrixXd& J() const { return mJ; }
   Eigen::MatrixXd&       getJ() { return mJ; }
   const Eigen::VectorXd& Res() const { return mRes; }

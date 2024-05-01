@@ -142,9 +142,11 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
     }
   }
 
-  for (auto& mp : lostMapPoints) {
-    marginalMapPoints.push_back(mp);
-  }
+  //for (auto& mp : lostMapPoints) {
+  //  if (mp->frameFactorMap().size() > 1) {
+  //    marginalMapPoints.push_back(mp);
+  //  }
+  //}
 
   for (auto& mp : marginalMapPoints) {
     auto& factorMap = mp->frameFactorMap();
@@ -208,7 +210,8 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
 
   /* marginal factor*/
   rows += mMarginalizer->J().rows();
-
+  ToyLogD("------------- margi ------------ ");
+  ToyLogD("{}", mMarginalizer->J());
   /*  construct entire Jacob  */
   Eigen::MatrixXd Q2t_J;
   Eigen::VectorXd Q2t_C;
@@ -258,6 +261,8 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
       }
     }
   }
+
+  ToyLogD("margin : {} keep : {}", marginIndces.size(), keepIndices.size());
 
   Eigen::VectorXd delta(cols - marginIndces.size());
   Eigen::Index    deltaIdx = 0u;

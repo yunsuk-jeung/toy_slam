@@ -100,7 +100,7 @@ std::vector<MapPointLinearization::Ptr> SqrtProblem::grepMarginMapPointLineariza
 bool SqrtProblem::solve() {
   const auto& frames = *mFrames;
   //const auto  iTwb0  = frames.front()->getTwb();
-  
+
   //prepare solving
   const int Hrows = frames.size() * db::Frame::PARAMETER_SIZE;
   mH.resize(Hrows, Hrows);
@@ -275,10 +275,12 @@ double SqrtProblem::linearize(bool updateState) {
     errSq += poseOnlyReporjectinCost->linearlize(updateState);
   }
 
-  if (Config::Vio::solverLogDebug) {
-    ToyLogD("------ marginal cost : {}", mSqrtMarginalizationCost->linearize());
+  if (mSqrtMarginalizationCost) {
+    if (Config::Vio::solverLogDebug) {
+      ToyLogD("------ marginal cost : {}", mSqrtMarginalizationCost->linearize());
+    }
+    errSq += mSqrtMarginalizationCost->linearize();
   }
-  errSq += mSqrtMarginalizationCost->linearize();
 
   return errSq;
 }

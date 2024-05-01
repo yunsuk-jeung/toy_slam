@@ -8,21 +8,29 @@
 
 namespace toy {
 void SqrtMarginalizer::setFrames(const std::vector<db::Frame::Ptr>& frames) {
-  auto size = mJ.cols() / db::Frame::PARAMETER_SIZE;
-  mFrames.resize(size);
-  std::copy(frames.begin(), frames.begin() + size, mFrames.begin());
+  mFrames = frames;
 }
 
 std::shared_ptr<SqrtMarginalizationCost> SqrtMarginalizer::createMarginCost() {
   return std::make_shared<SqrtMarginalizationCost>(mFrames, mJ, mRes);
 }
 
-void SqrtMarginalizer::marginalize(Eigen::VectorXi& indices,
+void SqrtMarginalizer::marginalize(std::set<int>&   marginIndices,
+                                   std::set<int>&   remainIndices,
                                    Eigen::MatrixXd& J,
                                    Eigen::VectorXd& Res,
                                    Eigen::VectorXd& delta) {
   using PermutationWrapper = Eigen::PermutationWrapper<
     Eigen::Matrix<int, Eigen::Dynamic, 1>>;
+
+  Eigen::VectorXi indices(J.cols());
+  size_t          currIndex = 0;
+  for (auto& index : marginIndices) {
+    indices[currIndex++] = index;
+  }
+  for (auto& index : remainIndices) {
+    indices[currIndex++] = index;
+  }
 
   const PermutationWrapper permutation(indices);
   J.applyOnTheRight(permutation);

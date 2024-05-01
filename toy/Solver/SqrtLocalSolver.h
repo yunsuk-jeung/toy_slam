@@ -17,7 +17,7 @@ public:
     const std::vector<std::shared_ptr<db::MapPoint>>& trackingMapPoints) override;
 
   virtual void marginalize(
-    std::vector<std::shared_ptr<db::Frame>>&          marginalkeyFrames,
+    std::set<int64_t>&                                marginalkeyFrameIds,
     std::forward_list<std::shared_ptr<db::MapPoint>>& lostMapPoints) override;
 
 protected:

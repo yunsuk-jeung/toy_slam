@@ -60,8 +60,10 @@ SqrtLocalSolver::~SqrtLocalSolver() {}
 
 bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
                             const std::vector<db::MapPoint::Ptr>& trackingMapPoints) {
-  if (frames.size() < Config::Vio::solverMinimumFrames)
+  if (frames.size() < Config::Vio::solverMinimumFrames) {
+    mMarginalizer->setFrames(frames);
     return false;
+  }
 
   mFrames    = &frames;
   mMapPoints = &trackingMapPoints;
@@ -110,7 +112,6 @@ bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
     mProblem->addReprojectionCost(mp, costs);
   }
 
-  mMarginalizer->setFrames(*mFrames);
   auto marginCost = mMarginalizer->createMarginCost();
   mProblem->addMarginalizationCost(marginCost);
 
@@ -119,38 +120,32 @@ bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
   return result;
 }
 
-void SqrtLocalSolver::marginalize(std::vector<db::Frame::Ptr>&          marginalkeyFrames,
+void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
                                   std::forward_list<db::MapPoint::Ptr>& lostMapPoints) {
-  std::unordered_set<int64_t>        frameIds;
-  std::vector<db::Frame::Ptr>        frames;
-  std::vector<ReprojectionCost::Ptr> costs;
-  std::unordered_set<int64_t>        mpIds;
-  std::vector<db::MapPoint::Ptr>     marginalMapPoints;
-  frames.reserve(mFrames->size());
+  if (marginalkeyFrameIds.empty())
+    return;
+
+  std::vector<db::MapPoint::Ptr> marginalMapPoints;
   marginalMapPoints.reserve(mMapPoints->size());
 
-  auto frames = mMarginalizer->frames();
+  std::unordered_set<int64_t> frameIds;
+  auto                        frames = mMarginalizer->frames();
   for (auto& f : frames) {
     frameIds.insert(f->id());
-    frames.push_back(f);
   }
-  //for (auto& f : marginalkeyFrames) {
-  //  frameIds.insert(f->id());
-  //  frames.push_back(f);
-  //}
+
   for (auto& mp : *mMapPoints) {
-    for (auto& f : marginalkeyFrames) {
-      if (f == mp->hostFrame()) {
+    if (marginalkeyFrameIds.count(mp->hostFrame()->id())) {
+      if (mp->frameFactorMap().size() > 1) {
         marginalMapPoints.push_back(mp);
       }
     }
   }
+
   for (auto& mp : lostMapPoints) {
     marginalMapPoints.push_back(mp);
   }
 
-  MEstimator::Ptr reProjME       = createReprojectionMEstimator();
-  const double&   stdFocalLength = Config::Vio::standardFocalLength;
   for (auto& mp : marginalMapPoints) {
     auto& factorMap = mp->frameFactorMap();
     for (auto& [frameCamId, factor] : factorMap) {
@@ -165,6 +160,8 @@ void SqrtLocalSolver::marginalize(std::vector<db::Frame::Ptr>&          marginal
   problem.setFrames(&frames);
   problem.setMapPoints(&marginalMapPoints);
 
+  MEstimator::Ptr reProjME       = createReprojectionMEstimator();
+  const double&   stdFocalLength = Config::Vio::standardFocalLength;
   for (auto& mp : marginalMapPoints) {
     auto&                              factorMap = mp->frameFactorMap();
     std::vector<ReprojectionCost::Ptr> costs;
@@ -196,33 +193,17 @@ void SqrtLocalSolver::marginalize(std::vector<db::Frame::Ptr>&          marginal
     problem.addReprojectionCost(mp, costs);
   }
 
+  problem.linearize(true);
+  problem.decomposeLinearization();
+
   size_t     rows = 0u;
-  const auto cols = mFrames->size() * db::Frame::PARAMETER_SIZE;
+  const auto cols = frames.size() * db::Frame::PARAMETER_SIZE;
 
-  auto mpLinearizations = mProblem->grepMarginMapPointLinearizations(marginMps);
+  auto mpLinearizations = mProblem->mapPointLinearization();
 
-  if (Config::Vio::tbb) {
-    auto sumRow = [&](const tbb::blocked_range<size_t>& r, size_t row) {
-      for (size_t i = r.begin(); i != r.end(); ++i) {
-        auto& linearization = mpLinearizations[i];
-        linearization->linearize(true);
-        linearization->decomposeWithQR();
-        row += (linearization->J().rows() - MP_SIZE);
-      }
-      return row;
-    };
-    auto                       mpLinearizationSize = mpLinearizations.size();
-    tbb::blocked_range<size_t> range(0, mpLinearizationSize);
-    rows = tbb::parallel_reduce(range, size_t(0), sumRow, std::plus<size_t>());
+  for (auto& linearization : mpLinearizations) {
+    rows += (linearization->J().rows() - MP_SIZE);
   }
-  else {
-    for (auto& linearization : mpLinearizations) {
-      linearization->linearize(true);
-      linearization->decomposeWithQR();
-      rows += (linearization->J().rows() - MP_SIZE);
-    }
-  }
-
   /*  imu factor */
 
   /* marginal factor*/
@@ -258,37 +239,45 @@ void SqrtLocalSolver::marginalize(std::vector<db::Frame::Ptr>&          marginal
     currRow += J.rows();
   }
 
-  std::map<int64_t, size_t>& frameColumnMap = mProblem->getFrameIdColumnMap();
-  auto                       marginColStart = frameColumnMap[marginFrameId];
+  std::map<int64_t, size_t>& frameColumnMap = problem.getFrameIdColumnMap();
 
-  Eigen::VectorXi indices(cols);
-  auto            indexBegin = indices.begin();
+  std::set<int> marginIndces;
+  std::set<int> keepIndices;
 
-  std::iota(indexBegin, indexBegin + FRAME_SIZE, marginColStart);
-  indexBegin += FRAME_SIZE;
-
-  for (auto& [id, startCol] : frameColumnMap) {
-    if (id == marginFrameId)
-      continue;
-    std::iota(indexBegin, indexBegin + FRAME_SIZE, startCol);
-    indexBegin += FRAME_SIZE;
+  for (auto& f : frames) {
+    const auto& id    = f->id();
+    auto        start = frameColumnMap[id];
+    if (marginalkeyFrameIds.count(id)) {
+      for (int i = 0; i < db::Frame::PARAMETER_SIZE; ++i) {
+        marginIndces.emplace(start + i);
+      }
+    }
+    else {
+      for (int i = 0; i < db::Frame::PARAMETER_SIZE; ++i) {
+        keepIndices.emplace(start + i);
+      }
+    }
   }
 
-  Eigen::VectorXd delta(cols - db::Frame::PARAMETER_SIZE);
+  Eigen::VectorXd delta(cols - marginIndces.size());
   Eigen::Index    deltaIdx = 0u;
 
-  for (auto& f : *mFrames) {
-    if (f->isKeyFrame()) {
+  std::vector<db::Frame::Ptr> remainFrames;
+
+  for (auto& f : frames) {
+    if (!f->isLinearized()) {
       f->setLinearized(true);
     }
-    if (f->id() == marginFrameId) {
+
+    if (marginalkeyFrameIds.count(f->id())) {
       continue;
     }
+    remainFrames.push_back(f);
     delta.segment(deltaIdx, FRAME_SIZE) = f->getDelta();
     deltaIdx += db::Frame::PARAMETER_SIZE;
   }
-  //ToyLogD("wtf {}", delta);
-  mMarginalizer->marginalize(indices, Q2t_J, Q2t_C, delta);
+  mMarginalizer->marginalize(marginIndces, keepIndices, Q2t_J, Q2t_C, delta);
+  mMarginalizer->setFrames(remainFrames);
 }
 
 }  //namespace toy

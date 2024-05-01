@@ -22,7 +22,7 @@ public:
 
   ~MapPointLinearization() = default;
 
-  virtual double linearize(bool updateState);
+  virtual double linearize(bool updateJacobian);
   virtual void   decomposeWithQR();
 
   virtual double backSubstitue(Eigen::VectorXd& frameDelta);

@@ -18,7 +18,6 @@ LocalTracker::LocalTracker()
   , mLocalMap{nullptr}
   , mKeyFrameAfter{0}
   , mSetKeyFrame{false} {
-  mMarginalKeyFrames.reserve(Config::Vio::maxKeyFrameSize);
   mMarginalFrameIds.reserve(Config::Vio::maxKeyFrameSize);
 }
 
@@ -150,18 +149,19 @@ void LocalTracker::process() {
       }
     }
 
-    mVioSolver->marginalize(mMarginalKeyFrames, lostMapPoints);
-
     for (auto id : mMarginalFrameIds) {
       mLocalMap->removeFrame(id);
     }
-    for (auto f : mMarginalKeyFrames) {
-      mNumCreatedPoints.erase(f->id());
-      mLocalMap->removeFrame(f->id());
+
+    mVioSolver->marginalize(mMarginalKeyFrameIds, lostMapPoints);
+
+    for (auto id : mMarginalKeyFrameIds) {
+      mNumCreatedPoints.erase(id);
+      mLocalMap->removeFrame(id);
     }
 
     mMarginalFrameIds.clear();
-    mMarginalKeyFrames.clear();
+    mMarginalKeyFrameIds.clear();
     break;
   }
   }
@@ -292,7 +292,7 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
     }
   }
 
-  while (keyFrames.size() - mMarginalKeyFrames.size() > Config::Vio::maxKeyFrameSize) {
+  while (keyFrames.size() - mMarginalKeyFrameIds.size() > Config::Vio::maxKeyFrameSize) {
     auto& latestMap = latestFrame->mapPointFactorMap(0u);
 
     bool selected = false;
@@ -314,7 +314,7 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
                 mNumCreatedPoints[kf->id()],
                 ratio,
                 kf->id());
-        mMarginalKeyFrames.push_back(kf);
+        mMarginalKeyFrameIds.emplace(kf->id());
         selected = true;
         break;
       }
@@ -348,7 +348,7 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
       ) * denom;
       // clang-format on
       if (score < minScore) {
-        minKeyFrame = *it1;
+        minId       = (*it1)->id();
         minScore    = score;
       }
     }
@@ -356,7 +356,7 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
     TOY_ASSERT(minId >= 0);
 
     ToyLogD("marginalize due to : distance score");
-    mMarginalKeyFrames.push_back(minKeyFrame);
+    mMarginalKeyFrameIds.emplace(minId);
   }
 }
 

@@ -35,7 +35,7 @@ MapPointLinearization::MapPointLinearization(MapPointLinearization&& src) noexce
   mReprojectionCosts.swap(src.mReprojectionCosts);
 }
 
-double MapPointLinearization::linearize(bool updateState) {
+double MapPointLinearization::linearize(bool updateJacobian) {
   mJ.setZero();
   mRes.setZero();
 
@@ -46,9 +46,9 @@ double MapPointLinearization::linearize(bool updateState) {
 
   //YSTODO: tbb.... tbb might be slower
   for (auto& cost : mReprojectionCosts) {
-    errSq += cost->linearlize(updateState);
+    errSq += cost->linearlize(updateJacobian);
 
-    if (updateState) {
+    if (updateJacobian) {
       const int& id0 = cost->getFrame0()->id();
       const int& id1 = cost->getFrame1()->id();
 

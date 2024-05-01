@@ -37,12 +37,13 @@ public:
 
   bool solve();
 
-protected:
   double linearize(bool updateState);
   void   decomposeLinearization();
-  void   constructFrameHessian();
-  void   backupParameters();
-  void   restoreParameters();
+
+protected:
+  void constructFrameHessian();
+  void backupParameters();
+  void restoreParameters();
 
 public:
   struct Option {
@@ -76,5 +77,7 @@ public:
   }
 
   std::map<int64_t, size_t>& getFrameIdColumnMap() { return mFrameIdColumnMap; };
+
+  auto& mapPointLinearization() { return mMapPointLinearizations; }
 };
 }  //namespace toy

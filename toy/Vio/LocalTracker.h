@@ -1,5 +1,7 @@
 #pragma once
 #include <array>
+#include <set>
+#include <vector>
 #include <map>
 #include "Thread.h"
 
@@ -41,8 +43,8 @@ private:
   std::map<int64_t, int>        mNumCreatedPoints;
   bool                          mSetKeyFrame;
 
-  std::vector<int64_t>                    mMarginalFrameIds;
-  std::vector<std::shared_ptr<db::Frame>> mMarginalKeyFrames;
+  std::vector<int64_t> mMarginalFrameIds;
+  std::set<int64_t>    mMarginalKeyFrameIds;
 };
 
 }  //namespace toy

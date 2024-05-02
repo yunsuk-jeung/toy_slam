@@ -166,7 +166,11 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
     auto meaUV = mCameras[idx]->project(undist);
     cv::circle(img, meaUV, 6, {255, 0, 0}, -1);
 
-    auto            Tcw  = getTwc(idx).inverse();
+    auto Tcw = getTwc(idx).inverse();
+
+    if (!mp->hostFrame()) {
+      continue;
+    }
     Eigen::Vector3d Xcx  = Tcw * mp->getPwx();
     Eigen::Vector3d nXcx = Xcx / Xcx.z();
 

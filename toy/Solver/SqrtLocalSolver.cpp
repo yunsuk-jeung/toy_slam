@@ -20,8 +20,8 @@
 
 namespace toy {
 namespace {
-size_t MP_SIZE    = db::MapPoint::PARAMETER_SIZE;
-size_t FRAME_SIZE = db::Frame::PARAMETER_SIZE;
+constexpr size_t MP_SIZE    = db::MapPoint::PARAMETER_SIZE;
+constexpr size_t FRAME_SIZE = db::Frame::PARAMETER_SIZE;
 
 MEstimator::Ptr createReprojectionMEstimator() {
   switch (Config::Vio::reprojectionME) {
@@ -41,17 +41,18 @@ SqrtLocalSolver::SqrtLocalSolver() {
   mProblem      = std::make_unique<SqrtProblem>();
   mMarginalizer = std::make_unique<SqrtMarginalizer>();
 
-  const size_t& initialFrameSize = Config::Vio::solverMinimumFrames - 1;
-  const auto    cols             = FRAME_SIZE * initialFrameSize;
+  //const size_t& initialFrameSize = Config::Vio::solverMinimumFrames - 1;
+  //const auto    cols             = FRAME_SIZE * initialFrameSize;
 
   Eigen::MatrixXd& J   = mMarginalizer->getJ();
   Eigen::VectorXd& Res = mMarginalizer->getRes();
 
-  J.resize(FRAME_SIZE, cols);
+  //J.resize(FRAME_SIZE, cols);
+  J.resize(FRAME_SIZE, FRAME_SIZE);
   Res.resize(FRAME_SIZE);
 
   J.setIdentity();
-  J *= 10000.0;
+  J *= 100000.0;
 
   Res.setZero();
 }
@@ -61,11 +62,24 @@ SqrtLocalSolver::~SqrtLocalSolver() {}
 bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
                             const std::vector<db::MapPoint::Ptr>& trackingMapPoints) {
   if (frames.size() < Config::Vio::solverMinimumFrames) {
-    mMarginalizer->setFrames(frames);
+    mMarginalizer->setFrames({frames.front()});
     return false;
   }
 
-  mFrames    = &frames;
+  std::vector<db::Frame::Ptr> reordered = mMarginalizer->frames();
+  reordered.reserve(frames.size());
+  std::set<int64_t> frameIds;
+  for (auto& f : reordered) {
+    frameIds.insert(f->id());
+  }
+  for (auto& f : frames) {
+    if (frameIds.count(f->id()) == 0) {
+      reordered.push_back(f);
+      frameIds.insert(f->id());
+    }
+  }
+
+  mFrames    = &reordered;
   mMapPoints = &trackingMapPoints;
 
   for (auto& f : *mFrames) {
@@ -142,11 +156,11 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
     }
   }
 
-  //for (auto& mp : lostMapPoints) {
-  //  if (mp->frameFactorMap().size() > 1) {
-  //    marginalMapPoints.push_back(mp);
-  //  }
-  //}
+  for (auto& mp : lostMapPoints) {
+    if (mp->frameFactorMap().size() > 1) {
+      marginalMapPoints.push_back(mp);
+    }
+  }
 
   for (auto& mp : marginalMapPoints) {
     auto& factorMap = mp->frameFactorMap();
@@ -201,7 +215,7 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
   size_t     rows = 0u;
   const auto cols = frames.size() * db::Frame::PARAMETER_SIZE;
 
-  auto mpLinearizations = mProblem->mapPointLinearization();
+  auto mpLinearizations = problem.mapPointLinearization();
 
   for (auto& linearization : mpLinearizations) {
     rows += (linearization->J().rows() - MP_SIZE);
@@ -210,8 +224,8 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
 
   /* marginal factor*/
   rows += mMarginalizer->J().rows();
-  ToyLogD("------------- margi ------------ ");
-  ToyLogD("{}", mMarginalizer->J());
+  //ToyLogD("------------- margi ------------ ");
+  //ToyLogD("{}", mMarginalizer->J());
   /*  construct entire Jacob  */
   Eigen::MatrixXd Q2t_J;
   Eigen::VectorXd Q2t_C;

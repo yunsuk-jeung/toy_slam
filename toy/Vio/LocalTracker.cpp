@@ -1,3 +1,4 @@
+#include <set>
 #include "ToyAssert.h"
 #include "SLAMInfo.h"
 #include "Feature.h"
@@ -19,6 +20,7 @@ LocalTracker::LocalTracker()
   , mKeyFrameAfter{0}
   , mSetKeyFrame{false} {
   mMarginalFrameIds.reserve(Config::Vio::maxKeyFrameSize);
+  TAG = "LocalTracker";
 }
 
 LocalTracker::~LocalTracker() {
@@ -37,6 +39,10 @@ void LocalTracker::process() {
   db::Frame::Ptr currFrame = getLatestInput();
   if (!currFrame)
     return;
+
+  if (Config::Vio::debug) {
+    ToyLogD("-------------- {} frame {:4d} --------------", TAG, currFrame->id());
+  }
 
   switch (mStatus) {
   case Status::NONE: {
@@ -70,8 +76,6 @@ void LocalTracker::process() {
     break;
   }
   case Status::TRACKING: {
-    ++mKeyFrameAfter;
-
     //YSTODO: changed if imu exists;
     if (NO_IMU) {
       auto& Twb = mLocalMap->getFrames().rbegin()->second->getTwb();
@@ -104,16 +108,17 @@ void LocalTracker::process() {
     if (mSetKeyFrame && mKeyFrameAfter > Config::Vio::newKeyFrameAfter) {
       int createMPCount = initializeMapPoints(currFrame);
 
-      if (Config::Vio::debug)
-        ToyLogD("              {}th frame, createMP : {} ",
-                currFrame->id(),
-                createMPCount);
-
       if (createMPCount > 0) {
         mNumCreatedPoints[currFrame->id()] = createMPCount;
         currFrame->setKeyFrame();
-        mKeyFrameAfter = 0;
       }
+    }
+
+    if (currFrame->isKeyFrame()) {
+      mKeyFrameAfter = 0;
+    }
+    else {
+      ++mKeyFrameAfter;
     }
 
     //drawDebugView(100, 0);
@@ -126,11 +131,11 @@ void LocalTracker::process() {
     //            createMPCount);
     //  }
 
-    if (currFrame->id() > 3600) {
-      drawDebugView(100, 0);
-      DEBUG_POINT();
-      cv::waitKey();
-    }
+    //if (currFrame->id() > 50) {
+    //  drawDebugView(100, 0);
+    //  DEBUG_POINT();
+    //  cv::waitKey();
+    //}
 
     //drawDebugView(101, 1040);
     //drawDebugView(101, 1040);
@@ -142,12 +147,12 @@ void LocalTracker::process() {
     selectMarginalFrame(frames);
 
     std::forward_list<db::MapPoint::Ptr> lostMapPoints;
-    for (auto& mp : trackingMapPoints) {
-      if (!currFactorMap.count(mp->id())) {
-        lostMapPoints.push_front(mp);
-        mp->setState(db::MapPoint::Status::MARGINED);
-      }
-    }
+    //for (auto& mp : trackingMapPoints) {
+    //  if (!currFactorMap.count(mp->id())) {
+    //    lostMapPoints.push_front(mp);
+    //    mp->setState(db::MapPoint::Status::MARGINED);
+    //  }
+    //}
 
     for (auto id : mMarginalFrameIds) {
       mLocalMap->removeFrame(id);
@@ -172,21 +177,20 @@ void LocalTracker::process() {
 int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
   auto& mpCands = mLocalMap->getMapPointCandidiates();
 
-  int initCount     = 0;
-  int monoInitCount = 0;
-  int tryCount      = 0;
-  int oldCount      = 0;
-  int candSize      = mpCands.size();
+  int initCount = 0;
+  int oldCount  = 0;
+  int tryCount  = mpCands.size();
 
-  FrameCamId frameCamId0{currFrame->id(), 0};
+  FrameCamId        frameCamId0{currFrame->id(), 0};
+  std::set<int64_t> eraseMpIds;
+
   //YSTODO : tbb
-  for (auto it = mpCands.begin(); it != mpCands.end();) {
-    auto& mp             = it->second;
+  for (auto& [mpId, mp] : mpCands) {
     auto& frameFactorMap = mp->frameFactorMap();
 
     if (frameFactorMap.count(frameCamId0) == 0) {
-      it = mpCands.erase(it);
       ++oldCount;
+      eraseMpIds.insert(mpId);
       continue;
     }
 
@@ -230,6 +234,9 @@ int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
         //cv::imshow("1", image1);
         //cv::waitKey();
 
+        if (Tc1c0.translation().squaredNorm() < 0.0025)
+          continue;
+
         initSuccess |= BasicSolver::triangulate(factor0.undist(),
                                                 factor1.undist(),
                                                 Tc1c0,
@@ -262,17 +269,24 @@ int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
     }
 
     if (initSuccess) {
-      it = mpCands.erase(it);
-    }
-    else {
-      ++it;
+      eraseMpIds.insert(mpId);
     }
   }
 
-  if (Config::Vio::debug) {
-    ToyLogD("init : {}, oldCount :{}, cand :{}", initCount, oldCount, candSize);
+  for (auto& id : eraseMpIds) {
+    mpCands.erase(id);
   }
-  return initCount + monoInitCount;
+  auto candSize = mpCands.size();
+
+  if (Config::Vio::debug) {
+    ToyLogD("init : {}, oldCount :{}, cand : {} -> {}",
+            initCount,
+            oldCount,
+            tryCount,
+            candSize);
+  }
+
+  return initCount;
 }
 
 void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
@@ -301,19 +315,26 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
       size_t count = 0;
 
       for (auto& [mpId, f] : latestMap) {
+        if (f.mapPoint()->status() < db::MapPoint::Status::TRACKING)
+          continue;
+
         if (kfMap.count(mpId)) {
           ++count;
         }
       }
 
       float ratio = float(count) / mNumCreatedPoints[kf->id()];
-
+      ToyLogD("marg due to ratio : {} / {} = {} id: {}",
+              count,
+              mNumCreatedPoints[kf->id()],
+              ratio,
+              kf->id());
       if (ratio < Config::Vio::margFeatureConnectionRatio) {
-        ToyLogD("marg due to ratio : {} / {} = {} id: {}",
+        /*ToyLogD("marg due to ratio : {} / {} = {} id: {}",
                 count,
                 mNumCreatedPoints[kf->id()],
                 ratio,
-                kf->id());
+                kf->id());*/
         mMarginalKeyFrameIds.emplace(kf->id());
         selected = true;
         break;
@@ -348,8 +369,8 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
       ) * denom;
       // clang-format on
       if (score < minScore) {
-        minId       = (*it1)->id();
-        minScore    = score;
+        minId    = (*it1)->id();
+        minScore = score;
       }
     }
 

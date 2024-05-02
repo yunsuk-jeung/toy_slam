@@ -35,6 +35,7 @@ private:
   void drawDebugView(int tag, int offset = 0);
 
 private:
+  std::string TAG;
   enum class Status { NONE = -1, INITIALIZING = 0, TRACKING = 1 };
   Status                        mStatus;
   std::unique_ptr<db::LocalMap> mLocalMap;

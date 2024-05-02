@@ -10,7 +10,7 @@
       "feature": {
         "point": {
           "patchSize": 31,
-          "rowGridCount": 10,
+          "rowGridCount": 12,
           "colGridCount": 16,
           "on": true,
           "tracker": "Fast.PatchOpticalFlow",

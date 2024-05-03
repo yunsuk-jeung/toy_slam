@@ -67,7 +67,8 @@ void LocalTracker::process() {
     bool OK            = createMPCount > Config::Vio::initializeMapPointCount;
 
     if (OK) {
-      mStatus = Status::TRACKING;
+      mStatus                            = Status::TRACKING;
+      mNumCreatedPoints[currFrame->id()] = createMPCount;
     }
     else {
       mLocalMap->reset();
@@ -306,37 +307,44 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
     }
   }
 
+  auto lastKeyFrame = keyFrames.back();
+  auto endIt        = std::prev(keyFrames.end(), 2);
+
   while (keyFrames.size() - mMarginalKeyFrameIds.size() > Config::Vio::maxKeyFrameSize) {
-    auto& latestMap = latestFrame->mapPointFactorMap(0u);
-
-    bool selected = false;
-    for (auto& kf : keyFrames) {
-      auto&  kfMap = kf->mapPointFactorMap(0u);
-      size_t count = 0;
-
-      for (auto& [mpId, f] : latestMap) {
+    std::map<int64_t, int> connectedMapPoints;
+    for (auto& map : latestFrame->mapPointFactorMaps()) {
+      for (auto& [mpId, f] : map) {
         if (f.mapPoint()->status() < db::MapPoint::Status::TRACKING)
           continue;
+        connectedMapPoints[f.mapPoint()->hostFrame()->id()]++;
+      }
+    }
 
-        if (kfMap.count(mpId)) {
-          ++count;
-        }
+    bool selected = false;
+
+    for (auto it = keyFrames.begin(); it < endIt; ++it) {
+      auto kfId = (*it)->id();
+
+      int count = 0;
+      if (connectedMapPoints.count(kfId)) {
+        count = connectedMapPoints[kfId];
       }
 
-      float ratio = float(count) / mNumCreatedPoints[kf->id()];
+      float ratio = float(count) / mNumCreatedPoints[kfId];
       ToyLogD("marg due to ratio : {} / {} = {} id: {}",
               count,
-              mNumCreatedPoints[kf->id()],
+              mNumCreatedPoints[kfId],
               ratio,
-              kf->id());
+              kfId);
       if (ratio < Config::Vio::margFeatureConnectionRatio) {
         /*ToyLogD("marg due to ratio : {} / {} = {} id: {}",
                 count,
                 mNumCreatedPoints[kf->id()],
                 ratio,
                 kf->id());*/
-        mMarginalKeyFrameIds.emplace(kf->id());
+        mMarginalKeyFrameIds.emplace(kfId);
         selected = true;
+        ToyLogD("marginalize due to : ratio  id : {}", kfId);
         break;
       }
     }
@@ -345,13 +353,10 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
       continue;
     }
 
-    auto lastKeyFrame = keyFrames.back();
-
     float          minScore = std::numeric_limits<float>::max();
     db::Frame::Ptr minKeyFrame;
     int64_t        minId = -1;
 
-    auto endIt = std::prev(keyFrames.end(), 2);
     for (auto it1 = keyFrames.begin(); it1 < endIt; ++it1) {
       float denom = 0;
       for (auto it2 = keyFrames.begin(); it2 < endIt; ++it2) {
@@ -367,6 +372,8 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
       float score = std::sqrt(
         ((*it1)->getTwb().translation() - lastKeyFrame->getTwb().translation()) .norm()
       ) * denom;
+
+      ToyLogD("id : {} marg distance score : {} denom : {}", (*it1)->id(), (int)score, denom);
       // clang-format on
       if (score < minScore) {
         minId    = (*it1)->id();
@@ -376,7 +383,7 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
 
     TOY_ASSERT(minId >= 0);
 
-    ToyLogD("marginalize due to : distance score");
+    ToyLogD("marginalize due to : distance score id : {}", minId);
     mMarginalKeyFrameIds.emplace(minId);
   }
 }

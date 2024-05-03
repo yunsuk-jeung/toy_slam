@@ -48,7 +48,7 @@ void SqrtMarginalizer::marginalize(std::set<int>&   marginIndices,
   mJ   = J.block(margRank, db::Frame::PARAMETER_SIZE, rows, cols);
   mRes = Res.segment(margRank, rows) + mJ * delta;
 
-  //debug::drawSparseMatrix("after QR", mJ , 1);
+  debug::drawSparseMatrix("after QR", mJ , 1);
 
   //ToyLogD("final QR {}", ToyLogger::eigenMat(mJ, 2));
   //ToyLogD("final QR {}", ToyLogger::eigenVec(mRes, 2));

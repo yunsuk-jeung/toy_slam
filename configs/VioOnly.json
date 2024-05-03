@@ -11,7 +11,7 @@
         "point": {
           "patchSize": 31,
           "rowGridCount": 12,
-          "colGridCount": 16,
+          "colGridCount": 18,
           "on": true,
           "tracker": "Fast.PatchOpticalFlow",
           "minTrackedPoint": 30,

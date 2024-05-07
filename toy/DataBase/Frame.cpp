@@ -18,6 +18,9 @@ Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   , mFixed{false}
   , mLinearized{false} {
   mMapPointFactorMaps.resize(mImagePyramids.size());
+
+  mDelta.setZero();
+  mBackupDelta.setZero();
 }
 
 Frame::Frame(Frame* src) {
@@ -135,17 +138,10 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
 
     cv::Scalar color;
     switch (mp->status()) {
-    case db::MapPoint::Status::DELETING: {
-      continue;
-    }
     case db::MapPoint::Status::NONE: {
       color = {0, 0, 0};
       break;
       //continue;
-    }
-    case db::MapPoint::Status::MARGINED: {
-      color = {255, 255, 0};
-      break;
     }
     //case db::MapPoint::Status::INITIALING: {
     //  color = {0, 255, 0};

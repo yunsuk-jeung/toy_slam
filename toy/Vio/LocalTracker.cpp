@@ -132,12 +132,6 @@ void LocalTracker::process() {
     //            createMPCount);
     //  }
 
-    //if (currFrame->id() > 50) {
-    //  drawDebugView(100, 0);
-    //  DEBUG_POINT();
-    //  cv::waitKey();
-    //}
-
     //drawDebugView(101, 1040);
     //drawDebugView(101, 1040);
 
@@ -168,6 +162,13 @@ void LocalTracker::process() {
 
     mMarginalFrameIds.clear();
     mMarginalKeyFrameIds.clear();
+
+    if (currFrame->id() > 198) {
+      drawDebugView(100, 0);
+      DEBUG_POINT();
+      cv::waitKey();
+    }
+
     break;
   }
   }

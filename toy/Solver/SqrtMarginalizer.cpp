@@ -31,28 +31,31 @@ void SqrtMarginalizer::marginalize(std::set<int>&   marginIndices,
   for (auto& index : remainIndices) {
     indices[currIndex++] = index;
   }
+  //debug::drawSparseMatrix("before Per", J , 1);
 
   const PermutationWrapper permutation(indices);
   J.applyOnTheRight(permutation);
 
   size_t margRank       = 0;
   size_t validBlockRows = 0;
-  decomposeWithQR(J, Res, db::Frame::PARAMETER_SIZE, margRank, validBlockRows);
+  //debug::drawSparseMatrix("before QR", J , 1);
+
+  decomposeWithQR(J, Res, marginIndices.size(), margRank, validBlockRows);
 
   size_t& rows = validBlockRows;
-  size_t  cols = indices.rows() - db::Frame::PARAMETER_SIZE;
+  size_t  cols = indices.rows() - marginIndices.size();
 
   mJ.resize(rows, cols);
   mRes.resize(rows);
 
-  mJ   = J.block(margRank, db::Frame::PARAMETER_SIZE, rows, cols);
+  mJ   = J.block(margRank, marginIndices.size(), rows, cols);
   mRes = Res.segment(margRank, rows) + mJ * delta;
 
-  debug::drawSparseMatrix("after QR", mJ , 1);
+  debug::drawSparseMatrix("after QR", mJ ,1);
 
-  //ToyLogD("final QR {}", ToyLogger::eigenMat(mJ, 2));
-  //ToyLogD("final QR {}", ToyLogger::eigenVec(mRes, 2));
-  //ToyLogD("=============================================================");
+  ToyLogD("final QR {}", ToyLogger::eigenMat(mJ, 2));
+  ToyLogD("final QR {}", ToyLogger::eigenVec(mRes, 2));
+  ToyLogD("=============================================================");
 }
 
 void SqrtMarginalizer::decomposeWithQR(Eigen::MatrixXd& J,

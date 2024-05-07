@@ -27,16 +27,14 @@ public:
   void update(const Eigen::Vector3d& delta);
   void update(const double& delta);
 
-  uint8_t eraseFrame(std::shared_ptr<db::Frame> frame);
+  bool eraseFrame(std::shared_ptr<db::Frame> frame);
 
 protected:
 
 public:
   enum class Status {
-    DELETING = -2,
     NONE     = 0,
-    MARGINED = 1,
-    TRACKING = 2,
+    TRACKING = 1,
   };
 
 protected:

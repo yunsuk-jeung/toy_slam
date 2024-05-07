@@ -78,6 +78,6 @@ public:
 
   std::map<int64_t, size_t>& getFrameIdColumnMap() { return mFrameIdColumnMap; };
 
-  auto& mapPointLinearization() { return mMapPointLinearizations; }
+  auto& mapPointLinearizations() { return mMapPointLinearizations; }
 };
 }  //namespace toy

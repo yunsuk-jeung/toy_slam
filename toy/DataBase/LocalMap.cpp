@@ -101,21 +101,18 @@ void LocalMap::getCurrentStates(std::vector<Frame::Ptr>&    frames,
 }
 
 void LocalMap::removeFrame(int64_t id) {
-  auto it = mFrames.find(id);
-  TOY_ASSERT(it != mFrames.end());
-  std::forward_list<size_t> mpIds;
-  Frame::Ptr&               f                  = it->second;
-  auto&                     mapPointFactorMaps = f->mapPointFactorMaps();
+  TOY_ASSERT(mFrames.count(id) > 0);
+
+  auto& f                  = mFrames[id];
+  auto& mapPointFactorMaps = f->mapPointFactorMaps();
+
+  std::forward_list<size_t> marginMapPointIds;
 
   for (auto it = mMapPoints.begin(); it != mMapPoints.end();) {
     auto eraseMapPoint = it->second->eraseFrame(f);
 
-    if (eraseMapPoint == 1u) {
-      mMapPointCandidates.emplace(it->first, it->second);
-      it = mMapPoints.erase(it);
-    }
-    else if (eraseMapPoint == 2u) {
-      mpIds.push_front(it->first);
+    if (eraseMapPoint) {
+      marginMapPointIds.push_front(it->first);
       it = mMapPoints.erase(it);
     }
     else {
@@ -126,19 +123,19 @@ void LocalMap::removeFrame(int64_t id) {
   for (auto it = mMapPointCandidates.begin(); it != mMapPointCandidates.end();) {
     auto eraseMapPoint = it->second->eraseFrame(f);
 
-    if (eraseMapPoint == 2u) {
+    if (eraseMapPoint) {
       it = mMapPointCandidates.erase(it);
-      mpIds.push_front(it->first);
+      marginMapPointIds.push_front(it->first);
     }
     else {
       ++it;
     }
   }
 
-  mFrames.erase(it);
+  mFrames.erase(id);
 
   for (auto& [fId, frame] : mFrames) {
-    for (auto& mpId : mpIds) {
+    for (auto& mpId : marginMapPointIds) {
       frame->eraseMapPointFactor(mpId);
     }
   }

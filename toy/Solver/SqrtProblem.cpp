@@ -346,7 +346,9 @@ void SqrtProblem::constructFrameHessian() {
   }
 
   //construct hessian for frames from marginCost
-  mSqrtMarginalizationCost->addToHessian(mH, mB);
+  if (mSqrtMarginalizationCost) {
+    mSqrtMarginalizationCost->addToHessian(mH, mB);
+  }
 }
 
 void SqrtProblem::backupParameters() {

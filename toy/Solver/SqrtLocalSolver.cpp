@@ -187,10 +187,6 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
     Sophus::SE3d&  Tbc0   = frame0->getTbc(0);
 
     for (auto& [frameCamId, factor] : factorMap) {
-      if (frameIds.count(frameCamId.frameId) == 0) {
-        frames.push_back(factor.frame());
-        frameIds.insert(frameCamId.frameId);
-      }
       db::Frame::Ptr frame1 = factor.frame();
       auto&          camId  = factor.camIdx();
       Sophus::SE3d&  Tbc1   = frame1->getTbc(camId);
@@ -215,7 +211,7 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
   size_t     rows = 0u;
   const auto cols = frames.size() * db::Frame::PARAMETER_SIZE;
 
-  auto mpLinearizations = problem.mapPointLinearization();
+  auto mpLinearizations = problem.mapPointLinearizations();
 
   for (auto& linearization : mpLinearizations) {
     rows += (linearization->J().rows() - MP_SIZE);
@@ -275,8 +271,6 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
       }
     }
   }
-
-  ToyLogD("margin : {} keep : {}", marginIndces.size(), keepIndices.size());
 
   Eigen::VectorXd delta(cols - marginIndces.size());
   Eigen::Index    deltaIdx = 0u;

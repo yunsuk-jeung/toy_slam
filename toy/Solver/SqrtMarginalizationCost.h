@@ -32,7 +32,7 @@ public:
 
   double linearize() {
     //updateParameters();
-    auto rows = mFrames.size() * db::Frame::PARAMETER_SIZE;
+    //auto rows = mFrames.size() * db::Frame::PARAMETER_SIZE;
 
     Eigen::VectorXd delta = getDelta();
     //Eigen::VectorXd delta = (mCurrentParameters - mInitialParameters).head(rows);

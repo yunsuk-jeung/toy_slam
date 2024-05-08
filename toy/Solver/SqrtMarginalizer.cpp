@@ -49,13 +49,13 @@ void SqrtMarginalizer::marginalize(std::set<int>&   marginIndices,
   mRes.resize(rows);
 
   mJ   = J.block(margRank, marginIndices.size(), rows, cols);
-  mRes = Res.segment(margRank, rows) + mJ * delta;
+  mRes = Res.segment(margRank, rows) - mJ * delta;
 
-  debug::drawSparseMatrix("after QR", mJ ,1);
+  //debug::drawSparseMatrix("after QR", mJ ,1);
 
-  ToyLogD("final QR {}", ToyLogger::eigenMat(mJ, 2));
-  ToyLogD("final QR {}", ToyLogger::eigenVec(mRes, 2));
-  ToyLogD("=============================================================");
+  //ToyLogD("final QR {}", ToyLogger::eigenMat(mJ, 2));
+  //ToyLogD("final QR {}", ToyLogger::eigenVec(mRes, 2));
+  //ToyLogD("=============================================================");
 }
 
 void SqrtMarginalizer::decomposeWithQR(Eigen::MatrixXd& J,

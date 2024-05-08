@@ -40,6 +40,8 @@ public:
   double linearize(bool updateState);
   void   decomposeLinearization();
 
+  void getQRJacobian(Eigen::MatrixXd& Q2t_J, Eigen::VectorXd& Q2t_C);
+
 protected:
   void constructFrameHessian();
   void backupParameters();

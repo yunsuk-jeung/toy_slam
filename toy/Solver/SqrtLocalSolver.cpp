@@ -208,6 +208,13 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
   problem.linearize(true);
   problem.decomposeLinearization();
 
+  auto marginCost = mMarginalizer->createMarginCost();
+  problem.addMarginalizationCost(marginCost);
+
+  Eigen::MatrixXd Q2t_J;
+  Eigen::VectorXd Q2t_C;
+  problem.getQRJacobian(Q2t_J, Q2t_C);
+  /*
   size_t     rows = 0u;
   const auto cols = frames.size() * db::Frame::PARAMETER_SIZE;
 
@@ -216,13 +223,11 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
   for (auto& linearization : mpLinearizations) {
     rows += (linearization->J().rows() - MP_SIZE);
   }
-  /*  imu factor */
+  // imu factor
 
-  /* marginal factor*/
+  // marginal factor
   rows += mMarginalizer->J().rows();
-  //ToyLogD("------------- margi ------------ ");
-  //ToyLogD("{}", mMarginalizer->J());
-  /*  construct entire Jacob  */
+
   Eigen::MatrixXd Q2t_J;
   Eigen::VectorXd Q2t_C;
 
@@ -235,8 +240,8 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
   for (auto& linearization : mpLinearizations) {
     auto blockRow = linearization->J().rows() - MP_SIZE;
     // clang-format off
-    auto& Q2t_J_block = 
-    Q2t_J.block(currRow, 0, blockRow, cols) 
+    auto& Q2t_J_block =
+    Q2t_J.block(currRow, 0, blockRow, cols)
       = linearization->J().bottomLeftCorner(blockRow, cols);
     Q2t_C.segment(currRow, blockRow) = linearization->Res().tail(blockRow);
     // clang-format on
@@ -251,6 +256,7 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
     Q2t_C.segment(currRow, J.rows())            = Res;
     currRow += J.rows();
   }
+  */
 
   std::map<int64_t, size_t>& frameColumnMap = problem.getFrameIdColumnMap();
 
@@ -272,6 +278,7 @@ void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
     }
   }
 
+  auto            cols = Q2t_J.cols();
   Eigen::VectorXd delta(cols - marginIndces.size());
   Eigen::Index    deltaIdx = 0u;
 

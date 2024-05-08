@@ -163,11 +163,11 @@ void LocalTracker::process() {
     mMarginalFrameIds.clear();
     mMarginalKeyFrameIds.clear();
 
-    if (currFrame->id() > 198) {
-      drawDebugView(100, 0);
-      DEBUG_POINT();
-      cv::waitKey();
-    }
+    //if (currFrame->id() > 198) {
+    //  drawDebugView(100, 0);
+    //  DEBUG_POINT();
+    //  cv::waitKey();
+    //}
 
     break;
   }

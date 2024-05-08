@@ -312,6 +312,40 @@ void SqrtProblem::decomposeLinearization() {
 #endif
 }
 
+void SqrtProblem::getQRJacobian(Eigen::MatrixXd& Q2t_J, Eigen::VectorXd& Q2t_C) {
+  size_t     rows = 0u;
+  const auto cols = mFrames->size() * db::Frame::PARAMETER_SIZE;
+
+  for (auto& linearization : mMapPointLinearizations) {
+    rows += (linearization->J().rows() - MP_SIZE);
+  }
+
+  if (mSqrtMarginalizationCost) {
+    rows += mSqrtMarginalizationCost->rows();
+  }
+
+  Q2t_J.resize(rows, cols);
+  Q2t_C.resize(rows);
+  Q2t_J.setZero();
+  Q2t_C.setZero();
+
+  size_t currRow = 0;
+  for (auto& linearization : mMapPointLinearizations) {
+    auto blockRow = linearization->J().rows() - MP_SIZE;
+    // clang-format off
+    auto& Q2t_J_block = 
+    Q2t_J.block(currRow, 0, blockRow, cols) 
+      = linearization->J().bottomLeftCorner(blockRow, cols);
+    Q2t_C.segment(currRow, blockRow) = linearization->Res().tail(blockRow);
+    // clang-format on
+    currRow += blockRow;
+  }
+
+  if (mSqrtMarginalizationCost) {
+    mSqrtMarginalizationCost->addToQRJacobian(Q2t_J, Q2t_C, currRow);
+  }
+}
+
 void SqrtProblem::constructFrameHessian() {
   const int Hrows = mFrames->size() * db::Frame::PARAMETER_SIZE;
 

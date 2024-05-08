@@ -37,12 +37,15 @@ public:
 
   bool solve();
 
-protected:
   double linearize(bool updateState);
   void   decomposeLinearization();
-  void   constructFrameHessian();
-  void   backupParameters();
-  void   restoreParameters();
+
+  void getQRJacobian(Eigen::MatrixXd& Q2t_J, Eigen::VectorXd& Q2t_C);
+
+protected:
+  void constructFrameHessian();
+  void backupParameters();
+  void restoreParameters();
 
 public:
   struct Option {
@@ -58,7 +61,7 @@ public:
 protected:
   //std::map<int, FrameParameter>*                      mFrameParameterMapRpt;
   //std::map<int, MapPointParameter>*                   mMapPointParameterMapRpt;
-  std::map<size_t, size_t>                          mFrameIdColumnMap;
+  std::map<int64_t, size_t>                         mFrameIdColumnMap;
   const std::vector<std::shared_ptr<db::Frame>>*    mFrames;
   const std::vector<std::shared_ptr<db::MapPoint>>* mMapPoints;
 
@@ -75,6 +78,8 @@ public:
     return mSqrtMarginalizationCost;
   }
 
-  std::map<size_t, size_t>& getFrameIdColumnMap() { return mFrameIdColumnMap; };
+  std::map<int64_t, size_t>& getFrameIdColumnMap() { return mFrameIdColumnMap; };
+
+  auto& mapPointLinearizations() { return mMapPointLinearizations; }
 };
 }  //namespace toy

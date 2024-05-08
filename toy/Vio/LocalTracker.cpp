@@ -1,3 +1,4 @@
+#include <set>
 #include "ToyAssert.h"
 #include "SLAMInfo.h"
 #include "Feature.h"
@@ -16,7 +17,11 @@ constexpr bool NO_IMU = true;
 LocalTracker::LocalTracker()
   : mStatus{Status::NONE}
   , mLocalMap{nullptr}
-  , mKeyFrameAfter{100} {}
+  , mKeyFrameAfter{0}
+  , mSetKeyFrame{false} {
+  mMarginalFrameIds.reserve(Config::Vio::maxKeyFrameSize);
+  TAG = "LocalTracker";
+}
 
 LocalTracker::~LocalTracker() {
   mLocalMap.reset();
@@ -34,6 +39,10 @@ void LocalTracker::process() {
   db::Frame::Ptr currFrame = getLatestInput();
   if (!currFrame)
     return;
+
+  if (Config::Vio::debug) {
+    ToyLogD("-------------- {} frame {:4d} --------------", TAG, currFrame->id());
+  }
 
   switch (mStatus) {
   case Status::NONE: {
@@ -58,7 +67,8 @@ void LocalTracker::process() {
     bool OK            = createMPCount > Config::Vio::initializeMapPointCount;
 
     if (OK) {
-      mStatus = Status::TRACKING;
+      mStatus                            = Status::TRACKING;
+      mNumCreatedPoints[currFrame->id()] = createMPCount;
     }
     else {
       mLocalMap->reset();
@@ -67,8 +77,6 @@ void LocalTracker::process() {
     break;
   }
   case Status::TRACKING: {
-    ++mKeyFrameAfter;
-
     //YSTODO: changed if imu exists;
     if (NO_IMU) {
       auto& Twb = mLocalMap->getFrames().rbegin()->second->getTwb();
@@ -76,25 +84,17 @@ void LocalTracker::process() {
     }
 
     size_t connected = mLocalMap->addFrame(currFrame);
-    //if (mLocalMap->addFrame(currFrame)) {
-    //mKeyFrameInterval = 0;
-    //}
 
     //YSTODO: check quality with createdMPCount
     std::vector<db::Frame::Ptr>    frames;
     std::vector<db::MapPoint::Ptr> trackingMapPoints;
-    std::vector<db::MapPoint::Ptr> marginedMapPoints;
-    mLocalMap->getCurrentStates(frames, trackingMapPoints, marginedMapPoints);
+    mLocalMap->getCurrentStates(frames, trackingMapPoints);
 
     BasicSolver::solveFramePose(currFrame);
 
-    //frames.front()->setFixed(true);
-    mVioSolver->solve(frames, trackingMapPoints, {});
-
-    bool setKf = false;
-
-    //float ratio = float(connected) / float(mLocalMap->getMapPoints().size());
-    float ratio = float(connected) / float(currFrame->getMapPointFactorMap().size());
+    mVioSolver->solve(frames, trackingMapPoints);
+    auto& currFactorMap = currFrame->mapPointFactorMap(0u);
+    float ratio         = float(connected) / float(currFactorMap.size());
 
     if (ratio < 0.8) {
       if (Config::Vio::debug)
@@ -102,21 +102,24 @@ void LocalTracker::process() {
                 currFrame->id(),
                 ratio,
                 connected,
-                currFrame->getMapPointFactorMap().size());
-      setKf = true;
+                currFrame->mapPointFactorMap(0).size());
+      mSetKeyFrame = true;
     }
 
-    if (setKf) {
+    if (mSetKeyFrame && mKeyFrameAfter > Config::Vio::newKeyFrameAfter) {
       int createMPCount = initializeMapPoints(currFrame);
 
-      if (Config::Vio::debug)
-        ToyLogD("{}th frame, createMP : {} ", currFrame->id(), createMPCount);
-
-      if (createMPCount > 0 && mKeyFrameAfter > 1) {
+      if (createMPCount > 0) {
         mNumCreatedPoints[currFrame->id()] = createMPCount;
         currFrame->setKeyFrame();
-        mKeyFrameAfter = 0;
       }
+    }
+
+    if (currFrame->isKeyFrame()) {
+      mKeyFrameAfter = 0;
+    }
+    else {
+      ++mKeyFrameAfter;
     }
 
     //drawDebugView(100, 0);
@@ -129,28 +132,42 @@ void LocalTracker::process() {
     //            createMPCount);
     //  }
 
-    if (currFrame->id() > 3600) {
-      drawDebugView(100, 0);
-      DEBUG_POINT();
-      cv::waitKey();
-    }
-
     //drawDebugView(101, 1040);
     //drawDebugView(101, 1040);
 
-    if (frames.size() < Config::Vio::solverMinimumFrames)
+    if (frames.size() < Config::Vio::solverMinimumFrames) {
       return setDataToInfo();
-
-    db::Frame::Ptr marginalFrame = selectMarginalFrame(frames);
-
-    if (!marginalFrame) {
-      break;
     }
 
-    mNumCreatedPoints.erase(marginalFrame->id());
+    selectMarginalFrame(frames);
 
-    mVioSolver->marginalize(marginalFrame);
-    mLocalMap->removeFrame(marginalFrame->id());
+    std::forward_list<db::MapPoint::Ptr> lostMapPoints;
+    //for (auto& mp : trackingMapPoints) {
+    //  if (!currFactorMap.count(mp->id())) {
+    //    lostMapPoints.push_front(mp);
+    //    mp->setState(db::MapPoint::Status::MARGINED);
+    //  }
+    //}
+
+    for (auto id : mMarginalFrameIds) {
+      mLocalMap->removeFrame(id);
+    }
+
+    mVioSolver->marginalize(mMarginalKeyFrameIds, lostMapPoints);
+
+    for (auto id : mMarginalKeyFrameIds) {
+      mNumCreatedPoints.erase(id);
+      mLocalMap->removeFrame(id);
+    }
+
+    mMarginalFrameIds.clear();
+    mMarginalKeyFrameIds.clear();
+
+    //if (currFrame->id() > 198) {
+    //  drawDebugView(100, 0);
+    //  DEBUG_POINT();
+    //  cv::waitKey();
+    //}
 
     break;
   }
@@ -159,241 +176,188 @@ void LocalTracker::process() {
   setDataToInfo();
 }
 
-//int LocalTracker::initializeMapPoints(db::Frame::Ptr currFrame) {
-//  auto& mapPointFactorMap = currFrame->getMapPointFactorMap();
-//
-//  auto            Twc0  = currFrame->getTwc(0);
-//  auto            Twc1  = currFrame->getTwc(1);  //identity for mono or depth..
-//  auto            Tc1c0 = Twc1.inverse() * Twc0;
-//  Eigen::Vector3d Pc0x;
-//
-//  int successCount = 0;
-//  int tryCount     = 0;
-//  for (auto& [mpWeak, factor] : mapPointFactorMap) {
-//    auto mp = mpWeak.lock();
-//    if (mp->status() != db::MapPoint::Status::INITIALING)
-//      continue;
-//    ++tryCount;
-//
-//    switch (factor.type()) {
-//    case db::ReprojectionFactor::Type::MONO: {
-//      break;
-//    }
-//    case db::ReprojectionFactor::Type::STEREO: {
-//      if (!BasicSolver::triangulate(factor.undist0(), factor.undist1(), Tc1c0, Pc0x)) {
-//        continue;
-//      }
-//
-//      double invD = 1.0 / Pc0x.z();
-//      //Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
-//      //mp->setUndist(nuv);
-//      mp->setInvDepth(invD);
-//      mp->setState(db::MapPoint::Status::INITIALING);
-//      ++successCount;
-//      break;
-//    }
-//    case db::ReprojectionFactor::Type::DEPTH: {
-//      break;
-//    }
-//    }
-//  }
-//
-//  if (Config::Vio::debug) {
-//    ToyLogD("triangulation successed {} / {}", successCount, tryCount);
-//  }
-//
-//  if (Config::Vio::showStereoTracking) {
-//    currFrame->drawReprojectionView(0, "tri0");
-//    currFrame->drawReprojectionView(1, "tri1");
-//    cv::waitKey();
-//  }
-//
-//  return successCount;
-//}
-
 int LocalTracker::initializeMapPoints(std::shared_ptr<db::Frame> currFrame) {
   auto& mpCands = mLocalMap->getMapPointCandidiates();
 
-  int initCount     = 0;
-  int monoInitCount = 0;
-  int tryCount      = 0;
-  int oldCount      = 0;
-  int candSize      = mpCands.size();
+  int initCount = 0;
+  int oldCount  = 0;
+  int tryCount  = mpCands.size();
 
-  //YSTODO : tbb & erase with rejected count
-  for (auto it = mpCands.begin(); it != mpCands.end();) {
-    bool  success      = false;
-    auto& mp           = it->second;
-    auto& frameFactors = mp->getFrameFactors();
-    auto& factor       = frameFactors.back().second;
-    auto& frame        = frameFactors.back().first.lock();
+  FrameCamId        frameCamId0{currFrame->id(), 0};
+  std::set<int64_t> eraseMpIds;
 
-    if (frame->id() != currFrame->id()) {
-      it = mpCands.erase(it);
+  //YSTODO : tbb
+  for (auto& [mpId, mp] : mpCands) {
+    auto& frameFactorMap = mp->frameFactorMap();
+
+    if (frameFactorMap.count(frameCamId0) == 0) {
       ++oldCount;
+      eraseMpIds.insert(mpId);
       continue;
     }
 
-    Eigen::Vector3d Pc0x;
-    switch (factor.type()) {
-    case db::ReprojectionFactor::Type::STEREO: {
-      auto Twc0  = frame->getTwc(0);
-      auto Twc1  = frame->getTwc(1);  //identity for mono or depth..
-      auto Tc1c0 = Twc1.inverse() * Twc0;
+    auto& factor0 = frameFactorMap[frameCamId0];
 
-      success |= BasicSolver::triangulate(factor.undist0(),
-                                          factor.undist1(),
-                                          Tc1c0,
-                                          Pc0x);
-      break;
-    }
-    case db::ReprojectionFactor::Type::DEPTH: {
-      TOY_ASSERT_MESSAGE(0, "not implemented");
-      break;
-    }
-    }
-    if (!success) {
-      auto frame0 = frameFactors.front().first.lock();
-      if (frame == frame0) {
-        ++it;
+    bool initSuccess = false;
+    for (auto& [frameCamId1, factor1] : frameFactorMap) {
+      if (frameCamId0 == frameCamId1) {
         continue;
       }
-      auto  Twc0    = frame0->getTwc(0);
-      auto& factor0 = frameFactors.front().second;
-      auto  Twc1    = frame->getTwc(0);
-      auto  Tc1c0   = Twc1.inverse() * Twc0;
 
-      if (Tc1c0.translation().squaredNorm() > Config::Vio::minTriangulationBaselineSq) {
-        success |= BasicSolver::triangulate(factor0.undist0(),
-                                            factor.undist0(),
-                                            Tc1c0,
-                                            Pc0x);
+      Eigen::Vector3d Pc0x;
+      switch (factor1.type()) {
+      case db::Factor::Type::REPROJECTION: {
+        auto Twc0  = factor0.frame()->getTwc(frameCamId0.camId);
+        auto Twc1  = factor1.frame()->getTwc(frameCamId1.camId);
+        auto Tc1c0 = Twc1.inverse() * Twc0;
+
+        //auto image0 = factor0.frame()
+        //                ->getImagePyramid(frameCamId0.camId)
+        //                ->getOrigin()
+        //                .clone();
+        //auto image1 = factor1.frame()
+        //                ->getImagePyramid(frameCamId1.camId)
+        //                ->getOrigin()
+        //                .clone();
+
+        //cv::cvtColor(image0, image0, CV_GRAY2BGR);
+        //cv::cvtColor(image1, image1, CV_GRAY2BGR);
+        //cv::circle(image0,
+        //           cv::Point2f(factor0.uv().x(), factor0.uv().y()),
+        //           4,
+        //           {255, 0, 0},
+        //           -1);
+        //cv::circle(image1,
+        //           cv::Point2f(factor1.uv().x(), factor1.uv().y()),
+        //           4,
+        //           {255, 0, 0},
+        //           -1);
+        //cv::imshow("0", image0);
+        //cv::imshow("1", image1);
+        //cv::waitKey();
+
+        if (Tc1c0.translation().squaredNorm() < 0.0025)
+          continue;
+
+        initSuccess |= BasicSolver::triangulate(factor0.undist(),
+                                                factor1.undist(),
+                                                Tc1c0,
+                                                Pc0x);
+
+        break;
       }
-      if (success) {
-        ++monoInitCount;
+      case db::Factor::Type::DEPTH: {
+        TOY_ASSERT_MESSAGE(false, "not implemented");
+        break;
+      }
+      default: {
+        TOY_ASSERT_MESSAGE(false, "this should not happen");
+        break;
+      }
+      }
+
+      if (initSuccess) {
+        mp->setHost(currFrame);
+        double          invD = 1.0 / Pc0x.z();
+        Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
+        mp->setUndist(nuv);
+        mp->setInvDepth(invD);
+        mp->setState(db::MapPoint::Status::TRACKING);
+        mLocalMap->addMapPoint(mp);
+
+        ++initCount;
+        break;
       }
     }
-    else {
-      ++initCount;
-    }
 
-    if (success) {
-      double          invD = 1.0 / Pc0x.z();
-      Eigen::Vector2d nuv  = Pc0x.head(2) * invD;
-      mp->setUndist(nuv);
-      mp->setInvDepth(invD);
-      mp->setState(db::MapPoint::Status::INITIALING);
-      mLocalMap->addMapPoint(mp);
-
-      it = mpCands.erase(it);
-    }
-    else {
-      ++it;
-      //auto id = frameFactors.front().first.lock()->id();
-      //ToyLogE("triangulation fail  frame {} -- frame {}", id, frame->id());
+    if (initSuccess) {
+      eraseMpIds.insert(mpId);
     }
   }
+
+  for (auto& id : eraseMpIds) {
+    mpCands.erase(id);
+  }
+  auto candSize = mpCands.size();
 
   if (Config::Vio::debug) {
-    ToyLogD("init stereo : {}, init mono : {},  oldCount :{}, cand :{}",
+    ToyLogD("init : {}, oldCount :{}, cand : {} -> {}",
             initCount,
-            monoInitCount,
             oldCount,
+            tryCount,
             candSize);
   }
-  return initCount + monoInitCount;
+
+  return initCount;
 }
 
-db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
+void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
   std::vector<db::Frame::Ptr> keyFrames;
-  std::vector<db::Frame::Ptr> frames;
   keyFrames.reserve(Config::Vio::maxKeyFrameSize);
-  frames.reserve(Config::Vio::maxKeyFrameSize);
+
+  auto latestFrame = allFrames.back();
 
   for (auto& frame : allFrames) {
     if (frame->isKeyFrame()) {
       keyFrames.push_back(frame);
     }
     else {
-      frames.push_back(frame);
+      if (frame->id() != latestFrame->id()) {
+        mMarginalFrameIds.push_back(frame->id());
+      }
     }
   }
 
-  //if (frames.size() > Config::Vio::maxFrameSize) {
-  //  return frames.front();
-  //}
+  auto lastKeyFrame = keyFrames.back();
+  auto endIt        = std::prev(keyFrames.end(), 2);
 
-  auto latestFrame = allFrames.back();
-
-  if (keyFrames.size() > Config::Vio::maxKeyFrameSize) {
-    auto& latestMap = latestFrame->getMapPointFactorMap();
-
-    for (auto& kf : keyFrames) {
-      auto&  kfMap = kf->getMapPointFactorMap();
-      size_t count = 0;
-
-      for (auto& [mpWeak, f] : latestMap) {
-        if (kfMap.count(mpWeak)) {
-          ++count;
-        }
-      }
-
-      float ratio = float(count) / mNumCreatedPoints[kf->id()];
-      ToyLogD("marg due to ratio : {} / {} = {} id: {}",
-              count,
-              mNumCreatedPoints[kf->id()],
-              ratio,
-              kf->id());
-
-      if (ratio < Config::Vio::margFeatureConnectionRatio) {
-        //if (Config::Vio::debug)
-        //std::stringstream ss;
-        //for (auto& kff : keyFrames) {
-        //  ss << std::setw(4) << kff->id();
-        //}
-
-        ToyLogD("marg due to ratio : {} / {} = {} id: {}",
-                count,
-                mNumCreatedPoints[kf->id()],
-                ratio,
-                kf->id());
-        return kf;
+  while (keyFrames.size() - mMarginalKeyFrameIds.size() > Config::Vio::maxKeyFrameSize) {
+    std::map<int64_t, int> connectedMapPoints;
+    for (auto& map : latestFrame->mapPointFactorMaps()) {
+      for (auto& [mpId, f] : map) {
+        if (f.mapPoint()->status() < db::MapPoint::Status::TRACKING)
+          continue;
+        connectedMapPoints[f.mapPoint()->hostFrame()->id()]++;
       }
     }
 
-    //auto& oldest = keyFrames.front();
-    //auto& target = *(std::prev(keyFrames.end(), 2));
+    bool selected = false;
 
-    //auto& oldestMpFactorMap = oldest->getMapPointFactorMap();
-    //auto& targetMpFactorMap = target->getMapPointFactorMap();
+    for (auto it = keyFrames.begin(); it < endIt; ++it) {
+      auto kfId = (*it)->id();
 
-    //int count = 0;
+      int count = 0;
+      if (connectedMapPoints.count(kfId)) {
+        count = connectedMapPoints[kfId];
+      }
 
-    //for (auto& [mpWeak, f] : oldestMpFactorMap) {
-    //  if (targetMpFactorMap.count(mpWeak)) {
-    //    ++count;
-    //  }
-    //}
+      float ratio = float(count) / mNumCreatedPoints[kfId];
+      ToyLogD("marg due to ratio : {} / {} = {} id: {}",
+              count,
+              mNumCreatedPoints[kfId],
+              ratio,
+              kfId);
+      if (ratio < Config::Vio::margFeatureConnectionRatio) {
+        /*ToyLogD("marg due to ratio : {} / {} = {} id: {}",
+                count,
+                mNumCreatedPoints[kf->id()],
+                ratio,
+                kf->id());*/
+        mMarginalKeyFrameIds.emplace(kfId);
+        selected = true;
+        ToyLogD("marginalize due to : ratio  id : {}", kfId);
+        break;
+      }
+    }
 
-    //float ratio = float(count) / targetMpFactorMap.size();
+    if (selected) {
+      continue;
+    }
 
-    //if (ratio < Config::Vio::margFeatureConnectionRatio) {
-    //  //if (Config::Vio::debug)
-    //  ToyLogD("marginalize due to ratio : {} / {} = {}",
-    //          count,
-    //          targetMpFactorMap.size(),
-    //          ratio);
+    float          minScore = std::numeric_limits<float>::max();
+    db::Frame::Ptr minKeyFrame;
+    int64_t        minId = -1;
 
-    //return oldest;
-    //}
-
-    auto lastKeyFrame = keyFrames.back();
-
-    float  minScore = std::numeric_limits<float>::max();
-    size_t minIdx   = 1000000u;
-    size_t idx      = 0u;
-
-    auto endIt = std::prev(keyFrames.end(), 2);
     for (auto it1 = keyFrames.begin(); it1 < endIt; ++it1) {
       float denom = 0;
       for (auto it2 = keyFrames.begin(); it2 < endIt; ++it2) {
@@ -409,26 +373,20 @@ db::Frame::Ptr LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& al
       float score = std::sqrt(
         ((*it1)->getTwb().translation() - lastKeyFrame->getTwb().translation()) .norm()
       ) * denom;
+
+      ToyLogD("id : {} marg distance score : {} denom : {}", (*it1)->id(), (int)score, denom);
       // clang-format on
       if (score < minScore) {
-        minIdx   = idx;
+        minId    = (*it1)->id();
         minScore = score;
       }
-      idx++;
     }
-    TOY_ASSERT(minIdx < 100);
 
-    //if (Config::Vio::debug)
-    ToyLogD("marginalize due to : distance score");
+    TOY_ASSERT(minId >= 0);
 
-    return keyFrames[minIdx];
+    ToyLogD("marginalize due to : distance score id : {}", minId);
+    mMarginalKeyFrameIds.emplace(minId);
   }
-
-  if (frames.size() > Config::Vio::maxFrameSize) {
-    return frames.front();
-  }
-
-  return nullptr;
 }
 
 void LocalTracker::setDataToInfo() {
@@ -451,7 +409,7 @@ void LocalTracker::setDataToInfo() {
   outmp.reserve(mpSize * 4);
 
   for (auto& [key, mpPtr] : mpMap) {
-    if (mpPtr->status() < db::MapPoint::Status::INITIALING)
+    if (mpPtr->status() < db::MapPoint::Status::TRACKING)
       continue;
 
     Eigen::Vector3d Pwx = mpPtr->getPwx();

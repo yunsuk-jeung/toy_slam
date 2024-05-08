@@ -1,6 +1,6 @@
 #pragma once
 #include "sophus/se3.hpp"
-#include "usings.h"
+#include "CustomTypes.h"
 #include "VioSolver.h"
 
 namespace toy {
@@ -14,10 +14,11 @@ public:
 
   virtual bool solve(
     const std::vector<std::shared_ptr<db::Frame>>&    frames,
-    const std::vector<std::shared_ptr<db::MapPoint>>& trackingMapPoints,
-    const std::vector<std::shared_ptr<db::MapPoint>>& marginedMapPoints) override;
+    const std::vector<std::shared_ptr<db::MapPoint>>& trackingMapPoints) override;
 
-  virtual void marginalize(std::shared_ptr<db::Frame> frame) override;
+  virtual void marginalize(
+    std::set<int64_t>&                                marginalkeyFrameIds,
+    std::forward_list<std::shared_ptr<db::MapPoint>>& lostMapPoints) override;
 
 protected:
 

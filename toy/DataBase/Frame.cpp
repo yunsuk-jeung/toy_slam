@@ -8,7 +8,7 @@
 
 namespace toy {
 namespace db {
-size_t Frame::globalId = 0;
+int64_t Frame::globalId = 0;
 Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   : mId{globalId++}
   , mIsKeyFrame{false}
@@ -16,7 +16,12 @@ Frame::Frame(std::shared_ptr<ImagePyramidSet> set)
   , mCameras{nullptr, nullptr}
   , mFeatures{std::make_unique<Feature>(), std::make_unique<Feature>()}
   , mFixed{false}
-  , mLinearized{false} {}
+  , mLinearized{false} {
+  mMapPointFactorMaps.resize(mImagePyramids.size());
+
+  mDelta.setZero();
+  mBackupDelta.setZero();
+}
 
 Frame::Frame(Frame* src) {
   this->mId         = src->mId;
@@ -35,13 +40,14 @@ Frame::Frame(Frame* src) {
   this->mFeatures[0] = std::unique_ptr<Feature>(feature0);
   this->mFeatures[1] = std::unique_ptr<Feature>(feature1);
 
-  this->mTbcs        = src->mTbcs;
-  this->mTwb         = src->mTwb;
-  this->mBackupTwb   = src->mBackupTwb;
-  this->mDelta       = src->mDelta;
-  this->mBackupDelta = src->mBackupDelta;
-  this->mFixed       = src->mFixed;
-  this->mLinearized  = src->mLinearized;
+  this->mTbcs               = src->mTbcs;
+  this->mTwb                = src->mTwb;
+  this->mBackupTwb          = src->mBackupTwb;
+  this->mDelta              = src->mDelta;
+  this->mBackupDelta        = src->mBackupDelta;
+  this->mFixed              = src->mFixed;
+  this->mLinearized         = src->mLinearized;
+  this->mMapPointFactorMaps = src->mMapPointFactorMaps;
 }
 
 Frame::~Frame() {
@@ -66,29 +72,7 @@ void Frame::setCameras(Camera* cam0, Camera* cam1) {
   mCameras[1] = std::unique_ptr<Camera>(cam1);
 }
 
-//void Frame::setLbc(float* pfbc0, float* pfbc1) {
-//  Eigen::Matrix4f Mbc0(pfbc0);
-//  Eigen::Matrix4f Mbc1(pfbc1);
-
-//Eigen::Matrix3d Rbc0 = Mbc0.block<3, 3>(0, 0).cast<double>();
-//Eigen::Vector3d Tbc0 = Mbc0.block<3, 1>(0, 3).cast<double>();
-
-//Eigen::Matrix3d Rbc1 = Mbc1.block<3, 3>(0, 0).cast<double>();
-//Eigen::Vector3d Tbc1 = Mbc1.block<3, 1>(0, 3).cast<double>();
-
-//Eigen::Quaterniond Qbc0(Rbc0);
-//Eigen::Quaterniond Qbc1(Rbc1);
-
-//Sophus::SO3d SObc0 = Sophus::SO3d(Qbc0);
-//mLbcs[0].head(3)   = SObc0.log();
-//mLbcs[0].tail(3)   = Tbc0;
-
-//Sophus::SO3d SObc1 = Sophus::SO3d(Qbc1);
-//mLbcs[1].head(3)   = SObc1.log();
-//mLbcs[1].tail(3)   = Tbc1;
-//}
-
-void Frame::setSbc(float* pfbc0, float* pfbc1) {
+void Frame::setTbc(float* pfbc0, float* pfbc1) {
   Eigen::Matrix4f Mbc0(pfbc0);
   Eigen::Matrix4f Mbc1(pfbc1);
 
@@ -107,7 +91,14 @@ void Frame::setSbc(float* pfbc0, float* pfbc1) {
 
 void Frame::addMapPointFactor(std::shared_ptr<db::MapPoint> mp,
                               ReprojectionFactor            factor) {
-  mMapPointFactorMap.insert({mp, factor});
+  auto& idx = factor.camIdx();
+  mMapPointFactorMaps[idx].insert({mp->id(), factor});
+}
+
+void Frame::eraseMapPointFactor(size_t mapPointId) {
+  for (auto& mpFactorMap : mMapPointFactorMaps) {
+    mpFactorMap.erase(mapPointId);
+  }
 }
 
 void Frame::resetDelta() {
@@ -138,32 +129,24 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
   auto img = mImagePyramids[idx]->getOrigin().clone();
   cv::cvtColor(img, img, CV_GRAY2BGR);
 
-  auto Tcw = getTwc(idx).inverse();
+  for (auto& [mpId, factor] : mMapPointFactorMaps[idx]) {
+    auto mp = factor.mapPoint();
 
-  for (auto& [mpw, factor] : mMapPointFactorMap) {
-    auto mp = mpw.lock();
     if (!mp) {
       continue;
     }
 
     cv::Scalar color;
     switch (mp->status()) {
-    case db::MapPoint::Status::DELETING: {
-      continue;
-    }
     case db::MapPoint::Status::NONE: {
       color = {0, 0, 0};
       break;
       //continue;
     }
-    case db::MapPoint::Status::MARGINED: {
-      color = {255, 255, 0};
-      break;
-    }
-    case db::MapPoint::Status::INITIALING: {
-      color = {0, 255, 0};
-      break;
-    }
+    //case db::MapPoint::Status::INITIALING: {
+    //  color = {0, 255, 0};
+    //  break;
+    //}
     case db::MapPoint::Status::TRACKING: {
       color = {0, 0, 255};
       break;
@@ -173,15 +156,17 @@ void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
     Eigen::Vector3d undist;
 
     if (idx == 0) {
-      undist = factor.undist0();
-    }
-    else {
-      undist = factor.undist1();
+      undist = factor.undist();
     }
 
     auto meaUV = mCameras[idx]->project(undist);
     cv::circle(img, meaUV, 6, {255, 0, 0}, -1);
 
+    auto Tcw = getTwc(idx).inverse();
+
+    if (!mp->hostFrame()) {
+      continue;
+    }
     Eigen::Vector3d Xcx  = Tcw * mp->getPwx();
     Eigen::Vector3d nXcx = Xcx / Xcx.z();
 

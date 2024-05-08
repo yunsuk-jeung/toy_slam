@@ -10,7 +10,7 @@
 #include <tbb/blocked_range.h>
 #include "ToyLogger.h"
 #include "config.h"
-#include "usings.h"
+#include "CustomTypes.h"
 #include "Frame.h"
 #include "MapPoint.h"
 #include "CostFunction.h"
@@ -44,7 +44,7 @@ public:
   }
 
   static bool solveFramePose(db::Frame::Ptr curr) {
-    auto&            mapPointFactorMap = curr->getMapPointFactorMap();
+    auto&            mapPointFactorMap = curr->mapPointFactorMap(0u);
     Eigen::Matrix66d H                 = Eigen::Matrix66d::Zero();
     Eigen::Vector6d  b                 = Eigen::Vector6d::Zero();
 
@@ -54,16 +54,16 @@ public:
     std::vector<PORC::Ptr> costs;
     costs.reserve(mapPointFactorMap.size());
 
-    for (auto& [mpWeak, factor] : mapPointFactorMap) {
-      auto mp = mpWeak.lock();
+    for (auto& [mpId, factor] : mapPointFactorMap) {
+      auto& mp = factor.mapPoint();
       if (mp->status() != db::MapPoint::Status::TRACKING) {
         continue;
       }
-      db::Frame::Ptr   frame0  = curr;
-      Eigen::Vector3d& undist0 = factor.undist0();
-      Sophus::SE3d&    Tbc0    = frame0->getTbc(0);
+      db::Frame::Ptr   frame  = curr;
+      Eigen::Vector3d& undist = factor.undist();
+      Sophus::SE3d&    Tbc    = frame->getTbc(0u);
 
-      PORC::Ptr cost = std::make_shared<PORC>(frame0, Tbc0, mp, undist0, huber);
+      PORC::Ptr cost = std::make_shared<PORC>(frame, Tbc, mp, undist, huber);
 
       costs.push_back(cost);
     }

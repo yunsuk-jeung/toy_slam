@@ -60,7 +60,7 @@ public:
       // clang-format on
     }
 
-    std::vector<uint32_t>    mIds;
+    std::vector<int64_t>     mIds;
     std::vector<uint32_t>    mLevels;
     std::vector<cv::Point2f> mUVs;
     std::vector<uint32_t>    mTrackCounts;

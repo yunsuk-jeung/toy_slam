@@ -1,6 +1,8 @@
 #pragma once
 #include <memory>
 #include <vector>
+#include <set>
+#include <forward_list>
 #include <map>
 #include "macros.h"
 namespace toy {
@@ -14,12 +16,12 @@ public:
   VioSolver() {}
   virtual ~VioSolver() {}
 
-  virtual bool solve(
-    const std::vector<std::shared_ptr<db::Frame>>&    frames,
-    const std::vector<std::shared_ptr<db::MapPoint>>& mapPoints,
-    const std::vector<std::shared_ptr<db::MapPoint>>& marginedMapPoints) = 0;
+  virtual bool solve(const std::vector<std::shared_ptr<db::Frame>>&    frames,
+                     const std::vector<std::shared_ptr<db::MapPoint>>& mapPoints) = 0;
 
-  virtual void marginalize(std::shared_ptr<db::Frame> frame) = 0;
+  virtual void marginalize(
+    std::set<int64_t>&                                marginalkeyFrameIds,
+    std::forward_list<std::shared_ptr<db::MapPoint>>& marginalMapPoints) = 0;
 
 protected:
 };

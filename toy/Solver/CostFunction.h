@@ -1,6 +1,6 @@
 #pragma once
 #include "macros.h"
-#include "usings.h"
+#include "CustomTypes.h"
 #include "ToyAssert.h"
 #include "Frame.h"
 #include "MapPoint.h"
@@ -224,7 +224,7 @@ public:
     mPc1b1     = Tc1b1.translation();
   }
 
-  virtual double linearlize(bool updateState) {
+  virtual double linearlize(bool updateJacobian) {
     const Sophus::SE3d& Twb0 = mF0->Twb();
     const Sophus::SE3d  Tb1w = mF1->Twb().inverse();
 
@@ -257,7 +257,7 @@ public:
       std::tie(errSq, weight) = mME->computeError(cSq);
     }
 
-    if (updateState) {
+    if (updateJacobian) {
       double sqrtW = std::sqrt(weight);
 
       mRes = sqrtW * cost;

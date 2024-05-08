@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <set>
 #include <Eigen/Dense>
 #include "macros.h"
 
@@ -18,7 +19,8 @@ public:
   void setFrames(const std::vector<std::shared_ptr<db::Frame>>& frames);
   std::shared_ptr<SqrtMarginalizationCost> createMarginCost();
 
-  void marginalize(Eigen::VectorXi& indices,
+  void marginalize(std::set<int>&   marginIndices,
+                   std::set<int>&   remainIndices,
                    Eigen::MatrixXd& J,
                    Eigen::VectorXd& Res,
                    Eigen::VectorXd& delta);
@@ -37,6 +39,7 @@ protected:
   std::vector<std::shared_ptr<db::Frame>> mFrames;
 
 public:
+  auto&                  frames() { return mFrames; }
   const Eigen::MatrixXd& J() const { return mJ; }
   Eigen::MatrixXd&       getJ() { return mJ; }
   const Eigen::VectorXd& Res() const { return mRes; }

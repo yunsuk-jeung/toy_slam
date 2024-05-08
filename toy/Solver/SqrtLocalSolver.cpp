@@ -1,4 +1,5 @@
 #include <numeric>
+#include <unordered_set>
 #include <tbb/parallel_reduce.h>
 #include <tbb/blocked_range.h>
 #include "ToyLogger.h"
@@ -19,8 +20,8 @@
 
 namespace toy {
 namespace {
-size_t MP_SIZE    = db::MapPoint::PARAMETER_SIZE;
-size_t FRAME_SIZE = db::Frame::PARAMETER_SIZE;
+constexpr size_t MP_SIZE    = db::MapPoint::PARAMETER_SIZE;
+constexpr size_t FRAME_SIZE = db::Frame::PARAMETER_SIZE;
 
 MEstimator::Ptr createReprojectionMEstimator() {
   switch (Config::Vio::reprojectionME) {
@@ -40,17 +41,18 @@ SqrtLocalSolver::SqrtLocalSolver() {
   mProblem      = std::make_unique<SqrtProblem>();
   mMarginalizer = std::make_unique<SqrtMarginalizer>();
 
-  const size_t& initialFrameSize = Config::Vio::solverMinimumFrames - 1;
-  const auto    cols             = FRAME_SIZE * initialFrameSize;
+  //const size_t& initialFrameSize = Config::Vio::solverMinimumFrames - 1;
+  //const auto    cols             = FRAME_SIZE * initialFrameSize;
 
   Eigen::MatrixXd& J   = mMarginalizer->getJ();
   Eigen::VectorXd& Res = mMarginalizer->getRes();
 
-  J.resize(FRAME_SIZE, cols);
+  //J.resize(FRAME_SIZE, cols);
+  J.resize(FRAME_SIZE, FRAME_SIZE);
   Res.resize(FRAME_SIZE);
 
   J.setIdentity();
-  J *= 10000.0;
+  J *= 100000.0;
 
   Res.setZero();
 }
@@ -58,12 +60,26 @@ SqrtLocalSolver::SqrtLocalSolver() {
 SqrtLocalSolver::~SqrtLocalSolver() {}
 
 bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
-                            const std::vector<db::MapPoint::Ptr>& trackingMapPoints,
-                            const std::vector<db::MapPoint::Ptr>& marginedMapPoints) {
-  if (frames.size() < Config::Vio::solverMinimumFrames)
+                            const std::vector<db::MapPoint::Ptr>& trackingMapPoints) {
+  if (frames.size() < Config::Vio::solverMinimumFrames) {
+    mMarginalizer->setFrames({frames.front()});
     return false;
+  }
 
-  mFrames    = &frames;
+  std::vector<db::Frame::Ptr> reordered = mMarginalizer->frames();
+  reordered.reserve(frames.size());
+  std::set<int64_t> frameIds;
+  for (auto& f : reordered) {
+    frameIds.insert(f->id());
+  }
+  for (auto& f : frames) {
+    if (frameIds.count(f->id()) == 0) {
+      reordered.push_back(f);
+      frameIds.insert(f->id());
+    }
+  }
+
+  mFrames    = &reordered;
   mMapPoints = &trackingMapPoints;
 
   for (auto& f : *mFrames) {
@@ -78,118 +94,38 @@ bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
   mProblem->setMapPoints(mMapPoints);
 
   //reprojection cost
-  MEstimator::Ptr reProjME    = createReprojectionMEstimator();
-  const double&   focalLength = Config::Vio::standardFocalLength;
-
-  //add margin mappoints for anchor
-  //{
-  //  using PORC = PoseOnlyReporjectinCost;
-  //  std::vector<PORC::Ptr> costs;
-  //  costs.reserve(marginedMapPoints.size() * frames.size());
-  //  for (auto& mp : marginedMapPoints) {
-  //    auto& frameFactors = mp->getFrameFactors();
-  //    if (mp->status() == db::MapPoint::Status::MARGINED) {
-  //      for (auto& frameFactor : frameFactors) {
-  //        db::Frame::Ptr   frame0  = frameFactor.first.lock();
-  //        Eigen::Vector3d& undist0 = frameFactor.second.undist0();
-  //        Sophus::SE3d&    Tbc0    = frame0->getTbc(0);
-
-  //PORC::Ptr cost = std::make_shared<PORC>(frame0, Tbc0, mp, undist0, reProjME);
-  //costs.push_back(cost);
-
-  //if (frameFactor.second.type() != db::ReprojectionFactor::Type::STEREO)
-  //  continue;
-
-  //Eigen::Vector3d& undist1 = frameFactor.second.undist1();
-  //Sophus::SE3d&    Tbc1    = frame0->getTbc(1);
-  //PORC::Ptr cost2 = std::make_shared<PORC>(frame0, Tbc1, mp, undist1, reProjME);
-  //costs.push_back(cost2);
-  //}
-  //}
-  //}
-  //mProblem->addPoseOnlyReprojectionCost(costs);
-  //}
+  MEstimator::Ptr reProjME       = createReprojectionMEstimator();
+  const double&   stdFocalLength = Config::Vio::standardFocalLength;
 
   for (auto& mp : *mMapPoints) {
-    auto& frameFactors = mp->getFrameFactors();
+    auto& frameFactors = mp->frameFactorMap();
 
     std::vector<ReprojectionCost::Ptr> costs;
     costs.reserve(frameFactors.size());
 
-    auto it  = frameFactors.begin();
-    auto end = frameFactors.end();
-
-    db::Frame::Ptr frame0 = (*it).first.lock();
+    db::Frame::Ptr frame0 = mp->hostFrame();
     Sophus::SE3d&  Tbc0   = frame0->getTbc(0);
 
-    //add prior for uv
-    {
-      Eigen::Vector3d undist0 = it->second.undist0();
-
-      ReprojectionCost::Ptr cost = std::make_shared<ReprojectionPriorCost>(frame0,
-                                                                           Tbc0,
-                                                                           frame0,
-                                                                           Tbc0,
-                                                                           mp,
-                                                                           undist0,
-                                                                           reProjME,
-                                                                           focalLength);
-      costs.push_back(cost);
-    }
-    //add stereo reprojection cost for sub cam
-    if (it->second.type() == db::ReprojectionFactor::Type::STEREO) {
-      Sophus::SE3d&    Tbc1    = frame0->getTbc(1);
-      Eigen::Vector3d& undist1 = it->second.undist1();
-
-      ReprojectionCost::Ptr cost = std::make_shared<StereoReprojectionCost>(frame0,
-                                                                            Tbc0,
-                                                                            frame0,
-                                                                            Tbc1,
-                                                                            mp,
-                                                                            undist1,
-                                                                            reProjME,
-                                                                            focalLength);
-      costs.push_back(cost);
-    }
-
-    //add other reporjection cost
-    ++it;
-    for (; it != end; ++it) {
-      db::Frame::Ptr   frame1  = (*it).first.lock();
-      Sophus::SE3d&    Tbc1    = frame1->getTbc(0);
-      Eigen::Vector3d& undist0 = it->second.undist0();
+    for (auto& [frameCamId, factor] : frameFactors) {
+      db::Frame::Ptr frame1 = factor.frame();
+      auto&          camId  = frameCamId.camId;
+      Sophus::SE3d&  Tbc1   = frame1->getTbc(camId);
+      auto&          undist = factor.undist();
 
       ReprojectionCost::Ptr cost = std::make_shared<ReprojectionCost>(frame0,
                                                                       Tbc0,
                                                                       frame1,
                                                                       Tbc1,
                                                                       mp,
-                                                                      undist0,
+                                                                      undist,
                                                                       reProjME,
-                                                                      focalLength);
+                                                                      stdFocalLength);
       costs.push_back(cost);
-
-      if (it->second.type() != db::ReprojectionFactor::Type::STEREO)
-        continue;
-
-      Sophus::SE3d&    Tbc2    = frame1->getTbc(1);
-      Eigen::Vector3d& undist1 = it->second.undist1();
-
-      ReprojectionCost::Ptr cost2 = std::make_shared<ReprojectionCost>(frame0,
-                                                                       Tbc0,
-                                                                       frame1,
-                                                                       Tbc2,
-                                                                       mp,
-                                                                       undist1,
-                                                                       reProjME,
-                                                                       focalLength);
-      costs.push_back(cost2);
     }
 
     mProblem->addReprojectionCost(mp, costs);
   }
 
-  mMarginalizer->setFrames(*mFrames);
   auto marginCost = mMarginalizer->createMarginCost();
   mProblem->addMarginalizationCost(marginCost);
 
@@ -198,61 +134,100 @@ bool SqrtLocalSolver::solve(const std::vector<db::Frame::Ptr>&    frames,
   return result;
 }
 
-void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
-  std::vector<db::MapPoint::Ptr> marginMps;
-  marginMps.reserve(marginalFrame->getFeature(0)->getKeypoints().size());
+void SqrtLocalSolver::marginalize(std::set<int64_t>& marginalkeyFrameIds,
+                                  std::forward_list<db::MapPoint::Ptr>& lostMapPoints) {
+  if (marginalkeyFrameIds.empty())
+    return;
 
-  const size_t marginFrameId = marginalFrame->id();
+  std::vector<db::MapPoint::Ptr> marginalMapPoints;
+  marginalMapPoints.reserve(mMapPoints->size());
 
-  //greb mp which host frame is marginalFrame
+  std::unordered_set<int64_t> frameIds;
+  auto                        frames = mMarginalizer->frames();
+  for (auto& f : frames) {
+    frameIds.insert(f->id());
+  }
+
   for (auto& mp : *mMapPoints) {
-    auto frameId = mp->getFrameFactors().front().first.lock()->id();
-    if (frameId == marginFrameId) {
-      marginMps.push_back(mp);
-    }
-  }
-
-  if (Config::Vio::debug) {
-    ToyLogD("MarginalFrame ID : {}, margin mapPoints : {} ",
-            marginalFrame->id(),
-            marginMps.size());
-  }
-
-  /*  get linearized and decomposed mappoint blocks  */
-
-  size_t     rows = 0u;
-  const auto cols = mFrames->size() * db::Frame::PARAMETER_SIZE;
-
-  auto mpLinearizations = mProblem->grepMarginMapPointLinearizations(marginMps);
-
-  if (Config::Vio::tbb) {
-    auto sumRow = [&](const tbb::blocked_range<size_t>& r, size_t row) {
-      for (size_t i = r.begin(); i != r.end(); ++i) {
-        auto& linearization = mpLinearizations[i];
-        linearization->linearize(true);
-        linearization->decomposeWithQR();
-        row += (linearization->J().rows() - MP_SIZE);
+    if (marginalkeyFrameIds.count(mp->hostFrame()->id())) {
+      if (mp->frameFactorMap().size() > 1) {
+        marginalMapPoints.push_back(mp);
       }
-      return row;
-    };
-    auto                       mpLinearizationSize = mpLinearizations.size();
-    tbb::blocked_range<size_t> range(0, mpLinearizationSize);
-    rows = tbb::parallel_reduce(range, size_t(0), sumRow, std::plus<size_t>());
-  }
-  else {
-    for (auto& linearization : mpLinearizations) {
-      linearization->linearize(true);
-      linearization->decomposeWithQR();
-      rows += (linearization->J().rows() - MP_SIZE);
     }
   }
 
-  /*  imu factor */
+  for (auto& mp : lostMapPoints) {
+    if (mp->frameFactorMap().size() > 1) {
+      marginalMapPoints.push_back(mp);
+    }
+  }
 
-  /* marginal factor*/
+  for (auto& mp : marginalMapPoints) {
+    auto& factorMap = mp->frameFactorMap();
+    for (auto& [frameCamId, factor] : factorMap) {
+      if (frameIds.count(frameCamId.frameId) == 0) {
+        frames.push_back(factor.frame());
+        frameIds.insert(frameCamId.frameId);
+      }
+    }
+  }
+
+  SqrtProblem problem;
+  problem.setFrames(&frames);
+  problem.setMapPoints(&marginalMapPoints);
+
+  MEstimator::Ptr reProjME       = createReprojectionMEstimator();
+  const double&   stdFocalLength = Config::Vio::standardFocalLength;
+  for (auto& mp : marginalMapPoints) {
+    auto&                              factorMap = mp->frameFactorMap();
+    std::vector<ReprojectionCost::Ptr> costs;
+    costs.reserve(factorMap.size());
+
+    db::Frame::Ptr frame0 = mp->hostFrame();
+    Sophus::SE3d&  Tbc0   = frame0->getTbc(0);
+
+    for (auto& [frameCamId, factor] : factorMap) {
+      db::Frame::Ptr frame1 = factor.frame();
+      auto&          camId  = factor.camIdx();
+      Sophus::SE3d&  Tbc1   = frame1->getTbc(camId);
+      auto&          undist = factor.undist();
+
+      ReprojectionCost::Ptr cost = std::make_shared<ReprojectionCost>(frame0,
+                                                                      Tbc0,
+                                                                      frame1,
+                                                                      Tbc1,
+                                                                      mp,
+                                                                      undist,
+                                                                      reProjME,
+                                                                      stdFocalLength);
+      costs.push_back(cost);
+    }
+    problem.addReprojectionCost(mp, costs);
+  }
+
+  problem.linearize(true);
+  problem.decomposeLinearization();
+
+  auto marginCost = mMarginalizer->createMarginCost();
+  problem.addMarginalizationCost(marginCost);
+
+  Eigen::MatrixXd Q2t_J;
+  Eigen::VectorXd Q2t_C;
+  problem.getQRJacobian(Q2t_J, Q2t_C);
+  /*
+  size_t     rows = 0u;
+  const auto cols = frames.size() * db::Frame::PARAMETER_SIZE;
+
+  auto mpLinearizations = problem.mapPointLinearizations();
+
+  for (auto& linearization : mpLinearizations) {
+    rows += (linearization->J().rows() - MP_SIZE);
+  }
+  // imu factor
+
+  // marginal factor
   rows += mMarginalizer->J().rows();
 
-  /*  construct entire Jacob  */
   Eigen::MatrixXd Q2t_J;
   Eigen::VectorXd Q2t_C;
 
@@ -265,8 +240,8 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
   for (auto& linearization : mpLinearizations) {
     auto blockRow = linearization->J().rows() - MP_SIZE;
     // clang-format off
-    auto& Q2t_J_block = 
-    Q2t_J.block(currRow, 0, blockRow, cols) 
+    auto& Q2t_J_block =
+    Q2t_J.block(currRow, 0, blockRow, cols)
       = linearization->J().bottomLeftCorner(blockRow, cols);
     Q2t_C.segment(currRow, blockRow) = linearization->Res().tail(blockRow);
     // clang-format on
@@ -281,38 +256,48 @@ void SqrtLocalSolver::marginalize(db::Frame::Ptr marginalFrame) {
     Q2t_C.segment(currRow, J.rows())            = Res;
     currRow += J.rows();
   }
+  */
 
-  std::map<size_t, size_t>& frameColumnMap = mProblem->getFrameIdColumnMap();
-  auto                      marginColStart = frameColumnMap[marginFrameId];
+  std::map<int64_t, size_t>& frameColumnMap = problem.getFrameIdColumnMap();
 
-  Eigen::VectorXi indices(cols);
-  auto            indexBegin = indices.begin();
+  std::set<int> marginIndces;
+  std::set<int> keepIndices;
 
-  std::iota(indexBegin, indexBegin + FRAME_SIZE, marginColStart);
-  indexBegin += FRAME_SIZE;
-
-  for (auto& [id, startCol] : frameColumnMap) {
-    if (id == marginFrameId)
-      continue;
-    std::iota(indexBegin, indexBegin + FRAME_SIZE, startCol);
-    indexBegin += FRAME_SIZE;
+  for (auto& f : frames) {
+    const auto& id    = f->id();
+    auto        start = frameColumnMap[id];
+    if (marginalkeyFrameIds.count(id)) {
+      for (int i = 0; i < db::Frame::PARAMETER_SIZE; ++i) {
+        marginIndces.emplace(start + i);
+      }
+    }
+    else {
+      for (int i = 0; i < db::Frame::PARAMETER_SIZE; ++i) {
+        keepIndices.emplace(start + i);
+      }
+    }
   }
 
-  Eigen::VectorXd delta(cols - db::Frame::PARAMETER_SIZE);
+  auto            cols = Q2t_J.cols();
+  Eigen::VectorXd delta(cols - marginIndces.size());
   Eigen::Index    deltaIdx = 0u;
 
-  for (auto& f : *mFrames) {
-    if (f->isKeyFrame()) {
+  std::vector<db::Frame::Ptr> remainFrames;
+
+  for (auto& f : frames) {
+    if (!f->isLinearized()) {
       f->setLinearized(true);
     }
-    if (f->id() == marginFrameId) {
+
+    if (marginalkeyFrameIds.count(f->id())) {
       continue;
     }
+    remainFrames.push_back(f);
     delta.segment(deltaIdx, FRAME_SIZE) = f->getDelta();
     deltaIdx += db::Frame::PARAMETER_SIZE;
   }
-  //ToyLogD("wtf {}", delta);
-  mMarginalizer->marginalize(indices, Q2t_J, Q2t_C, delta);
+  mMarginalizer->marginalize(marginIndces, keepIndices, Q2t_J, Q2t_C, delta);
+  mMarginalizer->setFrames(remainFrames);
 }
 
 }  //namespace toy

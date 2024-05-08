@@ -15,15 +15,14 @@ public:
   SqrtMarginalizationCost(const std::vector<db::Frame::Ptr>& frames,
                           const Eigen::MatrixXd&             J,
                           const Eigen::VectorXd&             Res)
-    : mFrames{frames}
-    , mRows{frames.size() * db::Frame::PARAMETER_SIZE}
-    , mJ_marg{J}
-    , mRes_marg{Res} {
+    : mFrames{frames}  
+    , mJ{J}
+    , mRes{Res} {
     //mCurrentParameters.resize(rows);
     //mInitialParameters.resize(rows);
 
     //need one more jacobian for fixed frame
-    mJ = mJ_marg;
+
     //updateParameters();
     //mInitialParameters = mCurrentParameters;
   }
@@ -32,11 +31,11 @@ public:
 
   double linearize() {
     //updateParameters();
-    auto rows = mFrames.size() * db::Frame::PARAMETER_SIZE;
+    //auto rows = mFrames.size() * db::Frame::PARAMETER_SIZE;
 
     Eigen::VectorXd delta = getDelta();
     //Eigen::VectorXd delta = (mCurrentParameters - mInitialParameters).head(rows);
-    return delta.transpose() * mJ_marg.transpose() * (0.5 * mJ_marg * delta + mRes_marg);
+    return delta.transpose() * mJ.transpose() * (0.5 * mJ * delta + mRes);
   }
 
   void addToHessian(Eigen::MatrixXd& H, Eigen::VectorXd& B) {
@@ -45,9 +44,18 @@ public:
     //Eigen::VectorXd delta = (mCurrentParameters - mInitialParameters).head(rows);
     Eigen::VectorXd delta = getDelta();
 
-    auto cols = mJ_marg.cols();  //same as parameter rows
+    auto cols = mJ.cols();  //same as parameter rows
     H.block(0, 0, cols, cols) += mJ.transpose() * mJ;
-    B.segment(0, cols) -= mJ.transpose() * (mJ_marg * delta + mRes_marg);
+    B.segment(0, cols) -= mJ.transpose() * (mJ * delta + mRes);
+  }
+
+  void addToQRJacobian(Eigen::MatrixXd& Q2t_J, Eigen::VectorXd& Q2t_C, size_t& startRow) {
+    auto delta = getDelta();
+
+    Q2t_J.block(startRow, 0, mJ.rows(), mJ.cols()) = mJ;
+    Q2t_C.segment(startRow, mJ.rows())             = mJ * delta + mRes;
+
+    startRow += mJ.rows();
   }
 
 protected:
@@ -63,7 +71,7 @@ protected:
   //}
 
   Eigen::VectorXd getDelta() {
-    Eigen::VectorXd out(mRows);
+    Eigen::VectorXd out(mJ.cols());
     Eigen::Index    row = 0;
 
     for (auto& f : mFrames) {
@@ -78,11 +86,15 @@ protected:
   //Eigen::VectorXd                    mInitialParameters;
   //Eigen::VectorXd                    mCurrentParameters;
 
-  const size_t           mRows;
-  const Eigen::MatrixXd& mJ_marg;
-  const Eigen::VectorXd& mRes_marg;
+  //const Eigen::MatrixXd& mJ_marg;
+  //const Eigen::VectorXd& mRes_marg;
 
   Eigen::MatrixXd mJ;
   Eigen::MatrixXd mRes;
+
+public:
+  auto  rows() { return mJ.rows(); }
+  auto& J() { return mJ; }
+  auto& Res() { return mRes; }
 };
 }  //namespace toy

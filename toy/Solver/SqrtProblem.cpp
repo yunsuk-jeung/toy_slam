@@ -100,7 +100,7 @@ std::vector<MapPointLinearization::Ptr> SqrtProblem::grepMarginMapPointLineariza
 bool SqrtProblem::solve() {
   const auto& frames = *mFrames;
   //const auto  iTwb0  = frames.front()->getTwb();
-  
+
   //prepare solving
   const int Hrows = frames.size() * db::Frame::PARAMETER_SIZE;
   mH.resize(Hrows, Hrows);
@@ -275,10 +275,12 @@ double SqrtProblem::linearize(bool updateState) {
     errSq += poseOnlyReporjectinCost->linearlize(updateState);
   }
 
-  if (Config::Vio::solverLogDebug) {
-    ToyLogD("------ marginal cost : {}", mSqrtMarginalizationCost->linearize());
+  if (mSqrtMarginalizationCost) {
+    if (Config::Vio::solverLogDebug) {
+      ToyLogD("------ marginal cost : {}", mSqrtMarginalizationCost->linearize());
+    }
+    errSq += mSqrtMarginalizationCost->linearize();
   }
-  errSq += mSqrtMarginalizationCost->linearize();
 
   return errSq;
 }
@@ -308,6 +310,40 @@ void SqrtProblem::decomposeLinearization() {
   }
   qridx++;
 #endif
+}
+
+void SqrtProblem::getQRJacobian(Eigen::MatrixXd& Q2t_J, Eigen::VectorXd& Q2t_C) {
+  size_t     rows = 0u;
+  const auto cols = mFrames->size() * db::Frame::PARAMETER_SIZE;
+
+  for (auto& linearization : mMapPointLinearizations) {
+    rows += (linearization->J().rows() - MP_SIZE);
+  }
+
+  if (mSqrtMarginalizationCost) {
+    rows += mSqrtMarginalizationCost->rows();
+  }
+
+  Q2t_J.resize(rows, cols);
+  Q2t_C.resize(rows);
+  Q2t_J.setZero();
+  Q2t_C.setZero();
+
+  size_t currRow = 0;
+  for (auto& linearization : mMapPointLinearizations) {
+    auto blockRow = linearization->J().rows() - MP_SIZE;
+    // clang-format off
+    auto& Q2t_J_block = 
+    Q2t_J.block(currRow, 0, blockRow, cols) 
+      = linearization->J().bottomLeftCorner(blockRow, cols);
+    Q2t_C.segment(currRow, blockRow) = linearization->Res().tail(blockRow);
+    // clang-format on
+    currRow += blockRow;
+  }
+
+  if (mSqrtMarginalizationCost) {
+    mSqrtMarginalizationCost->addToQRJacobian(Q2t_J, Q2t_C, currRow);
+  }
 }
 
 void SqrtProblem::constructFrameHessian() {
@@ -344,7 +380,9 @@ void SqrtProblem::constructFrameHessian() {
   }
 
   //construct hessian for frames from marginCost
-  mSqrtMarginalizationCost->addToHessian(mH, mB);
+  if (mSqrtMarginalizationCost) {
+    mSqrtMarginalizationCost->addToHessian(mH, mB);
+  }
 }
 
 void SqrtProblem::backupParameters() {

@@ -5,13 +5,12 @@
 namespace toy {
 namespace db {
 
-MapPoint::MapPoint(size_t id)
+MapPoint::MapPoint(int64_t id)
   : mId{id}  //, mHostFrameId{-1}
   , mStatus{Status::NONE}
   , mInvDepth{1.0}
   , mBackupInvD{1.0}
   , mFixed{false} {
-  mFrameFactors.reserve(50);
   mMarginedPwx.setZero();
 }
 
@@ -19,9 +18,14 @@ MapPoint::MapPoint(size_t id)
 //
 //}
 
+void MapPoint::setHost(std::shared_ptr<db::Frame> host) {
+  mHostFrame = host;
+}
+
 void MapPoint::addFrameFactor(std::shared_ptr<db::Frame> frame,
                               ReprojectionFactor         factor) {
-  mFrameFactors.push_back({frame, factor});
+  FrameCamId key{frame->id(), factor.camIdx()};
+  mFrameFactorMap.insert({key, factor});
 }
 
 void MapPoint::backup() {
@@ -44,60 +48,29 @@ void MapPoint::update(const double& delta) {
 }
 
 bool MapPoint::eraseFrame(std::shared_ptr<db::Frame> frame) {
-  TOY_ASSERT(!mFrameFactors.empty());
+  TOY_ASSERT(!mFrameFactorMap.empty());
 
-  constexpr bool REMOVE_THIS = true;
+  bool eraseThis = false;
 
-  auto host = mFrameFactors.front().first.lock();
+  size_t camSize = frame->getFeatures().size();
 
-  for (auto it = mFrameFactors.begin(); it != mFrameFactors.end(); ++it) {
-    auto fptr = it->first.lock();
-
-    if (fptr != frame) {
-      continue;
-    }
-
-    if (fptr == host) {
-      if (status() > Status::INITIALING) {
-        auto nextIt   = std::next(it, 1);
-        this->mStatus = Status::MARGINED;
-        if (nextIt != mFrameFactors.end()) {
-          auto            Pwx = getPwx();
-          auto            kf  = nextIt->first.lock();
-          Eigen::Vector3d Pcx = kf->getTwc(0).inverse() * Pwx;
-          this->mInvDepth     = 1.0 / Pcx.z();
-          this->mUndist       = Pcx.head(2) * this->mInvDepth;
-          if (mFrameFactors.size() > 2) {
-            this->mStatus = Status::TRACKING;
-          }
-          else {
-            this->mStatus = Status::INITIALING;
-          }
-        }
-      }
-    }
-
-    mFrameFactors.erase(it);
-
-    if (mFrameFactors.empty())
-      return REMOVE_THIS;
-
-    break;
+  for (size_t i = 0; i < camSize; ++i) {
+    mFrameFactorMap.erase({frame->id(), i});
   }
 
-  return !REMOVE_THIS;
+  if (frame == mHostFrame || mFrameFactorMap.empty()) {
+    mHostFrame    = nullptr;
+    this->mStatus = Status::NONE;
+    eraseThis     = true;
+    mFrameFactorMap.clear();
+  }
+
+  return eraseThis;
 }
 
 Eigen::Vector3d MapPoint::getPwx() {
-  //if (mStatus == Status::MARGINED) {
-  //  return mMarginedPwx;
-  //}
-
-  auto& [frameW, factor] = mFrameFactors.front();
-  auto fPtr              = frameW.lock();
-
   Eigen::Vector3d Pc0x = Eigen::Vector3d(mUndist.x(), mUndist.y(), 1.0) / mInvDepth;
-  return fPtr->getTwc(0) * Pc0x;
+  return mHostFrame->getTwc(0) * Pc0x;
 }
 
 }  //namespace db

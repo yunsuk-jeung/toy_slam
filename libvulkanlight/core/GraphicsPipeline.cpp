@@ -83,8 +83,8 @@ void GraphicsPipeline::prepare() {
   };
 
   VKL_ASSERT_MESSAGE(!mVertBindingDescription.empty(), this->mName.c_str());
-  VKL_ASSERT(!mAttributeDescription.empty(), this->mName.c_str());
-  VKL_ASSERT(mInputAssemStateCISetted, this->mName.c_str());
+  VKL_ASSERT_MESSAGE(!mAttributeDescription.empty(), this->mName.c_str());
+  VKL_ASSERT_MESSAGE(mInputAssemStateCISetted, this->mName.c_str());
 
   vk::PipelineVertexInputStateCreateInfo inputStateCI({},
                                                       mVertBindingDescription,

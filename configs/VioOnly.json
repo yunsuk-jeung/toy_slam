@@ -1,5 +1,5 @@
 {
-	"sync": true,
+  "sync": true,
 
   "vio": {
     "on": true,
@@ -10,8 +10,8 @@
       "feature": {
         "point": {
           "patchSize": 31,
-          "rowGridCount": 10,
-          "colGridCount": 16,
+          "rowGridCount": 12,
+          "colGridCount": 18,
           "on": true,
           "tracker": "Fast.PatchOpticalFlow",
           "minTrackedPoint": 30,
@@ -31,7 +31,8 @@
     "localTracker": {
       "initializeMapPointCount": 30,
       "minTriangulationBaseline": 0.05,
-      "newKeframeFeatureRatio": 0.7,
+      "newKeyFrameFeatureRatio": 0.7,
+      "newKeyFrameAfter": 1,
       "margFeatureConnectionRatio": 0.2,
       "minKeyFrameCount": 3,
       "maxFrameSize": 2,
@@ -39,7 +40,7 @@
       "minParallaxSqNorm": 400,
       "vioSolver": {
         "name": "SqrtLocalSolver",
-        "solverLogDebug": false,
+        "solverLogDebug": true,
         "solverMinimumFrames": 4,
         "reprojectionME": "huber",
         "reprojectionMEConst": 1.0,

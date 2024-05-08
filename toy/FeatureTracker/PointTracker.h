@@ -43,7 +43,7 @@ protected:
   static cv::Mat createMask(const cv::Mat& origin, db::Feature* feature);
 
 protected:
-  size_t                        mFeatureId;
+  int64_t                       mFeatureId;
   size_t                        mMaxFeatureSize;
   std::vector<uint8_t>          mGridStatus;
   std::string                   mFeatureType;

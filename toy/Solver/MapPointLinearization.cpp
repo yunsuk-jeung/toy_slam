@@ -10,8 +10,8 @@ static constexpr auto COST_SIZE = ReprojectionCost::SIZE;
 static constexpr auto POSE_SIZE = db::Frame::PARAMETER_SIZE;
 static constexpr auto MP_SIZE   = db::MapPoint::PARAMETER_SIZE;
 }  //namespace
-MapPointLinearization::MapPointLinearization(db::MapPoint::Ptr         mp,
-                                             std::map<size_t, size_t>* frameIdColMap,
+MapPointLinearization::MapPointLinearization(db::MapPoint::Ptr          mp,
+                                             std::map<int64_t, size_t>* frameIdColMap,
                                              std::vector<ReprojectionCost::Ptr>& costs)
   : mMapPoint{mp}
   , mFrameIdColumnMapRp{frameIdColMap} {
@@ -35,7 +35,7 @@ MapPointLinearization::MapPointLinearization(MapPointLinearization&& src) noexce
   mReprojectionCosts.swap(src.mReprojectionCosts);
 }
 
-double MapPointLinearization::linearize(bool updateState) {
+double MapPointLinearization::linearize(bool updateJacobian) {
   mJ.setZero();
   mRes.setZero();
 
@@ -46,9 +46,9 @@ double MapPointLinearization::linearize(bool updateState) {
 
   //YSTODO: tbb.... tbb might be slower
   for (auto& cost : mReprojectionCosts) {
-    errSq += cost->linearlize(updateState);
+    errSq += cost->linearlize(updateJacobian);
 
-    if (updateState) {
+    if (updateJacobian) {
       const int& id0 = cost->getFrame0()->id();
       const int& id1 = cost->getFrame1()->id();
 

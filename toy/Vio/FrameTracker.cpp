@@ -69,6 +69,7 @@ void FrameTracker::process() {
 
 db::Frame::Ptr FrameTracker::getLatestFrame() {
   db::ImagePyramidSet::Ptr set = getLatestInput();
+
   if (!set)
     return nullptr;
 
@@ -77,7 +78,7 @@ db::Frame::Ptr FrameTracker::getLatestFrame() {
 
   db::Frame::Ptr currFrame = std::make_shared<db::Frame>(set);
   currFrame->setCameras(cam0, cam1);
-  currFrame->setSbc(Config::Vio::camInfo0.Mbc.data(), Config::Vio::camInfo1.Mbc.data());
+  currFrame->setTbc(Config::Vio::camInfo0.Mbc.data(), Config::Vio::camInfo1.Mbc.data());
 
   return currFrame;
 }

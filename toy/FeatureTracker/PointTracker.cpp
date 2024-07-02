@@ -33,62 +33,12 @@ PointTracker::PointTracker(std::string type)
 PointTracker::~PointTracker() {}
 
 size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
-  size_t trackedPtSize = match(prevFrame, currFrame);
+  size_t trackedPtSize = mPointMatcher->match(prevFrame, currFrame);
 
-  //ToyLogD("currFrame id {} , {}  ",
-  //        currFrame->id(),
-  //        trackedPtSize);
-
-  //size_t prevSize      = mPrevIds.size() + 1;
-  //size_t newPt         = 0u;
-
-  //int   found  = 0;
-  //auto& kptIds = currFrame->getFeature(0)->getKeypoints().mIds;
-  //for (auto& id : kptIds) {
-  //  if (mPrevIds.count(id)) {
-  //    ++found;
-  //  }
-  //}
-  //if (prevSize > mMaxFeatureSize) {
-  //  prevSize = mMaxFeatureSize;
-  //}
-
-  //float ratio = float(found) / float(prevSize);
-
-  //bool bTrackStereo = false;
-
-  //if (mStereoTrackingIntervalCount == Config::Vio::stereoTrackingInterval) {
-  //  mStereoTrackingIntervalCount = 0;
-  //  bTrackStereo                 = true;
-  //}
-  //else {
-  //  ++mStereoTrackingIntervalCount;
-  //}
-
-  //ToyLogD("currFrame id {} , ratio : {} = {} /{}  ",
-  //        currFrame->id(),
-  //        ratio,
-  //        trackedPtSize,
-  //        prevSize);
-
-  //if (ratio < Config::Vio::minTrackedRatio
-  //    || trackedPtSize < Config::Vio::minTrackedPoint) {
-  //ToyLogD("currFrame id {} , extracting new Feature : {} = {} /{}  ",
-  //        currFrame->id(),
-  //        ratio,
-  //        trackedPtSize,
-  //        prevSize);
   size_t newPt = detect(currFrame);
-  //mPrevIds.clear();
-
-  //for (auto& id : kptIds) {
-  //  mPrevIds.insert(id);
-  //}
-  //bTrackStereo = true;
-  //}
 
   if (currFrame->getImagePyramid(1)->type() == 1) {
-    size_t stereo = matchStereo(currFrame);
+    size_t stereo = mPointMatcher->matchStereo(currFrame, mDetectedFeature);
   }
 
   return trackedPtSize;
@@ -210,14 +160,6 @@ void PointTracker::devideImage(cv::Mat&                  src,
       offsets.push_back(offset);
     }
   }
-}
-
-size_t PointTracker::match(db::Frame* prev, db::Frame* curr) {
-  return mPointMatcher->match(prev, curr);
-}
-
-size_t PointTracker::matchStereo(db::Frame* frame) {
-  return mPointMatcher->matchStereo(frame, mDetectedFeature);
 }
 
 void PointTracker::convertCVKeyPointsToFeature(Camera*                    cam,

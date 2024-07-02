@@ -296,7 +296,9 @@ SwapchainRenderContext::acquireNextImage() {
   VKL_CHECK_ERROR(static_cast<VkResult>(result.result), "acquireNextImageKHR");
 
   if (mDevice->vk().getFenceStatus(mCmdFences[curr]) == vk::Result::eNotReady) {
-    auto result = mDevice->vk().waitForFences({mCmdFences[curr]}, VK_TRUE, UINT64_MAX);
+    auto waitResult = mDevice->vk().waitForFences({mCmdFences[curr]},
+                                                  VK_TRUE,
+                                                  UINT64_MAX);
   }
   mDevice->vk().resetFences({mCmdFences[curr]});
 

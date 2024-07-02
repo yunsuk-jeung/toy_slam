@@ -13,7 +13,7 @@
           "rowGridCount": 12,
           "colGridCount": 18,
           "on": true,
-          "tracker": "Fast.PatchOpticalFlow",
+          "tracker": "Fast.CVOpticalFlow",
           "minTrackedPoint": 30,
           "minTrackedRatio": 0.7,
           "epipolarThreashold": 0.005,

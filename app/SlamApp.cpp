@@ -190,7 +190,7 @@ void SLAMApp::createPipelines() {
     };
     PL->setVertexDescription(bd, ad);
     PL->setPrimitiveTopology(vk::PrimitiveTopology::eLineList);
-    auto& RCI = PL->getRasterizationStateCI();
+    auto& RCI     = PL->getRasterizationStateCI();
     RCI.lineWidth = 3.0f;
     PL->prepare();
   }
@@ -203,6 +203,12 @@ void SLAMApp::createRenderers() {
 }
 
 void SLAMApp::onRender() {
+  static int count = 0;
+  if (count == 1) {
+    count = 0;
+    return;
+  }
+  count++;
   mWindow->pollEvents();
 
   if (mGUI) {

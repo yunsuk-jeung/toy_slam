@@ -92,7 +92,7 @@ void LocalTracker::process() {
 
     BasicSolver::solveFramePose(currFrame);
 
-    drawDebugView(100, 0);
+    //drawDebugView(100, 0);
 
     mVioSolver->solve(frames, trackingMapPoints);
     auto& currFactorMap = currFrame->mapPointFactorMap(0u);
@@ -124,11 +124,11 @@ void LocalTracker::process() {
       ++mKeyFrameAfter;
     }
 
-    drawDebugView(500, 500);
+    //drawDebugView(500, 500);
     //drawDebugView(100, 1);
 
     //DEBUG_POINT();
-    cv::waitKey(1);
+    //cv::waitKey(1);
     //
     //if (newMp > 0) && createMPCount > 0) {
     //    ToyLogD("     Set KeyFrame : {} create Mp Count : {}",

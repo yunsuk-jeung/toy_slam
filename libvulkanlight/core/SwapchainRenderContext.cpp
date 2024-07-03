@@ -295,14 +295,16 @@ SwapchainRenderContext::acquireNextImage() {
                                                   mBfSemaphores[curr].available);
   VKL_CHECK_ERROR(static_cast<VkResult>(result.result), "acquireNextImageKHR");
 
-  if (mDevice->vk().getFenceStatus(mCmdFences[curr]) == vk::Result::eNotReady) {
-    auto waitResult = mDevice->vk().waitForFences({mCmdFences[curr]},
+  auto swapchainIdx = result.value;
+
+  if (mDevice->vk().getFenceStatus(mCmdFences[swapchainIdx]) == vk::Result::eNotReady) {
+    auto waitResult = mDevice->vk().waitForFences({mCmdFences[swapchainIdx]},
                                                   VK_TRUE,
                                                   UINT64_MAX);
   }
-  mDevice->vk().resetFences({mCmdFences[curr]});
+  mDevice->vk().resetFences({mCmdFences[swapchainIdx]});
 
-  return std::make_tuple(curr, mCmdFences[curr], mBfSemaphores[curr]);
+  return std::make_tuple(swapchainIdx, mCmdFences[swapchainIdx], mBfSemaphores[curr]);
 }
 
 void SwapchainRenderContext::prepareColor() {

@@ -198,8 +198,8 @@ void PointTracker::checkEmptyGrid(const cv::Mat& origin, db::Feature* feature) {
   memset(mGridStatus.data(), 0, sizeof(uint8_t) * mGridStatus.size());
   const auto& uvs = feature->getKeypoints().mUVs;
 
-  const int& rowGridCount = Config::Vio::rowGridCount;
   const int& colGridCount = Config::Vio::colGridCount;
+  const int& rowGridCount = Config::Vio::rowGridCount;
   const int  gridCols     = origin.cols / colGridCount;
   const int  gridRows     = origin.rows / rowGridCount;
   const int  startCol     = (origin.cols % colGridCount) >> 1;
@@ -207,10 +207,9 @@ void PointTracker::checkEmptyGrid(const cv::Mat& origin, db::Feature* feature) {
   auto       k            = 0u;
 
   for (const auto& uv : uvs) {
-    int col  = (uv.x - startCol) / gridCols;
-    int row  = (uv.y - startRow) / gridRows;
-    col      = col < 0 ? 0 : col;
-    row      = row < 0 ? 0 : row;
+    int col = std::clamp(int(uv.x - startCol) / gridCols, 0, colGridCount - 1);
+    int row = std::clamp(int(uv.y - startRow) / gridRows, 0, rowGridCount - 1);
+
     auto idx = colGridCount * row + col;
     if (mGridStatus[idx] != 0x01) {
       mGridStatus[idx] = 0x01;

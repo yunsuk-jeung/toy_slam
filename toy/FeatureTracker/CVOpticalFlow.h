@@ -69,12 +69,20 @@ public:
                                patch,
                                Config::Vio::maxPyramidLevel);
 
+      auto cols = pyramid0[0].cols;
+      auto rows = pyramid0[0].rows;
+
       for (size_t i = 0; i < reverse_status.size(); ++i) {
         if (!statusO[i]) {
           continue;
         }
 
         if (!reverse_status[i]) {
+          statusO[i] = false;
+          continue;
+        }
+
+        if (uvs[i].x < 2 || uvs[i].x > cols - 2 || uvs[i].y < 2 || uvs[i].y > rows - 2) {
           statusO[i] = false;
           continue;
         }

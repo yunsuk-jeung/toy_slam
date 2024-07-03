@@ -302,7 +302,7 @@ SwapchainRenderContext::acquireNextImage() {
   }
   mDevice->vk().resetFences({mCmdFences[curr]});
 
-  return std::make_tuple(result.value, mCmdFences[curr], mBfSemaphores[curr]);
+  return std::make_tuple(curr, mCmdFences[curr], mBfSemaphores[curr]);
 }
 
 void SwapchainRenderContext::prepareColor() {

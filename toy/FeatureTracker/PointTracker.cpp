@@ -37,7 +37,7 @@ size_t PointTracker::process(db::Frame* prevFrame, db::Frame* currFrame) {
 
   size_t newPt = detect(currFrame);
 
-  if (currFrame->getImagePyramid(1)->type() == 1) {
+  if (newPt > 0 && currFrame->getImagePyramid(1)->type() == 1) {
     size_t stereo = mPointMatcher->matchStereo(currFrame, mDetectedFeature);
   }
 
@@ -86,7 +86,13 @@ size_t PointTracker::detect(db::Frame* frame) {
     keyPoints.push_back(kpts.front());
   }
 
-  convertCVKeyPointsToFeature(cam, keyPoints, feature);
+  auto& newKpts = mDetectedFeature->getKeypoints();
+  newKpts.clear();
+  newKpts.reserve(keyPoints.size());
+
+  if (!keyPoints.empty()) {
+    convertCVKeyPointsToFeature(cam, keyPoints, feature);
+  }
 
   if (Config::Vio::showExtraction) {
     cv::Mat image = origin.clone();
@@ -165,10 +171,7 @@ void PointTracker::devideImage(cv::Mat&                  src,
 void PointTracker::convertCVKeyPointsToFeature(Camera*                    cam,
                                                std::vector<cv::KeyPoint>& kpts,
                                                db::Feature*               feature) {
-  auto& newKpts = mDetectedFeature->getKeypoints();
-  newKpts.clear();
-  newKpts.reserve(kpts.size());
-
+  auto& newKpts    = mDetectedFeature->getKeypoints();
   auto& ids        = newKpts.mIds;
   auto& levels     = newKpts.mLevels;
   auto& points     = newKpts.mUVs;

@@ -610,11 +610,10 @@ void App::buildCommandBuffer() {
 
 vk::CommandBuffer App::beginCommandBuffer() {
   //if you dont want to recycle
-  //vk::CommandBufferBeginInfo
-  //cmdBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+  vk::CommandBufferBeginInfo cmdBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
   //if you want to recycle
-  vk::CommandBufferBeginInfo cmdBeginInfo;
+  //vk::CommandBufferBeginInfo cmdBeginInfo;
 
   auto& renderCmdBuffers = mRenderContext->getRenderCommandBuffers();
   auto& swapChainImages  = mRenderContext->getColorImages();
@@ -674,7 +673,6 @@ void App::prepareFrame() {
   std::tie(mCurrBufferingIdx,
            mCurrCmdFence,
            mCurrBufferingSemaphore) = mRenderContext->acquireNextImage();
-  vklLogD("{}", mCurrBufferingIdx);
 
   //mCurrBufferingSemaphore           = mRenderContext->getCurrBufferingSemaphore();
 

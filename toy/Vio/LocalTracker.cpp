@@ -92,6 +92,8 @@ void LocalTracker::process() {
 
     BasicSolver::solveFramePose(currFrame);
 
+    drawDebugView(100, 0);
+
     mVioSolver->solve(frames, trackingMapPoints);
     auto& currFactorMap = currFrame->mapPointFactorMap(0u);
     float ratio         = float(connected) / float(currFactorMap.size());
@@ -122,9 +124,11 @@ void LocalTracker::process() {
       ++mKeyFrameAfter;
     }
 
-    //drawDebugView(100, 0);
+    drawDebugView(500, 500);
+    //drawDebugView(100, 1);
+
     //DEBUG_POINT();
-    //cv::waitKey(1);
+    cv::waitKey(1);
     //
     //if (newMp > 0) && createMPCount > 0) {
     //    ToyLogD("     Set KeyFrame : {} create Mp Count : {}",
@@ -309,7 +313,10 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
   }
 
   auto lastKeyFrame = keyFrames.back();
-  auto endIt        = std::prev(keyFrames.end(), 2);
+  if (keyFrames.size() < 2)
+    return;
+
+  auto endIt = std::prev(keyFrames.end(), 2);
 
   while (keyFrames.size() - mMarginalKeyFrameIds.size() > Config::Vio::maxKeyFrameSize) {
     std::map<int64_t, int> connectedMapPoints;

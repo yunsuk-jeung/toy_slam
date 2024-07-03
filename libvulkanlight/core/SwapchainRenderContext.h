@@ -28,7 +28,7 @@ protected:
   void prepareDepthStencil() override;
 
   void createSwapChain(vk::Extent2D                    extent     = {},
-                       uint32_t                        imageCount = 4,
+                       uint32_t                        imageCount = 3,
                        vk::SurfaceTransformFlagBitsKHR transform =
                          vk::SurfaceTransformFlagBitsKHR::eIdentity,
                        std::set<vk::ImageUsageFlagBits> imageUsageFlags =

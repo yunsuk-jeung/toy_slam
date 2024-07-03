@@ -50,14 +50,11 @@ public:
                                patch,
                                Config::Vio::maxPyramidLevel);
 
-      auto* cam1 = curr->getCamera(0);
-      cam1->undistortPoints(uvs, undists);
+      //std::vector<uchar> statusE;
+      //cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
 
-      std::vector<uchar> statusE;
-      cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
-
-      const double threshold = Config::Vio::epipolarThreashold;
-      cv::findFundamentalMat(uvs0, uvs, cv::FM_RANSAC, 1.0, 0.99, statusE);
+      //const double threshold = Config::Vio::epipolarThreashold;
+      //cv::findFundamentalMat(uvs0, uvs, cv::FM_RANSAC, 1.0, 0.99, statusE);
       //cv::findEssentialMat(undists0, undists, I, cv::RANSAC, 0.99, threshold, statusE);
 
       std::vector<cv::Point2f> reverse_uvs;
@@ -81,15 +78,19 @@ public:
           statusO[i] = false;
           continue;
         }
-        //cv::Point2f dist       = uvs0[i] - reverse_uvs[i];
-        //float       distNormSq = dist.x * dist.x + dist.y * dist.y;
-        //
-        //if (distNormSq > 5.0f) {
-        //  statusO[i] = 0;
-        //}
+
+        cv::Point2f dist       = uvs0[i] - reverse_uvs[i];
+        float       distNormSq = dist.x * dist.x + dist.y * dist.y;
+
+        if (distNormSq > 5.0f) {
+          statusO[i] = 0;
+        }
       }
 
-      auto  trackSize  = statusE.size();
+      auto* cam1 = curr->getCamera(k);
+      cam1->undistortPoints(uvs, undists);
+
+      auto  trackSize  = statusO.size();
       auto& keyPoints1 = curr->getFeature(k)->getKeypoints();
       keyPoints1.reserve(trackSize);
 
@@ -98,16 +99,21 @@ public:
       auto& uvs1        = keyPoints1.mUVs;
       auto& trackCount1 = keyPoints1.mTrackCounts;
       auto& undists1    = keyPoints1.mUndists;
+      auto& idToidx     = keyPoints1.mIdIdx;
+
       //auto& featureType = keyPoints1.mFeatureType;
 
+      size_t trackedIdx = 0;
       for (size_t i = 0; i < trackSize; ++i) {
-        if (statusO[i] == 0 || statusE[i] == 0)
+        if (statusO[i] == 0)
           continue;
         ids1.push_back(ids0[i]);
         levels1.push_back(levels0[i]);
         uvs1.push_back(uvs[i]);
         trackCount1.push_back(++trackCount0[i]);
         undists1.push_back(undists[i]);
+        idToidx[ids0[i]] = trackedIdx++;
+
         //featureType.push_back(0);
       }
       if (k == 0) {
@@ -174,14 +180,44 @@ public:
                              patch,
                              Config::Vio::maxPyramidLevel);
 
+    std::vector<cv::Point2f> reverse_uvs;
+    std::vector<uchar>       reverse_status;
+
+    cv::calcOpticalFlowPyrLK(pyramid1,
+                             pyramid0,
+                             uvs,
+                             reverse_uvs,
+                             reverse_status,
+                             cv::noArray(),
+                             patch,
+                             Config::Vio::maxPyramidLevel);
+
+    for (size_t i = 0; i < reverse_status.size(); ++i) {
+      if (!status[i]) {
+        continue;
+      }
+
+      if (!reverse_status[i]) {
+        status[i] = false;
+        continue;
+      }
+
+      cv::Point2f dist       = uvs0[i] - reverse_uvs[i];
+      float       distNormSq = dist.x * dist.x + dist.y * dist.y;
+
+      if (distNormSq > 5.0f) {
+        status[i] = 0;
+      }
+    }
+
     auto* cam1 = frame->getCamera(1);
     cam1->undistortPoints(uvs, undists);
-    std::vector<uchar> statusE;
+    //std::vector<uchar> statusE;
     //cv::Mat            I = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, 1, 0, 0, 0, 1);
 
     //const double threshold = Config::Vio::epipolarThreashold;
     //cv::findEssentialMat(undists0, undists1, I, cv::RANSAC, 0.99, threshold, statusE);
-    cv::findFundamentalMat(uvs0, uvs, cv::FM_RANSAC, 1.0, 0.99, statusE);
+    //cv::findFundamentalMat(uvs0, uvs, cv::FM_RANSAC, 1.0, 0.99, statusE);
 
     auto trackSize = uvs0.size();
 
@@ -197,7 +233,7 @@ public:
 
     size_t stereoFeatureSize = 0u;
     for (int i = 0; i < trackSize; ++i) {
-      if (status[i] == 0 || statusE[i] == 0) {
+      if (status[i] == 0 || reverse_status[i] == 0) {
         continue;
       }
 
@@ -216,13 +252,16 @@ public:
       cv::cvtColor(image1, image1, cv::COLOR_GRAY2BGR);
 
       for (int i = 0; i < uvs0.size(); i++) {
-        cv::line(image1, uvs0[i], uvs1[i], {0.0, 255.0, 0.0}, 1);
-        cv::circle(image1, uvs1[i], 4, {0.0, 255.0, 0.0}, -1);
+        if (idToidx.count(ids0[i]) < 1)
+          continue;
+        auto idx1 = idToidx[ids0[i]];
+        cv::line(image1, uvs0[i], uvs1[idx1], {0.0, 255.0, 0.0}, 1);
+        cv::circle(image1, uvs1[idx1], 4, {0.0, 255.0, 0.0}, -1);
       }
       for (int i = 0; i < uvs0.size(); i++) {
-        if (status[i] == 0 || statusE[i] == 0) {
-          cv::line(image1, uvs0[i], uvs1[i], {255.0, 0.0, 0.0}, 1);
-          cv::circle(image1, uvs1[i], 2, {255.0, 0.0, 0.0}, -1);
+        if (status[i] == 0) {
+          cv::line(image1, uvs0[i], uvs[i], {255.0, 0.0, 0.0}, 1);
+          cv::circle(image1, uvs[i], 2, {255.0, 0.0, 0.0}, -1);
         }
       }
       cv::imshow("stereo opticalflow1", image1);

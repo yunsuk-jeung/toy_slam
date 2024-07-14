@@ -16,14 +16,20 @@ file(GLOB_RECURSE VKL_SRC
 
 add_library(${PROJECT_NAME} STATIC ${VKL_SRC})
 
-file(GLOB SUBDIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} */)
+file(GLOB SUBDIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *)
+
+set(DIRECTORY_LIST "")
+foreach(subdir ${SUBDIRECTORIES})
+  if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
+    list(APPEND DIRECTORY_LIST ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
+  endif()
+endforeach()
 
 target_link_libraries(${PROJECT_NAME} PUBLIC Vulkan::Vulkan libs graphicslib)
 target_include_directories(${PROJECT_NAME}
   PUBLIC
-
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${SUBDIRECTORIES}
+  ${DIRECTORY_LIST}
   ${CMAKE_CURRENT_SOURCE_DIR}/../common
 )
 

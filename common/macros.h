@@ -20,3 +20,4 @@
 #define DELETE_MOVE_CONSTRUCTORS(TypeName)                                               \
   TypeName(TypeName&&)       = delete;                                                   \
   void operator=(TypeName&&) = delete
+  

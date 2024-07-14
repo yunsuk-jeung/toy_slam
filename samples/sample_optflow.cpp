@@ -56,9 +56,13 @@ auto main() -> int {
     ImageData data0{0, CV_8UC1, ns, image.data, image.cols, image.rows};
     ImageData data1{-1, CV_8UC1, ns, nullptr, image.cols, image.rows};
 
-  db::ImagePyramid::Uni    pyr0  = std::make_unique<db::ImagePyramid>(data0);
-  db::ImagePyramid::Uni    pyr1  = std::make_unique<db::ImagePyramid>(data1);
-  db::ImagePyramidSet::Ptr set   = std::make_shared<db::ImagePyramidSet>(pyr0, pyr1);
+
+  std::vector<db::ImagePyramid::Ptr> imagePyramids;
+
+    imagePyramids.emplace_back(std::make_shared<db::ImagePyramid>(data0));
+    imagePyramids.emplace_back(std::make_shared<db::ImagePyramid>(data1));
+
+  db::ImagePyramidSet::Ptr set   = std::make_shared<db::ImagePyramidSet>(imagePyramids);
   db::Frame::Ptr           frame = std::make_shared<db::Frame>(set);
   frames.push_back(frame);
 

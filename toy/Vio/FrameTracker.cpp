@@ -13,16 +13,12 @@
 namespace toy {
 FrameTracker::FrameTracker()
   : mFeatureTracker{nullptr}
-  , mFrameSolver{nullptr}
   , mStatus{Status::NONE}
   , mPrevFrame{nullptr} {}
 
 FrameTracker::~FrameTracker() {
   delete mFeatureTracker;
   mFeatureTracker = nullptr;
-
-  delete mFrameSolver;
-  mFrameSolver = nullptr;
 }
 
 void FrameTracker::prepare() {

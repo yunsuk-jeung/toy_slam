@@ -35,3 +35,4 @@ public:
 
 #define vklLogE(fmt, ...)                                                                \
   VklLogger::logE(LogUtil::extractFileName(__FILE__), __LINE__, fmt, ##__VA_ARGS__);
+  

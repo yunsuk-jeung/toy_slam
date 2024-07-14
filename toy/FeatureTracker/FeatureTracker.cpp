@@ -1,4 +1,3 @@
-#pragma once
 #include "ImagePyramid.h"
 #include "Frame.h"
 #include "PointTracker.h"

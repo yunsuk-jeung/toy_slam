@@ -4,7 +4,7 @@
 	"vio": {
 		"on": true,
 		"tbb": false,
-		"debug": false,
+		"debug": true,
 		"frameTracker": {
 			"maxPyramidLevel": 10,
 			"feature": {

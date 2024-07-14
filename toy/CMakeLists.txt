@@ -16,16 +16,17 @@ add_library(${PROJECT_NAME} STATIC ${TOY_SRC})
 
 file(GLOB SUBDIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *)
 
+set(DIRECTORY_LIST "")
+foreach(subdir ${SUBDIRECTORIES})
+  if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
+    list(APPEND DIRECTORY_LIST ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
+  endif()
+endforeach()
+
 target_include_directories(${PROJECT_NAME} PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
-
-  # ${CMAKE_CURRENT_SOURCE_DIR}/datastruct
-  # ${CMAKE_CURRENT_SOURCE_DIR}/ImageModule
-  # ${CMAKE_CURRENT_SOURCE_DIR}/mapper
-  # ${CMAKE_CURRENT_SOURCE_DIR}/util
-  # ${CMAKE_CURRENT_SOURCE_DIR}/Vio
   ${CMAKE_CURRENT_SOURCE_DIR}/../common
-  ${SUBDIRECTORIES}
+  ${DIRECTORY_LIST}
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC libs)

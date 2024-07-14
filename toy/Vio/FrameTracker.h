@@ -9,7 +9,6 @@ namespace db {
 class Frame;
 }
 class FeatureTracker;
-class FrameSolver;
 class FrameTracker : public Thread<db::ImagePyramidSet, db::Frame> {
 public:
   using Thread<db::ImagePyramidSet, db::Frame>::registerOutQueue;
@@ -32,7 +31,6 @@ private:
 
   Status                     mStatus;
   FeatureTracker*            mFeatureTracker;
-  FrameSolver*               mFrameSolver;
   std::shared_ptr<db::Frame> mPrevFrame;
 };
 

@@ -25,7 +25,7 @@ git clone https://github.com/yunsuk-jeung/toy_slam.git
 cd toy_slam
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j8
 ```
 + ### run euroc sample

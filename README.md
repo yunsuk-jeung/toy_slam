@@ -35,9 +35,9 @@ bash ./euroc_vo
 + ### directory
 ```
 workspace
-  |_lib
-  |_toy_slam
-  |_EUROC/V1_01_easy
+  |_ lib
+  |_ toy_slam
+  |_ EUROC/V1_01_easy
 
 ```
 

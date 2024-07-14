@@ -13,6 +13,7 @@ vkl::SLAMApp*   app        = nullptr;
 io::Sensor*     sensor     = nullptr;
 io::DataReader* dataReader = nullptr;
 //std::string     dataPath         = "D:/dataset/EUROC/V1_01_easy";
+//std::string dataPath         = "D:/dataset/EUROC/V1_03_difficult";
 std::string dataPath         = "D:/dataset/EUROC/V1_01_easy";
 std::string configPath       = "D:/workspaceD/toy_vio/configs/";
 std::string sensorConfigFile = "euroc_sensor.json";

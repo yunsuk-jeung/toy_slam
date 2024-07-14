@@ -670,7 +670,6 @@ void App::prepareFrame() {
   //auto vkSwapchain = mRenderContext->getVkSwapchain();
   //if (!vkSwapchain)
   //  return;
-
   std::tie(mCurrBufferingIdx,
            mCurrCmdFence,
            mCurrBufferingSemaphore) = mRenderContext->acquireNextImage();

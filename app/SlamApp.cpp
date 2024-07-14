@@ -84,7 +84,7 @@ bool SLAMApp::prepare() {
   mGraphicsCamera->cam.M.block<3, 3>(0, 0) = Qyz.toRotationMatrix();
 
   auto* simulator = (io::Simulator*)mSensor;
-  simulator->setContinuosMode(false);
+  simulator->setContinuosMode(true);
 
   GuiImpl::RenderImpl impl = [this, simulator]() {
     if (ImGui::Button("change mode")) {
@@ -190,7 +190,7 @@ void SLAMApp::createPipelines() {
     };
     PL->setVertexDescription(bd, ad);
     PL->setPrimitiveTopology(vk::PrimitiveTopology::eLineList);
-    auto& RCI = PL->getRasterizationStateCI();
+    auto& RCI     = PL->getRasterizationStateCI();
     RCI.lineWidth = 3.0f;
     PL->prepare();
   }

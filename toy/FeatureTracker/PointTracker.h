@@ -36,9 +36,6 @@ protected:
                                    std::vector<cv::KeyPoint>& kpts,
                                    db::Feature*               feature);
 
-  size_t match(db::Frame* prev, db::Frame* curr);
-  size_t matchStereo(db::Frame* frame);
-
   void           checkEmptyGrid(const cv::Mat& origin, db::Feature* feature);
   static cv::Mat createMask(const cv::Mat& origin, db::Feature* feature);
 

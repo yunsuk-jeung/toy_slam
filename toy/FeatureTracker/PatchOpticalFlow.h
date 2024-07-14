@@ -214,13 +214,9 @@ public:
         cv::circle(image1, uvs1[idx1], 4, {0.0, 255.0, 0.0}, -1);
       }
       for (int i = 0; i < uvs0.size(); i++) {
-        if (idToidx.count(ids0[i]) < 1)
-          continue;
-
-        if (statusO[i] == 0 /*|| statusE[i] == 0*/) {
-          auto idx1 = idToidx[ids0[i]];
-          cv::line(image1, uvs0[i], uvs1[idx1], {255.0, 0.0, 0.0}, 1);
-          cv::circle(image1, uvs1[idx1], 2, {255.0, 0.0, 0.0}, -1);
+        if (statusO[i] == 0) {
+          cv::line(image1, uvs0[i], uvs[i], {255.0, 0.0, 0.0}, 1);
+          cv::circle(image1, uvs[i], 2, {255.0, 0.0, 0.0}, -1);
         }
       }
       cv::imshow("stereo opticalflow1", image1);

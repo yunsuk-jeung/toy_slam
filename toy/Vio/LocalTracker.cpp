@@ -92,6 +92,8 @@ void LocalTracker::process() {
 
     BasicSolver::solveFramePose(currFrame);
 
+    //drawDebugView(100, 0);
+
     mVioSolver->solve(frames, trackingMapPoints);
     auto& currFactorMap = currFrame->mapPointFactorMap(0u);
     float ratio         = float(connected) / float(currFactorMap.size());
@@ -122,7 +124,9 @@ void LocalTracker::process() {
       ++mKeyFrameAfter;
     }
 
-    //drawDebugView(100, 0);
+    //drawDebugView(500, 500);
+    //drawDebugView(100, 1);
+
     //DEBUG_POINT();
     //cv::waitKey(1);
     //
@@ -309,7 +313,10 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
   }
 
   auto lastKeyFrame = keyFrames.back();
-  auto endIt        = std::prev(keyFrames.end(), 2);
+  if (keyFrames.size() < 2)
+    return;
+
+  auto endIt = std::prev(keyFrames.end(), 2);
 
   while (keyFrames.size() - mMarginalKeyFrameIds.size() > Config::Vio::maxKeyFrameSize) {
     std::map<int64_t, int> connectedMapPoints;
@@ -332,11 +339,13 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
       }
 
       float ratio = float(count) / mNumCreatedPoints[kfId];
-      ToyLogD("marg due to ratio : {} / {} = {} id: {}",
-              count,
-              mNumCreatedPoints[kfId],
-              ratio,
-              kfId);
+      if (Config::Vio::debug) {
+        ToyLogD("marg due to ratio : {} / {} = {} id: {}",
+                count,
+                mNumCreatedPoints[kfId],
+                ratio,
+                kfId);
+      }
       if (ratio < Config::Vio::margFeatureConnectionRatio) {
         /*ToyLogD("marg due to ratio : {} / {} = {} id: {}",
                 count,
@@ -345,7 +354,9 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
                 kf->id());*/
         mMarginalKeyFrameIds.emplace(kfId);
         selected = true;
-        ToyLogD("marginalize due to : ratio  id : {}", kfId);
+        if (Config::Vio::debug) {
+          ToyLogD("marginalize due to : ratio  id : {}", kfId);
+        }
         break;
       }
     }
@@ -373,9 +384,14 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
       float score = std::sqrt(
         ((*it1)->getTwb().translation() - lastKeyFrame->getTwb().translation()) .norm()
       ) * denom;
-
-      ToyLogD("id : {} marg distance score : {} denom : {}", (*it1)->id(), (int)score, denom);
       // clang-format on
+
+      if (Config::Vio::debug) {
+        ToyLogD("id : {} marg distance score : {} denom : {}",
+                (*it1)->id(),
+                (int)score,
+                denom);
+      }
       if (score < minScore) {
         minId    = (*it1)->id();
         minScore = score;
@@ -384,7 +400,8 @@ void LocalTracker::selectMarginalFrame(std::vector<db::Frame::Ptr>& allFrames) {
 
     TOY_ASSERT(minId >= 0);
 
-    ToyLogD("marginalize due to : distance score id : {}", minId);
+    if (Config::Vio::debug)
+      ToyLogD("marginalize due to : distance score id : {}", minId);
     mMarginalKeyFrameIds.emplace(minId);
   }
 }

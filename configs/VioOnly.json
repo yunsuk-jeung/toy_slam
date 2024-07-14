@@ -4,7 +4,7 @@
 	"vio": {
 		"on": true,
 		"tbb": false,
-		"debug": true,
+		"debug": false,
 		"frameTracker": {
 			"maxPyramidLevel": 10,
 			"feature": {
@@ -13,7 +13,7 @@
 					"rowGridCount": 12,
 					"colGridCount": 18,
 					"on": true,
-					"tracker": "Fast.CVOpticalFlow",
+					"tracker": "Fast.PatchOpticalFlow",
 					"minTrackedPoint": 30,
 					"minTrackedRatio": 0.7,
 					"epipolarThreashold": 0.005,
@@ -40,7 +40,7 @@
 			"minParallaxSqNorm": 400,
 			"vioSolver": {
 				"name": "SqrtLocalSolver",
-				"solverLogDebug": true,
+				"solverLogDebug": false,
 				"solverMinimumFrames": 4,
 				"reprojectionME": "huber",
 				"reprojectionMEConst": 1.0,

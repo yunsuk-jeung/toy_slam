@@ -1,4 +1,3 @@
-#pragma once
 #include "patterns.h"
 namespace toy {
 // clang-format off

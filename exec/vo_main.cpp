@@ -97,7 +97,7 @@ int main() {
   slamConfigFile   = configPath + "/" + slamConfigFile;
 
 #ifdef __linux__
-  dataPath = dir.parent_path().append("V1_01_easy");
+  dataPath = dir.parent_path().append("EUROC").append("V1_01_easy");
 #endif
 
   prepareSensor();

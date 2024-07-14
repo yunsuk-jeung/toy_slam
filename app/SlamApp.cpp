@@ -26,8 +26,8 @@ enum eSHADERS {
 };
 enum ePIPELINES { BASIC_POINT_PL, BASIC_LINE_PL };
 
-constexpr char* SHADERS[]   = {"basicPoint", "basic"};
-constexpr char* PIPELINES[] = {"basic_point", "basic_line"};
+constexpr const char* SHADERS[]   = {"basicPoint", "basic"};
+constexpr const char* PIPELINES[] = {"basic_point", "basic_line"};
 
 template <typename Type, int Row>
 static std::string eigenVec(const Eigen::Matrix<Type, Row, 1>& vec, int precision = 4) {
@@ -140,9 +140,9 @@ void SLAMApp::run() {
 void SLAMApp::createPipelines() {
   {
     ShaderSourceType type = ShaderSourceType::STRING_FILE;
-    constexpr char*  vert = SHADERS[BASIC_POINT];
-    constexpr char*  frag = SHADERS[BASIC];
-    constexpr char*  PLN  = PIPELINES[BASIC_POINT_PL];
+    constexpr const char*  vert = SHADERS[BASIC_POINT];
+    constexpr const char*  frag = SHADERS[BASIC];
+    constexpr const char*  PLN  = PIPELINES[BASIC_POINT_PL];
 
     using RP         = ResourcePool;
     auto* vertShader = RP::loadShader(vert, type, vk::ShaderStageFlagBits::eVertex);
@@ -163,9 +163,9 @@ void SLAMApp::createPipelines() {
   }
   {
     ShaderSourceType type = ShaderSourceType::STRING_FILE;
-    constexpr char*  vert = SHADERS[BASIC];
-    constexpr char*  frag = SHADERS[BASIC];
-    constexpr char*  PLN  = PIPELINES[BASIC_LINE_PL];
+    constexpr const char*  vert = SHADERS[BASIC];
+    constexpr const char*  frag = SHADERS[BASIC];
+    constexpr const char*  PLN  = PIPELINES[BASIC_LINE_PL];
 
     using RP         = ResourcePool;
     auto* vertShader = RP::loadShader(vert, type, vk::ShaderStageFlagBits::eVertex);

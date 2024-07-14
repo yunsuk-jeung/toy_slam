@@ -55,7 +55,7 @@ public:
     costs.reserve(mapPointFactorMap.size());
 
     for (auto& [mpId, factor] : mapPointFactorMap) {
-      auto& mp = factor.mapPoint();
+      auto mp = factor.mapPoint();
       if (mp->status() != db::MapPoint::Status::TRACKING) {
         continue;
       }

@@ -6,7 +6,6 @@
 #include <sophus/se3.hpp>
 #include "Logger.h"
 
-namespace toy {
 
 template <typename T, int Rows, int Cols>
 struct fmt::formatter<Eigen::Matrix<T, Rows, Cols>> {
@@ -57,6 +56,7 @@ struct fmt::formatter<Eigen::Vector<T, Rows>> {
   }
 };
 
+namespace toy {
 class ToyLogger {
 public:
   static std::shared_ptr<spdlog::logger> logger;

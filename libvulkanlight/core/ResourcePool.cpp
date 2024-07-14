@@ -1,5 +1,3 @@
-#pragma once
-
 #include "ResourcePool.h"
 #include "Device.h"
 #include "Logger.h"

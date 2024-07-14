@@ -1,4 +1,3 @@
-#pragma once
 #include "VklLogger.h"
 #include "Device.h"
 #include "RenderContext.h"

@@ -1,4 +1,3 @@
-#pragma once
 #include "GUI.h"
 #include "Buffer.h"
 #include "Device.h"

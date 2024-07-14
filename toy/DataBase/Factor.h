@@ -45,9 +45,9 @@ protected:
   std::shared_ptr<MapPoint> mMapPoint;
 
 public:
-  auto&                     type() { return mType; }
-  std::shared_ptr<Frame>    frame() { return mFrame; }
-  std::shared_ptr<MapPoint> mapPoint() { return mMapPoint; }
+  auto&                      type() { return mType; }
+  std::shared_ptr<Frame>&    frame() { return mFrame; }
+  std::shared_ptr<MapPoint>& mapPoint() { return mMapPoint; }
 };
 
 //class ReprojectionFactor {

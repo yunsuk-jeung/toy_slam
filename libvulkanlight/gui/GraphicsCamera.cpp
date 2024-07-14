@@ -262,21 +262,21 @@ void GraphicsCamera::onMouseWheel(int scroll) {
 }
 
 void GraphicsCamera::setInputCallback() {
-  auto func = std::bind(&GraphicsCamera::onMouseClick,
+  auto clickFunc = std::bind(&GraphicsCamera::onMouseClick,
                         this,
                         std::placeholders::_1,
                         std::placeholders::_2,
                         std::placeholders::_3);
 
-  this->registerMouseClick(func);
+  this->registerMouseClick(clickFunc);
 
-  func = std::bind(&GraphicsCamera::onMouseDrag,
+  auto dragFunc = std::bind(&GraphicsCamera::onMouseDrag,
                    this,
                    std::placeholders::_1,
                    std::placeholders::_2,
                    std::placeholders::_3);
 
-  this->registerMouseDrag(func);
+  this->registerMouseDrag(dragFunc);
 
   auto func2 = std::bind(&GraphicsCamera::onMouseWheel, this, std::placeholders::_1);
   this->registerMouseWheel(func2);

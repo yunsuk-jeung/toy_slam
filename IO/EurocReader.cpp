@@ -152,7 +152,7 @@ void EurocReader::parseConfig(std::string configFile) {
     mCamInfo0.intrinsics      = cam0Json["intrinsics"].get<std::vector<float>>();
     mCamInfo0.distortionModel = cam0Json["distortionModel"];
 
-    auto& distortion = cam0Json["distortions"].get<std::vector<float>>();
+    auto distortion = cam0Json["distortions"].get<std::vector<float>>();
     memcpy(mCamInfo0.distortions.data(),
            distortion.data(),
            sizeof(float) * distortion.size());
@@ -172,7 +172,7 @@ void EurocReader::parseConfig(std::string configFile) {
     mCamInfo1.intrinsics      = cam1Json["intrinsics"].get<std::vector<float>>();
     mCamInfo1.distortionModel = cam1Json["distortionModel"];
 
-    auto& distortion = cam1Json["distortions"].get<std::vector<float>>();
+    auto distortion = cam1Json["distortions"].get<std::vector<float>>();
     memcpy(mCamInfo1.distortions.data(),
            distortion.data(),
            sizeof(float) * distortion.size());

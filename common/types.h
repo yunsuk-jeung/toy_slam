@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <vector>
 enum ImageType { NONE = -1, CAM0 = 0, CAM1 = 1, DEPTH = 2 };
 struct ImageData {

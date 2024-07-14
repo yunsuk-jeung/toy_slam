@@ -29,14 +29,14 @@ file(GLOB_RECURSE APP_SRC
   app/*.cpp
 )
 
-add_executable(euroc_vio exec/vio_main.cpp ${APP_SRC})
-target_include_directories(euroc_vio PRIVATE app)
-target_link_libraries(euroc_vio PRIVATE toy::toy libs io vulkanLight::vulkanLight)
+add_executable(euroc_vo exec/vo_main.cpp ${APP_SRC})
+target_include_directories(euroc_vo PRIVATE app)
+target_link_libraries(euroc_vo PRIVATE toy::toy libs io vulkanLight::vulkanLight)
 
 if(WIN32)
   set(EXTERNAL_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../lib)
 
   include(${EXTERNAL_LIB_DIR}/copyDLL.cmake)
-  copy_tbb_dlls(euroc_vio ${EXTERNAL_LIB_DIR})
-  copy_cv34_dlls(euroc_vio ${EXTERNAL_LIB_DIR})
+  copy_tbb_dlls(euroc_vo ${EXTERNAL_LIB_DIR})
+  copy_cv34_dlls(euroc_vo ${EXTERNAL_LIB_DIR})
 endif()

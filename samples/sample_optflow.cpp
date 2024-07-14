@@ -45,7 +45,6 @@ auto main() -> int {
   ToyLogI("png size : {}", pngs.size());
 
   /*std::vector<db::ImagePyramidSet> pyramids;*/
-
   //Config::Vio::showExtraction   = true;
   //Config::Vio::showMonoTracking = true;
 

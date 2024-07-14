@@ -15,9 +15,10 @@ io::DataReader* dataReader = nullptr;
 //std::string     dataPath         = "D:/dataset/EUROC/V1_01_easy";
 //std::string dataPath         = "D:/dataset/EUROC/V1_03_difficult";
 std::string dataPath         = "D:/dataset/EUROC/V1_01_easy";
-std::string configPath       = "D:/workspaceD/toy_vio/configs/";
+std::string configPath       = "";
 std::string sensorConfigFile = "euroc_sensor.json";
 std::string slamConfigFile   = "VioOnly.json";
+std::string shaderPath       = "";
 
 void setupSensor() {
   sensor = io::SensorFactory::createSensor(io::SensorFactory::SensorType::SIMULATOR);
@@ -26,7 +27,6 @@ void setupSensor() {
     dataReader = io::DataReader::createDataReader(io::DataReader::Type::EUROC);
     dataReader->openDirectory(sensorConfigFile, dataPath);
     ((io::Simulator*)sensor)->registerDataReader(dataReader);
-    //((io::Simulator*)sensor)->setSkip(80);
   }
   sensor->prepare();
 }
@@ -76,31 +76,33 @@ void prepareGUI() {
   app = new vkl::SLAMApp();
   std::unique_ptr<vkl::Window> glfwWindow(new vkl::GlfwWindow(winInfo, app));
   app->registerWindow(glfwWindow);
-  app->addShaderPath("F:/transfer/toy_slam/libvulkanlight/shaders");
-  app->addAssetPath("F:/transfer/toy_slam/libvulkanlight/shaders");
-  app->addShaderPath("D:/workspaceD/toy_vio/libvulkanlight/shaders");
-  app->addAssetPath("D:/workspaceD/toy_vio/libvulkanlight/shaders");
+  app->addShaderPath(shaderPath);
+  app->addAssetPath(shaderPath);
   app->registerSensor(sensor);
   app->prepare();
 }
 
 int main() {
-  if (!std::filesystem::exists(configPath + sensorConfigFile)) {
-    configPath = "F:/transfer/toy_slam/configs/";
-  }
-  sensorConfigFile = configPath + sensorConfigFile;
-  slamConfigFile   = configPath + slamConfigFile;
+  namespace fs = std::filesystem;
+  fs::path currFile(std::string(__FILE__));
+  auto     dir       = currFile.parent_path().parent_path();
+  auto     shaderDir = dir;
+  auto     configDir = dir;
+
+  std::cout << dir.string() << std::endl;
+
+  shaderPath       = shaderDir.append("libvulkanlight/shaders").string();
+  configPath       = configDir.append("configs").string();
+  sensorConfigFile = configPath + "/" + sensorConfigFile;
+  slamConfigFile   = configPath + "/" + slamConfigFile;
+
+#ifdef __linux__
+  dataPath = dir.parent_path().append("V1_01_easy");
+#endif
 
   prepareSensor();
   prepareSLAM();
   prepareGUI();
-
-  //while (true) {
-  //  ((io::Simulator*)sensor)->spinOnce();
-  //  int key = cv::waitKey();
-  //  if (key == 27)
-  //    break;
-  //}
 
   app->run();
 

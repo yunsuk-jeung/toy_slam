@@ -30,7 +30,8 @@ make -j8
 ```
 + ### run euroc sample
 ``` 
-bash ./euroc_vo
+#in build folder
+./euroc_vo
 ```
 + ### directory
 ```

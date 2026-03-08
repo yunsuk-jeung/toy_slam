@@ -3,3 +3,4 @@
 build/
 out/
 python/data/
+third_party/_deps/

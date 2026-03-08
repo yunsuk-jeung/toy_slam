@@ -11,6 +11,7 @@ file(GLOB_RECURSE TOY_SRC
   ${CMAKE_CURRENT_SOURCE_DIR}/*.h
   ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
 )
+list(FILTER TOY_SRC EXCLUDE REGEX "/IO/")
 
 add_library(${PROJECT_NAME} STATIC ${TOY_SRC})
 
@@ -25,10 +26,22 @@ endforeach()
 
 target_include_directories(${PROJECT_NAME} PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/../common
   ${DIRECTORY_LIST}
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC libs)
+target_link_libraries(${PROJECT_NAME} PUBLIC toy_libs)
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
+file(GLOB_RECURSE IO_SRC
+  ${CMAKE_CURRENT_SOURCE_DIR}/IO/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/IO/*.cpp
+)
+
+add_library(io STATIC ${IO_SRC})
+target_include_directories(io PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/IO
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/common
+)
+target_link_libraries(io PUBLIC toy_libs)

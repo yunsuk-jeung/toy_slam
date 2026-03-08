@@ -5,11 +5,8 @@
 #include "DataReader.h"
 #include "Simulator.h"
 #include "SensorFactory.h"
-#include "SLAM.h"
-#include "SLAMApp.h"
-#include "GlfwWindow.h"
+#include "Slam.h"
 
-vkl::SLAMApp*   app        = nullptr;
 io::Sensor*     sensor     = nullptr;
 io::DataReader* dataReader = nullptr;
 //std::string     dataPath         = "D:/dataset/EUROC/V1_01_easy";
@@ -18,7 +15,6 @@ std::string dataPath         = "D:/dataset/EUROC/V1_01_easy";
 std::string configPath       = "";
 std::string sensorConfigFile = "euroc_sensor.json";
 std::string slamConfigFile   = "VioOnly.json";
-std::string shaderPath       = "";
 
 void setupSensor() {
   sensor = io::SensorFactory::createSensor(io::SensorFactory::SensorType::SIMULATOR);
@@ -63,54 +59,37 @@ void prepareSLAM() {
   toy::SLAM::getInstance()->prepare(slamConfigFile);
 }
 
-void prepareGUI() {
-  vkl::WindowInfo winInfo{
-    "Sample window",
-    vkl::WindowInfo::Mode::Default,
-    true,
-    vkl::WindowInfo::Vsync::ON,
-    vkl::WindowInfo::Orientation::Landscape,
-    {1280, 1280}
-  };
-
-  app = new vkl::SLAMApp();
-  std::unique_ptr<vkl::Window> glfwWindow(new vkl::GlfwWindow(winInfo, app));
-  app->registerWindow(glfwWindow);
-  app->addShaderPath(shaderPath);
-  app->addAssetPath(shaderPath);
-  app->registerSensor(sensor);
-  app->prepare();
+void runSLAM() {
+  sensor->start();
+  std::cout << "SLAM is running. Press ENTER to stop." << std::endl;
+  std::cin.get();
+  sensor->stop();
 }
 
 int main() {
   namespace fs = std::filesystem;
   fs::path currFile(std::string(__FILE__));
   auto     dir       = currFile.parent_path().parent_path();
-  auto     shaderDir = dir;
   auto     configDir = dir;
 
   std::cout << dir.string() << std::endl;
 
-  shaderPath       = shaderDir.append("libvulkanlight/shaders").string();
   configPath       = configDir.append("configs").string();
   sensorConfigFile = configPath + "/" + sensorConfigFile;
   slamConfigFile   = configPath + "/" + slamConfigFile;
 
 #ifdef __linux__
-  dataPath = dir.parent_path().append("EUROC").append("V1_01_easy");
+  dataPath = dir.parent_path().append("EUROC").append("V1_01_easy").string();
 #endif
 
   prepareSensor();
   prepareSLAM();
-  prepareGUI();
-
-  app->run();
+  runSLAM();
 
   toy::SLAM::deleteInstance();
 
   delete dataReader;
   delete sensor;
-  delete app;
 
   return 0;
 }

@@ -1,6 +1,6 @@
-#include "Logger.h"
 #include "DataReader.h"
 #include "Simulator.h"
+#include <chrono>
 
 namespace io {
 Simulator::Simulator()
@@ -83,11 +83,15 @@ void Simulator::start() {
 
         mImageCallBack(datas);
 
-        cv::imshow("input", image0);
-        cv::waitKey(1);
+        //cv::imshow("input", image0);
+        //cv::waitKey(1);
       }
       else {
-        //mWorking = false;
+        if (mDataReader->isFinished()) {
+          mWorking = false;
+          break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
       }
     }
   };
@@ -138,7 +142,7 @@ void Simulator::spinOnce() {
 
     mImageCallBack(datas);
 
-    cv::imshow("input", image0);
+    //cv::imshow("input", image0);
     //cv::waitKey(33);
   }
   else {

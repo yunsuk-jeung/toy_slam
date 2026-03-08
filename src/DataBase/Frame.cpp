@@ -127,7 +127,7 @@ void Frame::update(const Eigen::Vector6d& delta) {
 
 void Frame::drawReprojectionView(int idx, std::string imshowName, bool half) {
   auto img = mImagePyramids[idx]->getOrigin().clone();
-  cv::cvtColor(img, img, CV_GRAY2BGR);
+  cv::cvtColor(img, img, cv::COLOR_GRAY2BGR);
 
   for (auto& [mpId, factor] : mMapPointFactorMaps[idx]) {
     auto mp = factor.mapPoint();

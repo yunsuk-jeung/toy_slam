@@ -43,5 +43,6 @@ protected:
 public:
   bool& getContinuousMode() { return mContinuousMode; }
   void  setSkip(int skip) { mSkip = skip; }
+  bool  isWorking() const { return mWorking.load(); }
 };
 }  //namespace io

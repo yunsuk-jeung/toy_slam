@@ -41,6 +41,11 @@ public:
                          uint64_t& ns1,
                          cv::Mat&  image1) = 0;
 
+  bool isFinished() {
+    std::unique_lock<std::mutex> lock(mLoadLock);
+    return !mLoading.load() && mImageDeque0.empty() && mImageDeque1.empty();
+  }
+
 protected:
   virtual void parseConfig(std::string configFile) = 0;
 

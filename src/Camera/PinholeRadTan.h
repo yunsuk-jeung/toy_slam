@@ -1,6 +1,7 @@
 #pragma once
 #include "Camera.h"
 #include <opencv2/opencv.hpp>
+#include <opencv2/calib3d.hpp>
 
 namespace toy {
 class PinholeRadialTangential : public Camera {

@@ -5,7 +5,7 @@
 #include <nlohmann/json.hpp>
 #include <Eigen/Dense>
 
-#include "Logger.h"
+#include "util/ToyLogger.h"
 #include "EurocReader.h"
 
 namespace io {
@@ -40,10 +40,10 @@ void EurocReader::openDirectory(std::string configFile,
 
   auto mav0 = fs::path(dataDir);
   if (!fs::exists(mav0)) {
-    LOGE("mav0 is missing, input path : {}", mav0.string());
+    ToyLogE("mav0 is missing, input path : {}", mav0.string());
     throw std::runtime_error("path dosent' exist");
   }
-  LOGI("Opening dataset : {}", mav0.string());
+  ToyLogI("Opening dataset : {}", mav0.string());
   mav0.append("mav0");
 
   auto camPath0 = mav0;
@@ -52,7 +52,7 @@ void EurocReader::openDirectory(std::string configFile,
 
   auto    front0 = mImageInfos0.front();
   cv::Mat image0 = cv::imread(front0.second, cv::IMREAD_GRAYSCALE);
-  LOGI("cam0 type : {} / format : {}", mImage0Type, image0.type());
+  ToyLogI("cam0 type : {} / format : {}", mImage0Type, image0.type());
 
   auto camPath1 = mav0;
   camPath1.append("cam1").append("data");
@@ -60,7 +60,7 @@ void EurocReader::openDirectory(std::string configFile,
 
   auto    front1 = mImageInfos1.front();
   cv::Mat image1 = cv::imread(front1.second, cv::IMREAD_GRAYSCALE);
-  LOGI("cam1 type : {} / format : {}", mImage1Type, image1.type());
+  ToyLogI("cam1 type : {} / format : {}", mImage1Type, image1.type());
 
   syncStereo();
 
@@ -137,7 +137,7 @@ void EurocReader::parseConfig(std::string configFile) {
   std::ifstream jsonFile(configFile);
 
   if (!jsonFile.is_open()) {
-    LOGE("missing config file : {}", configFile);
+    ToyLogE("missing config file : {}", configFile);
     return;
   }
   nlohmann::json jsonObject;
@@ -216,6 +216,7 @@ void EurocReader::loadAsync() {
       mImageInfos1.pop_front();
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+    mLoading = false;
   };
 
   mLoadThread = std::thread(loadFunc);

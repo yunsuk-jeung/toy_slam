@@ -3,9 +3,10 @@
 #include <iostream>
 #include <string>
 #include <iomanip>
+#include <mutex>
 #include <sophus/se3.hpp>
-#include "Logger.h"
-
+#include <spdlog/spdlog.h>
+#include "LogUtil.h"
 
 template <typename T, int Rows, int Cols>
 struct fmt::formatter<Eigen::Matrix<T, Rows, Cols>> {
@@ -64,18 +65,22 @@ public:
 
   template <typename... Args>
   static void logI(const char* fmt, Args... args) {
+    ensureInit();
     logger->info(fmt, args...);
   }
   template <typename... Args>
   static void logW(const char* fmt, Args... args) {
+    ensureInit();
     logger->warn(fmt, args...);
   }
   template <typename... Args>
   static void logD(const char* fmt, Args... args) {
+    ensureInit();
     logger->debug(fmt, args...);
   }
   template <typename... Args>
   static void logE(const char* file, int line, const char* fmt, Args... args) {
+    ensureInit();
     logger->error("[{}:{}] {}", file, line, fmt::format(fmt, args...));
   }
 
@@ -123,13 +128,14 @@ public:
   }
 
 private:
+  static void       ensureInit();
+  static std::mutex loggerMutex;
 };
 }  //namespace toy
 
-#define ToyLogI(fmt, ...) ToyLogger::logI(fmt, ##__VA_ARGS__);
-#define ToyLogW(fmt, ...) ToyLogger::logW(fmt, ##__VA_ARGS__);
-#define ToyLogD(fmt, ...) ToyLogger::logD(fmt, ##__VA_ARGS__);
+#define ToyLogI(fmt, ...) toy::ToyLogger::logI(fmt, ##__VA_ARGS__);
+#define ToyLogW(fmt, ...) toy::ToyLogger::logW(fmt, ##__VA_ARGS__);
+#define ToyLogD(fmt, ...) toy::ToyLogger::logD(fmt, ##__VA_ARGS__);
 #define ToyLogE(fmt, ...)                                                                \
-  ToyLogger::logE(LogUtil::extractFileName(__FILE__), __LINE__, fmt, ##__VA_ARGS__);
-#define DEBUG_POINT() \
-  ToyLogE("THIS Line is for debugging") ;
+  toy::ToyLogger::logE(LogUtil::extractFileName(__FILE__), __LINE__, fmt, ##__VA_ARGS__);
+#define DEBUG_POINT() ToyLogE("THIS Line is for debugging");

@@ -96,7 +96,7 @@ size_t PointTracker::detect(db::Frame* frame) {
 
   if (Config::Vio::showExtraction) {
     cv::Mat image = origin.clone();
-    cv::cvtColor(image, image, CV_GRAY2BGR);
+    cv::cvtColor(image, image, cv::COLOR_GRAY2BGR);
     for (const auto& kpt : keyPoints) {
       cv::circle(image, kpt.pt, 3, {255, 0, 0}, -1);
     }

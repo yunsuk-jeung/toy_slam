@@ -80,13 +80,21 @@ endif()
 
 # OpenCV
 if(TOYSLAM_FETCH_OPENCV)
-  set(BUILD_LIST "core;imgproc;imgcodecs;highgui;video;features2d" CACHE STRING "" FORCE)
+  set(BUILD_LIST "core;imgproc;imgcodecs;highgui;video;flann;features2d;calib3d" CACHE STRING "" FORCE)
   set(BUILD_opencv_world OFF CACHE BOOL "" FORCE)
   set(BUILD_opencv_apps OFF CACHE BOOL "" FORCE)
   set(BUILD_DOCS OFF CACHE BOOL "" FORCE)
   set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
   set(BUILD_PERF_TESTS OFF CACHE BOOL "" FORCE)
   set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+  # OpenCV's bundled zlib fails on recent Apple toolchains due legacy TARGET_OS_MAC macros.
+  # Use system zlib instead.
+  set(BUILD_ZLIB OFF CACHE BOOL "" FORCE)
+  set(WITH_ZLIB ON CACHE BOOL "" FORCE)
+  # OpenCV's bundled libpng may include legacy <fp.h> on macOS toolchains.
+  # Use system libpng instead.
+  set(BUILD_PNG OFF CACHE BOOL "" FORCE)
+  set(WITH_PNG ON CACHE BOOL "" FORCE)
   FetchContent_Declare(
     opencv
     GIT_REPOSITORY https://github.com/opencv/opencv.git
@@ -99,11 +107,22 @@ if(TOYSLAM_FETCH_OPENCV)
     opencv_imgcodecs
     opencv_highgui
     opencv_video
+    opencv_flann
     opencv_features2d
+    opencv_calib3d
   )
   set(TOYSLAM_OPENCV_INCLUDE_DIRS
     ${opencv_SOURCE_DIR}/include
+    ${opencv_SOURCE_DIR}/modules/core/include
+    ${opencv_SOURCE_DIR}/modules/imgproc/include
+    ${opencv_SOURCE_DIR}/modules/imgcodecs/include
+    ${opencv_SOURCE_DIR}/modules/highgui/include
+    ${opencv_SOURCE_DIR}/modules/video/include
+    ${opencv_SOURCE_DIR}/modules/flann/include
+    ${opencv_SOURCE_DIR}/modules/features2d/include
+    ${opencv_SOURCE_DIR}/modules/calib3d/include
     ${opencv_BINARY_DIR}
+    ${CMAKE_BINARY_DIR}
   )
 else()
   find_package(OpenCV REQUIRED)

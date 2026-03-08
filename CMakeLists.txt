@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.18.1)
 
+# CMake 4.x rejects some third-party projects that declare very old policy versions
+# (e.g. Sophus via FetchContent). Keep compatibility explicit for dependency configure.
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0" AND NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
+  set(CMAKE_POLICY_VERSION_MINIMUM "3.5")
+endif()
+
 project("toy_project")
 
 set(CMAKE_CXX_STANDARD 17)
